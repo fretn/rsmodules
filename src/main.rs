@@ -32,22 +32,22 @@ fn main() {
         return;
     }
 
-    let shell: String = args.get(1).unwrap().clone();
+    let shell: &str = &args[1];
 
-    if !is_shell_supported(&shell) {
+    if !is_shell_supported(shell) {
         print_usage(true);
         return; 
     }
 
-    let command: String;
-    let modulename: String;
+    let command: &str;
+    let modulename: &str;
 
     if args.len() >= 3 {
-        command = args.get(2).unwrap().clone();
+        command = &args[2];
 
         if command == "load" || command == "unload" || command == "available" {
             if args.len() > 3 {
-                modulename = args.get(3).unwrap().clone(); 
+                modulename = &args[3];
                 //run_command(command, modulename);
             } else {
                 print_usage(false);
@@ -59,9 +59,5 @@ fn main() {
             print_usage(false);
             return; 
         }
-    }
-
-    for arg in args {
-        println!("{}", arg);
     }
 }
