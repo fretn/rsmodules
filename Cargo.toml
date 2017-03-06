@@ -1,0 +1,10 @@
+[package]
+name = "rmodules"
+version = "0.1.0"
+authors = ["frlae <frlae@psb.ugent.be>"]
+
+[dependencies]
+
+[[bin]]
+name = "rmodules"
+path = "src/main.rs"
