@@ -1,3 +1,6 @@
+#[path = "rmodules.rs"]
+mod rmod;
+
 fn is_shell_supported(shell: &str) -> bool {
 
     let mut shell_list = Vec::new();
@@ -48,6 +51,7 @@ fn main() {
         if command == "load" || command == "unload" || command == "available" {
             if args.len() > 3 {
                 modulename = &args[3];
+                rmod::load(modulename);
                 //run_command(command, modulename);
             } else {
                 print_usage(false);
