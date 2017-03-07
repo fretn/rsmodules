@@ -28,7 +28,7 @@ fn is_shell_supported(shell: &str) -> bool {
 
 fn print_usage(shell_error: bool) {
 
-    println_stderr!("Usage: rmodules <shell> <load|unload|list|purge|available> [module name]"); 
+    println_stderr!("Usage: rmodules <shell> <load|unload|list|purge|available> [module name]");
 
     if shell_error == true {
         println_stderr!("Only tcsh and bash are supported");
@@ -37,7 +37,7 @@ fn print_usage(shell_error: bool) {
 
 fn main() {
 
-	let args: Vec<String> = std::env::args().collect();
+    let args: Vec<String> = std::env::args().collect();
 
     if args.len() < 3 {
         print_usage(false);
@@ -48,7 +48,7 @@ fn main() {
 
     if !is_shell_supported(shell) {
         print_usage(true);
-        return; 
+        return;
     }
 
     let command: &str;
@@ -64,13 +64,13 @@ fn main() {
                 //run_command(command, modulename);
             } else {
                 print_usage(false);
-                return; 
+                return;
             }
         } else if command == "list" || command == "purge" {
-            //run_command(command); 
+            //run_command(command);
         } else {
             print_usage(false);
-            return; 
+            return;
         }
     }
 }
