@@ -26,12 +26,25 @@ fn is_shell_supported(shell: &str) -> bool {
     return false;
 }
 
-fn print_usage(shell_error: bool) {
+fn print_usage(shell_error: bool, inside_eval: bool) {
 
-    println_stderr!("Usage: rmodules <shell> <load|unload|list|purge|available> [module name]");
+    let error_msg: &str = "Usage: rmodules <shell> <load|unload|list|purge|available> [module \
+                           name]";
+    // TODO: get shells from the shell supported vec
+    let shell_error_msg: &str = "Only tcsh and bash are supported";
+
+    if inside_eval {
+        println!("echo '{}'", &error_msg);
+    } else {
+        println_stderr!("{}", &error_msg);
+    }
 
     if shell_error == true {
-        println_stderr!("Only tcsh and bash are supported");
+        if inside_eval {
+            println!("echo '{}'", &shell_error_msg);
+        } else {
+            println_stderr!("{}", &shell_error_msg);
+        }
     }
 }
 
@@ -39,15 +52,22 @@ fn main() {
 
     let args: Vec<String> = std::env::args().collect();
 
-    if args.len() < 3 {
-        print_usage(false);
+    if args.len() >= 2 && (&args[1] == "-h" || &args[1] == "--help") {
+        print_usage(false, false);
+        return;
+    } else if args.len() >= 3 && (&args[1] == "-h" || &args[1] == "--help") {
+        print_usage(false, true);
         return;
     }
+
+    // create temporary file
+
+    // parse modules path
 
     let shell: &str = &args[1];
 
     if !is_shell_supported(shell) {
-        print_usage(true);
+        print_usage(true, true);
         return;
     }
 
@@ -63,13 +83,13 @@ fn main() {
                 rmod::load(modulename);
                 //run_command(command, modulename);
             } else {
-                print_usage(false);
+                print_usage(false, true);
                 return;
             }
         } else if command == "list" || command == "purge" {
             //run_command(command);
         } else {
-            print_usage(false);
+            print_usage(false, true);
             return;
         }
     }
