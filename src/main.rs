@@ -1,6 +1,15 @@
 #[path = "rmodules.rs"]
 mod rmod;
 
+use std::io::Write;
+
+macro_rules! println_stderr(
+    ($($arg:tt)*) => { {
+        let r = writeln!(&mut ::std::io::stderr(), $($arg)*);
+        r.expect("failed printing to stderr");
+    } }
+);
+
 fn is_shell_supported(shell: &str) -> bool {
 
     let mut shell_list = Vec::new();
@@ -19,10 +28,10 @@ fn is_shell_supported(shell: &str) -> bool {
 
 fn print_usage(shell_error: bool) {
 
-    println!("Usage: rmodules <shell> <load|unload|list|purge|available> [module name]"); 
+    println_stderr!("Usage: rmodules <shell> <load|unload|list|purge|available> [module name]"); 
 
     if shell_error == true {
-        println!("Only tcsh and bash are supported");
+        println_stderr!("Only tcsh and bash are supported");
     }
 }
 
