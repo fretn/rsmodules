@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["frlae <frlae@psb.ugent.be>"]
 
 [dependencies]
+tempfile = "2.1.5"
 
 [[bin]]
 name = "rmodules"

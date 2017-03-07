@@ -1,7 +1,10 @@
+extern crate tempfile;
+
 #[path = "rmodules.rs"]
 mod rmod;
 
 use std::io::Write;
+use std::fs::File;
 
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
@@ -61,6 +64,8 @@ fn main() {
     }
 
     // create temporary file
+    //let mut tmpfile: File = tempfile::tempfile().unwrap();
+    let mut tmpfile: File = tempfile::tempfile().expect("failed to create temporary file");
 
     // parse modules path
 
