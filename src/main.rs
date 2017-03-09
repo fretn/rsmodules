@@ -101,9 +101,13 @@ fn parse_commandline(args: &Vec<String>, modules: &Vec<String>) -> bool {
     let command: &str;
     let modulename: &str;
 
+    // create temporary file
+    //let mut tmpfile: File = tempfile::tempfile().unwrap();
+    let mut tmpfile: File = tempfile::tempfile().expect("failed to create temporary file");
+
     if !is_shell_supported(shell) {
         print_usage(true, true);
-        return false;
+        return;
     }
 
     if args.len() >= 3 {
@@ -116,17 +120,17 @@ fn parse_commandline(args: &Vec<String>, modules: &Vec<String>) -> bool {
                 //run_command(command, modulename);
             } else {
                 print_usage(false, true);
-                return false;
+                return;
             }
         } else if command == "list" || command == "purge" {
             //run_command(command);
         } else {
             print_usage(false, true);
-            return false;
+            return;
         }
     }
 
-    return true;
+    // print 'source tmpfile' or '. tmpfile' to output
 }
 
 fn main() {
@@ -141,19 +145,11 @@ fn main() {
         return;
     }
 
-    // create temporary file
-    //let mut tmpfile: File = tempfile::tempfile().unwrap();
-    let mut tmpfile: File = tempfile::tempfile().expect("failed to create temporary file");
-
     // parse modules path
     let modules: Vec<String>;
     modules = init_modules_path();
 
     //println!("{:?}", modules);
 
-    if parse_commandline(&args, &modules) {
-        // TODO
-        // print 'source tmpfile' or '. tmpfile' to output
-        println!("jup done");
-    }
+    parse_commandline(&args, &modules);
 }
