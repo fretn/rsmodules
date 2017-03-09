@@ -3,8 +3,10 @@ extern crate tempfile;
 #[path = "rmodules.rs"]
 mod rmod;
 
-use std::io::Write;
+use std::io::{BufReader, BufRead, Write};
+use std::env;
 use std::fs::File;
+use std::path::{Path, PathBuf};
 
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
@@ -12,6 +14,7 @@ macro_rules! println_stderr(
         r.expect("failed printing to stderr");
     } }
 );
+
 
 fn is_shell_supported(shell: &str) -> bool {
 
@@ -51,6 +54,48 @@ fn print_usage(shell_error: bool, inside_eval: bool) {
     }
 }
 
+fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
+
+    // read filename line by line, and push it to modules
+    let file = BufReader::new(File::open(filename).unwrap());
+    for (index, line) in file.lines().enumerate() {
+        let buffer = line.unwrap();
+        modules.push(String::from(buffer));
+    }
+}
+
+fn init_modules_path() -> Vec<String> {
+    let mut modulepath: String = String::from("/usr/local");
+    let mut modules: Vec<String> = Vec::new();
+
+    match env::var("MODULEPATH") {
+        Ok(path) => modulepath = path,
+        Err(e) => {
+            println_stderr!("Error: {}\n$MODULEPATH not found, falling back to {}",
+                            e,
+                            modulepath)
+        }
+    };
+
+    //println!("modulepath: {}", modulepath);
+    let modulepath: Vec<&str> = modulepath.split(':').collect();
+    for path in modulepath {
+        // test if cachefiles exist in the paths
+        // if they don't and we have write permission in that folder
+        // we should create the cache
+        let mut testpath = PathBuf::from(path);
+        testpath.push(".modulecache");
+        if testpath.exists() {
+            parse_modules_cache_file(&testpath, &mut modules);
+        } else {
+            println_stderr!("Cache file: {} doesn't exist.", testpath.display());
+            // TODO: generate cache
+        }
+    }
+
+    return modules;
+}
+
 fn main() {
 
     let args: Vec<String> = std::env::args().collect();
@@ -68,6 +113,10 @@ fn main() {
     let mut tmpfile: File = tempfile::tempfile().expect("failed to create temporary file");
 
     // parse modules path
+    let mut modules: Vec<String>;
+    modules = init_modules_path();
+
+    //println!("{:?}", modules);
 
     let shell: &str = &args[1];
 
