@@ -84,7 +84,7 @@ fn init_modules_path() -> Vec<String> {
         // if they don't and we have write permission in that folder
         // we should create the cache
         let mut testpath = PathBuf::from(path);
-        testpath.push(".modulecache");
+        testpath.push(".modulesindex");
         if testpath.exists() {
             parse_modules_cache_file(&testpath, &mut modules);
         } else {
