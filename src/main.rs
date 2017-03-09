@@ -6,7 +6,7 @@ mod rmod;
 use std::io::{BufReader, BufRead, Write};
 use std::env;
 use std::fs::File;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
@@ -58,7 +58,7 @@ fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
 
     // read filename line by line, and push it to modules
     let file = BufReader::new(File::open(filename).unwrap());
-    for (index, line) in file.lines().enumerate() {
+    for (_, line) in file.lines().enumerate() {
         let buffer = line.unwrap();
         modules.push(String::from(buffer));
     }
@@ -96,6 +96,39 @@ fn init_modules_path() -> Vec<String> {
     return modules;
 }
 
+fn parse_commandline(args: &Vec<String>, modules: &Vec<String>) -> bool {
+    let shell: &str = &args[1];
+    let command: &str;
+    let modulename: &str;
+
+    if !is_shell_supported(shell) {
+        print_usage(true, true);
+        return false;
+    }
+
+    if args.len() >= 3 {
+        command = &args[2];
+
+        if command == "load" || command == "unload" || command == "available" {
+            if args.len() > 3 {
+                modulename = &args[3];
+                rmod::load(modulename, shell);
+                //run_command(command, modulename);
+            } else {
+                print_usage(false, true);
+                return false;
+            }
+        } else if command == "list" || command == "purge" {
+            //run_command(command);
+        } else {
+            print_usage(false, true);
+            return false;
+        }
+    }
+
+    return true;
+}
+
 fn main() {
 
     let args: Vec<String> = std::env::args().collect();
@@ -113,38 +146,14 @@ fn main() {
     let mut tmpfile: File = tempfile::tempfile().expect("failed to create temporary file");
 
     // parse modules path
-    let mut modules: Vec<String>;
+    let modules: Vec<String>;
     modules = init_modules_path();
 
     //println!("{:?}", modules);
 
-    let shell: &str = &args[1];
-
-    if !is_shell_supported(shell) {
-        print_usage(true, true);
-        return;
-    }
-
-    let command: &str;
-    let modulename: &str;
-
-    if args.len() >= 3 {
-        command = &args[2];
-
-        if command == "load" || command == "unload" || command == "available" {
-            if args.len() > 3 {
-                modulename = &args[3];
-                rmod::load(modulename);
-                //run_command(command, modulename);
-            } else {
-                print_usage(false, true);
-                return;
-            }
-        } else if command == "list" || command == "purge" {
-            //run_command(command);
-        } else {
-            print_usage(false, true);
-            return;
-        }
+    if parse_commandline(&args, &modules) {
+        // TODO
+        // print 'source tmpfile' or '. tmpfile' to output
+        println!("jup done");
     }
 }

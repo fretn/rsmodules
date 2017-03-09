@@ -1,6 +1,6 @@
 
 
-pub fn load(name: &str) {
+pub fn load(name: &str, shell: &str) {
     println!("loading {}", name);
 }
 
