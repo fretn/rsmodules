@@ -173,9 +173,14 @@ fn run_commandline_args(args: &Vec<String>, modules: Vec<String>) {
 
         for cmd in command_list {
             if cmd.starts_with(command) {
-                let rmodule: Rmodule = Rmodule { command: cmd, module: modulename, modules: &modules, shell: shell, tmpfile: &mut tmpfile };
-                //rmod::command(cmd, modulename, modules, shell, &mut tmpfile);
-                rmod::command(rmodule);
+                let rmod_command: Rmodule = Rmodule {
+                    command: cmd,
+                    module: modulename,
+                    modules: &modules,
+                    shell: shell,
+                    tmpfile: &mut tmpfile,
+                };
+                rmod::command(rmod_command);
                 matches = true;
             }
         }

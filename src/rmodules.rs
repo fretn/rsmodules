@@ -2,22 +2,14 @@ use std::fs::File;
 use std::io::Write;
 
 pub struct Rmodule<'a> {
-	pub command: &'a str,
-	pub module: &'a str,
-	pub modules: &'a Vec<String>,
-	pub shell: &'a str,
-	pub tmpfile: &'a mut File
+    pub command: &'a str,
+    pub module: &'a str,
+    pub modules: &'a Vec<String>,
+    pub shell: &'a str,
+    pub tmpfile: &'a mut File,
 }
 
 pub fn command(rmodule: Rmodule) {
-/*
-pub fn command(command: &str,
-               module: &str,
-               modules: &Vec<String>,
-               shell: &str,
-               tmpfile: &mut File) {
-               */
-    //    println!("{} {} {:?} {}", command, module, modules, shell);
 
     if rmodule.command == "load" {
         load(rmodule.module, rmodule.shell);
