@@ -4,6 +4,9 @@ use rand::Rng;
 #[path = "rmodules.rs"]
 mod rmod;
 
+mod rmodule;
+use rmodule::Rmodule;
+
 use std::io::{BufReader, BufRead, Write};
 use std::env;
 use std::fs::File;
@@ -90,7 +93,7 @@ fn init_modules() -> Vec<String> {
     return modules;
 }
 
-fn run_commandline_args(args: &Vec<String>, modules: &Vec<String>) {
+fn run_commandline_args(args: &Vec<String>, modules: Vec<String>) {
     let shell: &str = &args[1];
     let command: &str;
     let mut modulename: &str = "";
@@ -171,7 +174,9 @@ fn run_commandline_args(args: &Vec<String>, modules: &Vec<String>) {
 
         for cmd in command_list {
             if cmd.starts_with(command) {
-                rmod::command(cmd, modulename, modules, shell, &mut tmpfile);
+                let rmodule: Rmodule = Rmodule { command: cmd.to_string(), module: modulename.to_string(), modules: &modules, shell: shell.to_string(), tmpfile: &mut tmpfile };
+                //rmod::command(cmd, modulename, modules, shell, &mut tmpfile);
+                rmod::command(rmodule);
                 matches = true;
             }
         }
@@ -211,5 +216,5 @@ fn main() {
 
     //println!("{:?}", modules);
 
-    run_commandline_args(&args, &modules);
+    run_commandline_args(&args, modules);
 }
