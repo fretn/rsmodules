@@ -122,10 +122,13 @@ fn run_commandline_args(args: &Vec<String>, modules: &Vec<String>) {
     match env::home_dir() {
         Some(path) => tmp_file_path = path,
         None => {
-            println_stderr!("We were unable to find your home directory, checking if /tmp is an option");
-            tmp_file_path = env::temp_dir(); // this is wrong, as we try to use temp again a bit later
-           // return;
-        } 
+            println_stderr!("We were unable to find your home directory, checking if /tmp is an \
+                             option");
+
+            // this is wrong, as we try to use temp again a bit later
+            tmp_file_path = env::temp_dir();
+            // return;
+        }
     };
 
     let filename: String = format!(".rmodulestmp{}", rstr);
@@ -134,12 +137,14 @@ fn run_commandline_args(args: &Vec<String>, modules: &Vec<String>) {
 
     match File::create(&tmp_file_path) {
         Ok(file) => tmpfile = file,
-        Err(_) => { // home exists but we can't create the temp file in it or 
-                    // worst case, /tmp exists but we can't create the temp file in it
+        Err(_) => {
+            // home exists but we can't create the temp file in it or
+            // worst case, /tmp exists but we can't create the temp file in it
             tmp_file_path = env::temp_dir();
             let filename: String = format!(".rmodulestmp{}", rstr);
             let filename: &str = filename.as_ref();
             tmp_file_path.push(filename);
+
             match File::create(&tmp_file_path) {
                 Ok(newfile) => tmpfile = newfile,
                 Err(e) => {
@@ -177,9 +182,15 @@ fn run_commandline_args(args: &Vec<String>, modules: &Vec<String>) {
     }
 
     let cmd = format!("rm -f {}\n", tmp_file_path.display());
+
+    // TODO: use a match to catch this error
     tmpfile.write_all(cmd.as_bytes()).expect("Unable to write data");
-    println!("source {}", tmp_file_path.display());
-    // print 'source tmpfile' or '. tmpfile' to output
+
+    if shell == "tcsh" || shell == "csh" {
+        println!(". {}", tmp_file_path.display());
+    } else {
+        println!("source {}", tmp_file_path.display());
+    }
 }
 
 fn main() {
