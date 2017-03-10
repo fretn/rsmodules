@@ -7,7 +7,7 @@ mod rmod;
 use std::io::{BufReader, BufRead, Write};
 use std::env;
 use std::fs::File;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
@@ -57,7 +57,7 @@ fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
     }
 }
 
-fn init_modules_path() -> Vec<String> {
+fn init_modules() -> Vec<String> {
     let mut modulepath: String = String::from("/usr/local");
     let mut modules: Vec<String> = Vec::new();
 
@@ -90,27 +90,65 @@ fn init_modules_path() -> Vec<String> {
     return modules;
 }
 
-fn parse_commandline(args: &Vec<String>, modules: &Vec<String>) {
+fn run_commandline_args(args: &Vec<String>, modules: &Vec<String>) {
     let shell: &str = &args[1];
     let command: &str;
     let mut modulename: &str = "";
-
-    // create temporary file in the home folder
-    // if the file cannot be created the program panics
-    let rstr: String = rand::thread_rng()
-        .gen_ascii_chars()
-        .take(8)
-        .collect();
-    let homedir: PathBuf = env::home_dir().expect("We where unable to find your home directory");
-    let filename: String = format!("{}/.rmodulestmp{}", homedir.display(), rstr);
-    let path = Path::new(&filename);
-    let mut tmpfile: File = File::create(&path).expect("Failed to create temporary file");
 
     if !is_shell_supported(shell) {
         print_usage(true);
         return;
     }
 
+    // create temporary file in the home folder
+    // if the file cannot be created try to create it
+    // in /tmp, if that fails, the program exits
+    //
+    // ~/.rmodulestmpXXXXXXXX
+    // /tmp/.rmodulestmpXXXXXXXX
+
+    let mut tmpfile: File;
+
+    let rstr: String = rand::thread_rng()
+        .gen_ascii_chars()
+        .take(8)
+        .collect();
+
+    //let mut tmp_file_path: PathBuf = env::home_dir()
+    //    .expect("We were unable to find your home directory");
+
+    let mut tmp_file_path: PathBuf;
+
+    match env::home_dir() {
+        Some(path) => tmp_file_path = path,
+        None => {
+            println_stderr!("We were unable to find your home directory, checking if /tmp is an option");
+            tmp_file_path = env::temp_dir(); // this is wrong, as we try to use temp again a bit later
+           // return;
+        } 
+    };
+
+    let filename: String = format!(".rmodulestmp{}", rstr);
+    let filename: &str = filename.as_ref();
+    tmp_file_path.push(filename);
+
+    match File::create(&tmp_file_path) {
+        Ok(file) => tmpfile = file,
+        Err(_) => { // home exists but we can't create the temp file in it or 
+                    // worst case, /tmp exists but we can't create the temp file in it
+            tmp_file_path = env::temp_dir();
+            let filename: String = format!(".rmodulestmp{}", rstr);
+            let filename: &str = filename.as_ref();
+            tmp_file_path.push(filename);
+            match File::create(&tmp_file_path) {
+                Ok(newfile) => tmpfile = newfile,
+                Err(e) => {
+                    println_stderr!("Failed to create temporary file: {}", e);
+                    return;
+                }
+            };
+        }
+    };
 
     if args.len() >= 3 {
         command = &args[2];
@@ -138,9 +176,9 @@ fn parse_commandline(args: &Vec<String>, modules: &Vec<String>) {
         }
     }
 
-    let cmd = format!("rm -f {}\n", path.display());
+    let cmd = format!("rm -f {}\n", tmp_file_path.display());
     tmpfile.write_all(cmd.as_bytes()).expect("Unable to write data");
-    println!("source {}", path.display());
+    println!("source {}", tmp_file_path.display());
     // print 'source tmpfile' or '. tmpfile' to output
 }
 
@@ -158,9 +196,9 @@ fn main() {
 
     // parse modules path
     let modules: Vec<String>;
-    modules = init_modules_path();
+    modules = init_modules();
 
     //println!("{:?}", modules);
 
-    parse_commandline(&args, &modules);
+    run_commandline_args(&args, &modules);
 }
