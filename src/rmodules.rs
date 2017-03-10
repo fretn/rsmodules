@@ -1,8 +1,13 @@
 use std::fs::File;
 use std::io::Write;
 
-mod rmodule;
-use rmodule::Rmodule;
+pub struct Rmodule<'a> {
+	pub command: &'a str,
+	pub module: &'a str,
+	pub modules: &'a Vec<String>,
+	pub shell: &'a str,
+	pub tmpfile: &'a mut File
+}
 
 pub fn command(rmodule: Rmodule) {
 /*
@@ -15,20 +20,20 @@ pub fn command(command: &str,
     //    println!("{} {} {:?} {}", command, module, modules, shell);
 
     if rmodule.command == "load" {
-        load(rmodule.module.as_ref(), rmodule.shell.as_ref());
+        load(rmodule.module, rmodule.shell);
     } else if rmodule.command == "unload" {
-        unload(rmodule.module.as_ref(), rmodule.shell.as_ref());
+        unload(rmodule.module, rmodule.shell);
     } else if rmodule.command == "available" {
-        available(rmodule.module.as_ref(), rmodule.modules.as_ref(), &rmodule.tmpfile);
+        available(rmodule.module, rmodule.modules, &rmodule.tmpfile);
     } else if rmodule.command == "list" {
-        list(rmodule.module.as_ref(), rmodule.shell.as_ref());
+        list(rmodule.module, rmodule.shell);
     } else if rmodule.command == "purge" {
-        purge(rmodule.module.as_ref(), rmodule.shell.as_ref());
+        purge(rmodule.module, rmodule.shell);
     }
 }
 
 fn load(module: &str, shell: &str) {
-    println!("load {} {}", module, shell);
+    //println!("echo 'load {} {}'", module, shell);
 
     // check if module file exists
 
@@ -39,7 +44,7 @@ fn load(module: &str, shell: &str) {
 }
 
 fn unload(module: &str, shell: &str) {
-    println!("unload {} {}", module, shell);
+    //println!("echo 'unload {} {}'", module, shell);
 }
 
 fn available(module: &str, modules: &Vec<String>, mut tmpfile: &File) {
@@ -70,9 +75,9 @@ fn write_av_output(line: &str, mut tmpfile: &File) {
 }
 
 fn list(module: &str, shell: &str) {
-    println!("list {} {}", module, shell);
+    //println!("echo 'list {} {}'", module, shell);
 }
 
 fn purge(module: &str, shell: &str) {
-    println!("purge {} {}", module, shell);
+    //println!("echo 'purge {} {}'", module, shell);
 }

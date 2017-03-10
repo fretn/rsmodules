@@ -4,8 +4,7 @@ use rand::Rng;
 #[path = "rmodules.rs"]
 mod rmod;
 
-mod rmodule;
-use rmodule::Rmodule;
+use rmod::Rmodule;
 
 use std::io::{BufReader, BufRead, Write};
 use std::env;
@@ -174,7 +173,7 @@ fn run_commandline_args(args: &Vec<String>, modules: Vec<String>) {
 
         for cmd in command_list {
             if cmd.starts_with(command) {
-                let rmodule: Rmodule = Rmodule { command: cmd.to_string(), module: modulename.to_string(), modules: &modules, shell: shell.to_string(), tmpfile: &mut tmpfile };
+                let rmodule: Rmodule = Rmodule { command: cmd, module: modulename, modules: &modules, shell: shell, tmpfile: &mut tmpfile };
                 //rmod::command(cmd, modulename, modules, shell, &mut tmpfile);
                 rmod::command(rmodule);
                 matches = true;
