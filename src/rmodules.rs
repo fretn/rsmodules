@@ -25,7 +25,7 @@ pub fn command(rmodule: Rmodule) {
 }
 
 fn load(module: &str, shell: &str) {
-    //println!("echo 'load {} {}'", module, shell);
+    println_stderr!("echo 'load {} {}'", module, shell);
 
     // check if module file exists
 
@@ -36,7 +36,7 @@ fn load(module: &str, shell: &str) {
 }
 
 fn unload(module: &str, shell: &str) {
-    //println!("echo 'unload {} {}'", module, shell);
+    println_stderr!("echo 'unload {} {}'", module, shell);
 }
 
 fn available(module: &str, modules: &Vec<String>, mut tmpfile: &File) {
@@ -67,9 +67,9 @@ fn write_av_output(line: &str, mut tmpfile: &File) {
 }
 
 fn list(module: &str, shell: &str) {
-    //println!("echo 'list {} {}'", module, shell);
+    println_stderr!("echo 'list {} {}'", module, shell);
 }
 
 fn purge(module: &str, shell: &str) {
-    //println!("echo 'purge {} {}'", module, shell);
+    println_stderr!("echo 'purge {} {}'", module, shell);
 }

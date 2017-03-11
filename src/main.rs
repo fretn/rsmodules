@@ -1,6 +1,9 @@
 extern crate rand;
 use rand::Rng;
 
+#[macro_use]
+mod macros;
+
 #[path = "rmodules.rs"]
 mod rmod;
 
@@ -10,14 +13,6 @@ use std::io::{BufReader, BufRead, Write};
 use std::env;
 use std::fs::File;
 use std::path::PathBuf;
-
-macro_rules! println_stderr(
-    ($($arg:tt)*) => { {
-        let r = writeln!(&mut ::std::io::stderr(), $($arg)*);
-        r.expect("failed printing to stderr");
-    } }
-);
-
 
 fn is_shell_supported(shell: &str) -> bool {
 
@@ -205,6 +200,15 @@ fn run_commandline_args(args: &Vec<String>, modules: Vec<String>) {
 fn main() {
 
     let args: Vec<String> = std::env::args().collect();
+
+/*
+    crash!(
+        1,
+        "{0}: {1}\nTry '{0} --help' for more information.",
+        "rmodules",
+        "missing operand"
+    );
+*/
 
     if args.len() >= 2 && (&args[1] == "-h" || &args[1] == "--help") {
         print_usage(false);
