@@ -98,6 +98,13 @@ fn load(rmodule: &mut Rmodule) {
     let (mut reversed_modules, _) = get_module_list();
     reversed_modules.reverse();
 
+    // check if module file exists
+    // run over modulepaths, check if a folder/file exists with the wanted 'module' var
+
+    // if not, maybe check if its a partial match
+    // blast -> blast/x86_64/1.0 and blast/x86_64/2.0
+    // then we need to load the Default version
+    // or just the latest one
     'outer: for modulepath in rmodule.modulepaths {
         let testpath = format!("{}/{}", modulepath, rmodule.module);
         if Path::new(&testpath).exists() {
@@ -107,26 +114,18 @@ fn load(rmodule: &mut Rmodule) {
             } else {
                 println_stderr!("partial match: {}", testpath);
                 for module in &reversed_modules {
+                    // we got a partial match, now we need to find the default module
+                    // for this folder or subfolders
+                    // loop through all the modules and get the first one
+                    // that matches starts_with
                     if module.starts_with(rmodule.module) {
                         println_stderr!("{}", module);
                         break 'outer;
                     }
                 }
-                // we got a partial match, now we need to find the default module
-                // for this folder or subfolders
-                // loop through all the modules and get the first one
-                // that matches starts_with
             }
         }
     }
-
-    // check if module file exists
-    // run over modulepaths, check if a folder/file exists with the wanted 'module' var
-
-    // if not, maybe check if its a partial match
-    // blast -> blast/x86_64/1.0 and blast/x86_64/2.0
-    // then we need to load the Default version
-    // or just the latest one
 
     // check if we are already loaded (LOADEDMODULES env var)
 
