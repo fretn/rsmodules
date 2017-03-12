@@ -9,10 +9,10 @@ mod rmod;
 
 use rmod::Rmodule;
 
-use std::io::{BufReader, BufRead, Write};
-use std::env;
+use std::io::Write;
 use std::fs::File;
 use std::path::PathBuf;
+use std::env;
 
 fn is_shell_supported(shell: &str) -> bool {
 
@@ -42,55 +42,6 @@ fn print_usage(shell_error: bool) {
     if shell_error == true {
         println_stderr!("{}", &shell_error_msg);
     }
-}
-
-fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
-
-    // read filename line by line, and push it to modules
-    let file = BufReader::new(File::open(filename).unwrap());
-    for (_, line) in file.lines().enumerate() {
-        let buffer = line.unwrap();
-        modules.push(String::from(buffer));
-    }
-}
-
-fn init_modules() -> (Vec<String>, Vec<String>) {
-    let mut modulepath: String = String::from("/usr/local");
-    let mut modules: Vec<String> = Vec::new();
-    let mut found_cachefile: bool = false;
-    let mut modulepaths: Vec<String> = Vec::new();
-
-    match env::var("MODULEPATH") {
-        Ok(path) => modulepath = path,
-        Err(_) => {
-            show_warning!("$MODULEPATH not found, using {}", modulepath);
-        }
-    };
-
-    //println!("modulepath: {}", modulepath);
-    let modulepath: Vec<&str> = modulepath.split(':').collect();
-    for path in modulepath {
-        // test if cachefiles exist in the paths
-        // if they don't and we have write permission in that folder
-        // we should create the cache
-        modulepaths.push(path.to_string());
-        let mut testpath = PathBuf::from(path);
-        testpath.push(".modulesindex");
-        if testpath.exists() {
-            parse_modules_cache_file(&testpath, &mut modules);
-            found_cachefile = true;
-        } else {
-            show_warning!("Cache file: {} doesn't exist.", testpath.display());
-            // TODO: generate cache
-        }
-    }
-
-    if !found_cachefile {
-        crash!(1, "No cachefiles found.");
-    }
-
-    modules.sort();
-    return (modules, modulepaths);
 }
 
 fn run_commandline_args(args: &Vec<String>, modules: Vec<String>, modulepaths: Vec<String>) {
@@ -224,7 +175,7 @@ fn main() {
     // parse modules path
     //    let modules: Vec<String>;
     //   let modulepaths: Vec<String>;
-    let (modules, modulepaths) = init_modules();
+    let (modules, modulepaths) = rmod::get_module_list();
 
     //println!("{:?}", modules);
 
