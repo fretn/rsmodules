@@ -24,6 +24,18 @@ pub fn command(rmodule: Rmodule) {
     }
 }
 
+fn execute_command_and_parse() {
+    // we basicly execute a system call (sourcing two bash files, one of them is the module)
+    // then we parse the output of the call (the output of env)
+    // and replace all the variables BLAH=124
+    // with export|setenv BLAH(=)124
+}
+
+fn parse_modulefile() -> bool {
+    return true;
+    // execute_command_and_parse(strva(". /home/frlae/svn/frlae/modules/module_load_tools.sh && . %s && env", path), &buffer, shell);
+}
+
 fn load(module: &str, shell: &str) {
     println_stderr!("echo 'load {} {}'", module, shell);
 
@@ -33,6 +45,14 @@ fn load(module: &str, shell: &str) {
     // blast -> blast/x86_64/1.0 and blast/x86_64/2.0
     // then we need to load the Default version
     // or just the latest one
+
+    // check if we are already loaded (LOADEDMODULES env var)
+
+    // we already know the path to the module file (see above)
+    // parse the module file and if successful
+    // add it to the LOADEDMODULES env var
+    // else unload the module
+
 }
 
 fn unload(module: &str, shell: &str) {
