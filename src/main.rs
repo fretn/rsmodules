@@ -57,13 +57,12 @@ fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
 fn init_modules() -> Vec<String> {
     let mut modulepath: String = String::from("/usr/local");
     let mut modules: Vec<String> = Vec::new();
+    let mut found_cachefile: bool = false;
 
     match env::var("MODULEPATH") {
         Ok(path) => modulepath = path,
-        Err(e) => {
-            println_stderr!("Error: {}\n$MODULEPATH not found, falling back to {}",
-                            e,
-                            modulepath)
+        Err(_) => {
+            show_warning!("$MODULEPATH not found, using {}", modulepath);
         }
     };
 
@@ -77,10 +76,18 @@ fn init_modules() -> Vec<String> {
         testpath.push(".modulesindex");
         if testpath.exists() {
             parse_modules_cache_file(&testpath, &mut modules);
+            found_cachefile = true;
         } else {
-            println_stderr!("Cache file: {} doesn't exist.", testpath.display());
+            show_warning!("Cache file: {} doesn't exist.", testpath.display());
             // TODO: generate cache
         }
+    }
+
+    if !found_cachefile {
+        crash!(
+            1,
+            "No cachefiles found."
+        );
     }
 
     modules.sort();
@@ -145,7 +152,7 @@ fn run_commandline_args(args: &Vec<String>, modules: Vec<String>) {
             match File::create(&tmp_file_path) {
                 Ok(newfile) => tmpfile = newfile,
                 Err(e) => {
-                    println_stderr!("Failed to create temporary file: {}", e);
+                    crash!(1, "Failed to create temporary file: {}", e);
                     return;
                 }
             };
@@ -188,7 +195,8 @@ fn run_commandline_args(args: &Vec<String>, modules: Vec<String>) {
     let cmd = format!("rm -f {}\n", tmp_file_path.display());
 
     // TODO: use a match to catch this error
-    tmpfile.write_all(cmd.as_bytes()).expect("Unable to write data");
+    //tmpfile.write_all(cmd.as_bytes()).expect("Unable to write data");
+    crash_if_err!(1, tmpfile.write_all(cmd.as_bytes()));
 
     if shell == "tcsh" || shell == "csh" {
         println!(". {}", tmp_file_path.display());
@@ -201,14 +209,13 @@ fn main() {
 
     let args: Vec<String> = std::env::args().collect();
 
-/*
-    crash!(
-        1,
-        "{0}: {1}\nTry '{0} --help' for more information.",
-        "rmodules",
-        "missing operand"
-    );
-*/
+    if args.len() == 1 {
+        crash!(
+            1,
+            "Try '{0} --help' for more information.",
+            executable!()
+        );
+    }
 
     if args.len() >= 2 && (&args[1] == "-h" || &args[1] == "--help") {
         print_usage(false);
