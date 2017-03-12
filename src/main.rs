@@ -54,10 +54,11 @@ fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
     }
 }
 
-fn init_modules() -> Vec<String> {
+fn init_modules() -> (Vec<String>, Vec<String>) {
     let mut modulepath: String = String::from("/usr/local");
     let mut modules: Vec<String> = Vec::new();
     let mut found_cachefile: bool = false;
+    let mut modulepaths: Vec<String> = Vec::new();
 
     match env::var("MODULEPATH") {
         Ok(path) => modulepath = path,
@@ -72,6 +73,7 @@ fn init_modules() -> Vec<String> {
         // test if cachefiles exist in the paths
         // if they don't and we have write permission in that folder
         // we should create the cache
+        modulepaths.push(path.to_string());
         let mut testpath = PathBuf::from(path);
         testpath.push(".modulesindex");
         if testpath.exists() {
@@ -84,17 +86,14 @@ fn init_modules() -> Vec<String> {
     }
 
     if !found_cachefile {
-        crash!(
-            1,
-            "No cachefiles found."
-        );
+        crash!(1, "No cachefiles found.");
     }
 
     modules.sort();
-    return modules;
+    return (modules, modulepaths);
 }
 
-fn run_commandline_args(args: &Vec<String>, modules: Vec<String>) {
+fn run_commandline_args(args: &Vec<String>, modules: Vec<String>, modulepaths: Vec<String>) {
     let shell: &str = &args[1];
     let command: &str;
     let mut modulename: &str = "";
@@ -153,7 +152,7 @@ fn run_commandline_args(args: &Vec<String>, modules: Vec<String>) {
                 Ok(newfile) => tmpfile = newfile,
                 Err(e) => {
                     crash!(1, "Failed to create temporary file: {}", e);
-                    return;
+                    //return;
                 }
             };
         }
@@ -179,6 +178,7 @@ fn run_commandline_args(args: &Vec<String>, modules: Vec<String>) {
                     command: cmd,
                     module: modulename,
                     modules: &modules,
+                    modulepaths: &modulepaths,
                     shell: shell,
                     tmpfile: &mut tmpfile,
                 };
@@ -210,11 +210,7 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
 
     if args.len() == 1 {
-        crash!(
-            1,
-            "Try '{0} --help' for more information.",
-            executable!()
-        );
+        crash!(1, "Try '{0} --help' for more information.", executable!());
     }
 
     if args.len() >= 2 && (&args[1] == "-h" || &args[1] == "--help") {
@@ -226,10 +222,11 @@ fn main() {
     }
 
     // parse modules path
-    let modules: Vec<String>;
-    modules = init_modules();
+    //    let modules: Vec<String>;
+    //   let modulepaths: Vec<String>;
+    let (modules, modulepaths) = init_modules();
 
     //println!("{:?}", modules);
 
-    run_commandline_args(&args, modules);
+    run_commandline_args(&args, modules, modulepaths);
 }

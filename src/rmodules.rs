@@ -5,6 +5,7 @@ pub struct Rmodule<'a> {
     pub command: &'a str,
     pub module: &'a str,
     pub modules: &'a Vec<String>,
+    pub modulepaths: &'a Vec<String>,
     pub shell: &'a str,
     pub tmpfile: &'a mut File,
 }
@@ -12,7 +13,7 @@ pub struct Rmodule<'a> {
 pub fn command(rmodule: Rmodule) {
 
     if rmodule.command == "load" {
-        load(rmodule.module, rmodule.shell);
+        load(rmodule.module, rmodule.modulepaths, rmodule.shell);
     } else if rmodule.command == "unload" {
         unload(rmodule.module, rmodule.shell);
     } else if rmodule.command == "available" {
@@ -33,13 +34,16 @@ fn execute_command_and_parse() {
 
 fn parse_modulefile() -> bool {
     return true;
-    // execute_command_and_parse(strva(". /home/frlae/svn/frlae/modules/module_load_tools.sh && . %s && env", path), &buffer, shell);
+    // execute_command_and_parse(strva(". /home/frlae/svn/frlae/modules/module_load_tools.sh &&
+    //. %s && env", path), &buffer, shell);
 }
 
-fn load(module: &str, shell: &str) {
-    println_stderr!("echo 'load {} {}'", module, shell);
+fn load(module: &str, modulepaths: &Vec<String>, shell: &str) {
+    println_stderr!("load {} {}", module, shell);
+    println_stderr!("{:?}", modulepaths);
 
     // check if module file exists
+    // run over modulepaths, check if a folder/file exists with the wanted 'module' var
 
     // if not, maybe check if its a partial match
     // blast -> blast/x86_64/1.0 and blast/x86_64/2.0
