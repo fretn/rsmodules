@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::path::{Path,PathBuf};
+use std::path::{Path, PathBuf};
 use std::io::{BufReader, BufRead, Write};
 use std::env;
 
@@ -103,9 +103,9 @@ fn load(rmodule: &mut Rmodule) {
         if Path::new(&testpath).exists() {
             // we got it, now we need to figure out if its a partial match or not
             if Path::new(&testpath).is_file() {
-                println_stderr!("full match: {}", testpath); 
+                println_stderr!("full match: {}", testpath);
             } else {
-                println_stderr!("partial match: {}", testpath); 
+                println_stderr!("partial match: {}", testpath);
                 for module in &reversed_modules {
                     if module.starts_with(rmodule.module) {
                         println_stderr!("{}", module);
@@ -117,7 +117,7 @@ fn load(rmodule: &mut Rmodule) {
                 // loop through all the modules and get the first one
                 // that matches starts_with
             }
-        } 
+        }
     }
 
     // check if module file exists
