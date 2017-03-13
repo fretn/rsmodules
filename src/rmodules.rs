@@ -4,6 +4,7 @@ use std::io::{BufReader, BufRead, Write};
 use std::env;
 
 static DEFAULT_MODULE_PATH: &'static str = "/usr/local";
+static LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
 
 pub struct Rmodule<'a> {
     pub cmd: &'a str, // load|list|avail|...
@@ -103,6 +104,7 @@ fn load(rmod: &mut Rmodule) {
 
     let mut reversed_modules = get_module_list();
     reversed_modules.reverse();
+    let mut selected_module = rmod.arg;
 
     // check if module file exists
     // run over modulepaths, check if a folder/file exists with the wanted 'module' var
@@ -126,6 +128,7 @@ fn load(rmod: &mut Rmodule) {
                     // that matches starts_with
                     if module.starts_with(rmod.arg) {
                         println_stderr!("{}", module);
+                        selected_module = module;
                         break 'outer;
                     }
                 }
@@ -134,12 +137,57 @@ fn load(rmod: &mut Rmodule) {
     }
 
     // check if we are already loaded (LOADEDMODULES env var)
+    if is_module_loaded(selected_module) {
+        return;
+    }
+
+    if parse_modulefile() {
+        add_module_to_loadedmodules(selected_module);
+    }
 
     // we already know the path to the module file (see above)
     // parse the module file and if successful
     // add it to the LOADEDMODULES env var
     // else unload the module
 
+}
+
+fn add_module_to_loadedmodules(name: &str) {
+    let loadedmodules: String;
+    match env::var(LOADEDMODULES) {
+        Ok(list) => loadedmodules = list,
+        Err(_) => {
+            env::set_var(LOADEDMODULES, name);
+            return;
+        }
+    };
+
+
+    let mut loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
+    loadedmodules.push(name);
+
+    let loaded_modules = loadedmodules.join(":");
+    env::set_var(LOADEDMODULES, loaded_modules);
+}
+
+fn is_module_loaded(name: &str) -> bool {
+    let loadedmodules: String;
+    match env::var("LOADEDMODULES") {
+        Ok(list) => loadedmodules = list,
+        Err(_) => {
+            return false;
+        }
+    };
+
+
+    let loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
+    for module in loadedmodules {
+        if module == name {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 fn unload(rmod: &mut Rmodule) {
