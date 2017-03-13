@@ -126,10 +126,10 @@ fn run_commandline_args(args: &Vec<String>, modules: Vec<String>, modulepaths: V
         for cmd in command_list {
             if cmd.starts_with(command) {
                 let mut rmod_command: Rmodule = Rmodule {
-                    command: cmd,
-                    module: modulename,
-                    modules: &modules,
-                    modulepaths: &modulepaths,
+                    cmd: cmd,
+                    arg: modulename,
+                    list: &modules,
+                    paths: &modulepaths,
                     shell: shell,
                     tmpfile: &tmpfile,
                 };

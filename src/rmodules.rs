@@ -4,10 +4,10 @@ use std::io::{BufReader, BufRead, Write};
 use std::env;
 
 pub struct Rmodule<'a> {
-    pub command: &'a str,
-    pub module: &'a str,
-    pub modules: &'a Vec<String>,
-    pub modulepaths: &'a Vec<String>,
+    pub cmd: &'a str,
+    pub arg: &'a str,
+    pub list: &'a Vec<String>,
+    pub paths: &'a Vec<String>,
     pub shell: &'a str,
     pub tmpfile: &'a File,
 }
@@ -53,18 +53,18 @@ pub fn get_module_list() -> (Vec<String>, Vec<String>) {
     return (modules, modulepaths);
 }
 
-pub fn command(rmodule: &mut Rmodule) {
+pub fn command(rmod: &mut Rmodule) {
 
-    if rmodule.command == "load" {
-        load(rmodule);
-    } else if rmodule.command == "unload" {
-        unload(rmodule.module, rmodule.shell);
-    } else if rmodule.command == "available" {
-        available(rmodule.module, rmodule.modules, &rmodule.tmpfile);
-    } else if rmodule.command == "list" {
-        list(rmodule.module, rmodule.shell);
-    } else if rmodule.command == "purge" {
-        purge(rmodule.module, rmodule.shell);
+    if rmod.cmd == "load" {
+        load(rmod);
+    } else if rmod.cmd == "unload" {
+        unload(rmod);
+    } else if rmod.cmd == "available" {
+        available(rmod);
+    } else if rmod.cmd == "list" {
+        list(rmod);
+    } else if rmod.cmd == "purge" {
+        purge(rmod);
     }
 }
 
@@ -91,8 +91,7 @@ fn parse_modulefile() -> bool {
     //. %s && env", path), &buffer, shell);
 }
 
-//fn load(module: &str, modulepaths: &Vec<String>, shell: &str) {
-fn load(rmodule: &mut Rmodule) {
+fn load(rmod: &mut Rmodule) {
     //println_stderr!("load {} {}", module, shell);
     //println_stderr!("{:?}", modulepaths);
 
@@ -106,8 +105,8 @@ fn load(rmodule: &mut Rmodule) {
     // blast -> blast/x86_64/1.0 and blast/x86_64/2.0
     // then we need to load the Default version
     // or just the latest one
-    'outer: for modulepath in rmodule.modulepaths {
-        let testpath = format!("{}/{}", modulepath, rmodule.module);
+    'outer: for modulepath in rmod.paths {
+        let testpath = format!("{}/{}", modulepath, rmod.arg);
         if Path::new(&testpath).exists() {
             // we got it, now we need to figure out if its a partial match or not
             if Path::new(&testpath).is_file() {
@@ -119,7 +118,7 @@ fn load(rmodule: &mut Rmodule) {
                     // for this folder or subfolders
                     // loop through all the modules and get the first one
                     // that matches starts_with
-                    if module.starts_with(rmodule.module) {
+                    if module.starts_with(rmod.arg) {
                         println_stderr!("{}", module);
                         break 'outer;
                     }
@@ -137,16 +136,17 @@ fn load(rmodule: &mut Rmodule) {
 
 }
 
-fn unload(module: &str, shell: &str) {
-    println_stderr!("echo 'unload {} {}'", module, shell);
+fn unload(rmod: &mut Rmodule) {
+    println_stderr!("echo 'unload {} {}'", rmod.arg, rmod.shell);
 }
 
-fn available(module: &str, modules: &Vec<String>, mut tmpfile: &File) {
+//fn available(module: &str, modules: &Vec<String>, mut tmpfile: &File) {
+fn available(rmod: &mut Rmodule) {
 
-    for avmodule in modules {
-        if module != "" {
+    for avmodule in rmod.list {
+        if rmod.arg != "" {
             let avmodule_lc: String = avmodule.to_lowercase();
-            let module_lc: String = module.to_lowercase();
+            let module_lc: String = rmod.arg.to_lowercase();
             let avmodule_lc: &str = avmodule_lc.as_ref();
             let module_lc: &str = module_lc.as_ref();
 
@@ -154,10 +154,10 @@ fn available(module: &str, modules: &Vec<String>, mut tmpfile: &File) {
             // everything
             // TODO: colored output
             if avmodule_lc.contains(module_lc) {
-                write_av_output(&avmodule, &mut tmpfile);
+                write_av_output(&avmodule, &mut rmod.tmpfile);
             }
         } else {
-            write_av_output(&avmodule, &mut tmpfile);
+            write_av_output(&avmodule, &mut rmod.tmpfile);
         }
     }
 }
@@ -168,10 +168,10 @@ fn write_av_output(line: &str, mut tmpfile: &File) {
     tmpfile.write_all("\n".as_bytes()).expect("Unable to write data");
 }
 
-fn list(module: &str, shell: &str) {
-    println_stderr!("echo 'list {} {}'", module, shell);
+fn list(rmod: &mut Rmodule) {
+    println_stderr!("echo 'list {} {}'", rmod.arg, rmod.shell);
 }
 
-fn purge(module: &str, shell: &str) {
-    println_stderr!("echo 'purge {} {}'", module, shell);
+fn purge(rmod: &mut Rmodule) {
+    println_stderr!("echo 'purge {} {}'", rmod.arg, rmod.shell);
 }
