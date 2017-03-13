@@ -119,6 +119,8 @@ fn run(args: &Vec<String>) {
 
         for cmd in command_list {
             if cmd.starts_with(command) {
+                // TODO: get RMODULE_INSTALLDIR env var and
+                // store it for later use
                 let mut rmod_command: Rmodule = Rmodule {
                     cmd: cmd,
                     arg: modulename,
@@ -126,6 +128,7 @@ fn run(args: &Vec<String>) {
                     search_path: &modulepaths,
                     shell: shell,
                     tmpfile: &tmpfile,
+                    installdir: "/home/frlae/rust/rmodules/",
                 };
                 rmod::command(&mut rmod_command);
                 matches = true;
