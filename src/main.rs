@@ -30,29 +30,26 @@ fn is_shell_supported(shell: &str) -> bool {
     return false;
 }
 
-fn print_usage(shell_error: bool) {
+fn usage() {
 
     let error_msg: &str = "Usage: rmodules <shell> <load|unload|list|purge|available> [module \
                            name]";
-    // TODO: get shells from the shell supported vec
-    let shell_error_msg: &str = "Only tcsh and bash are supported";
 
     println_stderr!("{}", &error_msg);
-
-    if shell_error == true {
-        println_stderr!("{}", &shell_error_msg);
-    }
 }
 
-fn run_commandline_args(args: &Vec<String>, modules: Vec<String>, modulepaths: Vec<String>) {
+fn run(args: &Vec<String>) {
     let shell: &str = &args[1];
     let command: &str;
     let mut modulename: &str = "";
 
     if !is_shell_supported(shell) {
-        print_usage(true);
-        return;
+        usage();
+        crash!(1, "{} is not a supported shell", shell);
     }
+
+    let modules = rmod::get_module_list();
+    let modulepaths = rmod::get_module_paths();
 
     // create temporary file in the home folder
     // if the file cannot be created try to create it
@@ -67,9 +64,6 @@ fn run_commandline_args(args: &Vec<String>, modules: Vec<String>, modulepaths: V
         .gen_ascii_chars()
         .take(8)
         .collect();
-
-    //let mut tmp_file_path: PathBuf = env::home_dir()
-    //    .expect("We were unable to find your home directory");
 
     let mut tmp_file_path: PathBuf;
 
@@ -129,7 +123,7 @@ fn run_commandline_args(args: &Vec<String>, modules: Vec<String>, modulepaths: V
                     cmd: cmd,
                     arg: modulename,
                     list: &modules,
-                    paths: &modulepaths,
+                    search_path: &modulepaths,
                     shell: shell,
                     tmpfile: &tmpfile,
                 };
@@ -139,7 +133,7 @@ fn run_commandline_args(args: &Vec<String>, modules: Vec<String>, modulepaths: V
         }
 
         if !matches {
-            print_usage(false);
+            usage();
         }
     }
 
@@ -165,19 +159,12 @@ fn main() {
     }
 
     if args.len() >= 2 && (&args[1] == "-h" || &args[1] == "--help") {
-        print_usage(false);
+        usage();
         return;
     } else if args.len() >= 3 && (&args[1] == "-h" || &args[1] == "--help") {
-        print_usage(false);
+        usage();
         return;
     }
 
-    // parse modules path
-    //    let modules: Vec<String>;
-    //   let modulepaths: Vec<String>;
-    let (modules, modulepaths) = rmod::get_module_list();
-
-    //println!("{:?}", modules);
-
-    run_commandline_args(&args, modules, modulepaths);
+    run(&args);
 }

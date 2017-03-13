@@ -3,21 +3,19 @@ use std::path::{Path, PathBuf};
 use std::io::{BufReader, BufRead, Write};
 use std::env;
 
+static DEFAULT_MODULE_PATH: &'static str = "/usr/local";
+
 pub struct Rmodule<'a> {
-    pub cmd: &'a str,
-    pub arg: &'a str,
-    pub list: &'a Vec<String>,
-    pub paths: &'a Vec<String>,
-    pub shell: &'a str,
-    pub tmpfile: &'a File,
+    pub cmd: &'a str, // load|list|avail|...
+    pub arg: &'a str, // blast/12.1 | blast | blast/12
+    pub list: &'a Vec<String>, // list of all av modules
+    pub search_path: &'a Vec<String>, // module paths
+    pub shell: &'a str, // tcsh|csh|bash|zsh
+    pub tmpfile: &'a File, // tempfile that will be sourced
 }
 
-
-// bad function name, maybe I should split this on two functions
-pub fn get_module_list() -> (Vec<String>, Vec<String>) {
-    let mut modulepath: String = String::from("/usr/local");
-    let mut modules: Vec<String> = Vec::new();
-    let mut found_cachefile: bool = false;
+pub fn get_module_paths() -> Vec<String> {
+    let mut modulepath: String = String::from(DEFAULT_MODULE_PATH);
     let mut modulepaths: Vec<String> = Vec::new();
 
     match env::var("MODULEPATH") {
@@ -27,15 +25,25 @@ pub fn get_module_list() -> (Vec<String>, Vec<String>) {
         }
     };
 
-    //println!("modulepath: {}", modulepath);
     let modulepath: Vec<&str> = modulepath.split(':').collect();
     for path in modulepath {
+        modulepaths.push(path.to_string());
+    }
+
+    return modulepaths;
+}
+
+pub fn get_module_list() -> Vec<String> {
+    let mut modules: Vec<String> = Vec::new();
+    let mut found_cachefile: bool = false;
+    let modulepaths = get_module_paths();
+    for path in modulepaths {
         // test if cachefiles exist in the paths
         // if they don't and we have write permission in that folder
         // we should create the cache
-        modulepaths.push(path.to_string());
         let mut testpath = PathBuf::from(path);
         testpath.push(".modulesindex");
+
         if testpath.exists() {
             parse_modules_cache_file(&testpath, &mut modules);
             found_cachefile = true;
@@ -50,7 +58,7 @@ pub fn get_module_list() -> (Vec<String>, Vec<String>) {
     }
 
     modules.sort();
-    return (modules, modulepaths);
+    return modules;
 }
 
 pub fn command(rmod: &mut Rmodule) {
@@ -92,10 +100,8 @@ fn parse_modulefile() -> bool {
 }
 
 fn load(rmod: &mut Rmodule) {
-    //println_stderr!("load {} {}", module, shell);
-    //println_stderr!("{:?}", modulepaths);
 
-    let (mut reversed_modules, _) = get_module_list();
+    let mut reversed_modules = get_module_list();
     reversed_modules.reverse();
 
     // check if module file exists
@@ -105,7 +111,7 @@ fn load(rmod: &mut Rmodule) {
     // blast -> blast/x86_64/1.0 and blast/x86_64/2.0
     // then we need to load the Default version
     // or just the latest one
-    'outer: for modulepath in rmod.paths {
+    'outer: for modulepath in rmod.search_path {
         let testpath = format!("{}/{}", modulepath, rmod.arg);
         if Path::new(&testpath).exists() {
             // we got it, now we need to figure out if its a partial match or not
