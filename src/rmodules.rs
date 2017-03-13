@@ -9,8 +9,9 @@ pub struct Rmodule<'a> {
     pub modules: &'a Vec<String>,
     pub modulepaths: &'a Vec<String>,
     pub shell: &'a str,
-    pub tmpfile: &'a mut File,
+    pub tmpfile: &'a File,
 }
+
 
 // bad function name, maybe I should split this on two functions
 pub fn get_module_list() -> (Vec<String>, Vec<String>) {
@@ -52,10 +53,10 @@ pub fn get_module_list() -> (Vec<String>, Vec<String>) {
     return (modules, modulepaths);
 }
 
-pub fn command(mut rmodule: Rmodule) {
+pub fn command(rmodule: &mut Rmodule) {
 
     if rmodule.command == "load" {
-        load(&mut rmodule);
+        load(rmodule);
     } else if rmodule.command == "unload" {
         unload(rmodule.module, rmodule.shell);
     } else if rmodule.command == "available" {
