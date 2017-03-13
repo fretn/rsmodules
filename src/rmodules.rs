@@ -4,7 +4,7 @@ use std::io::{BufReader, BufRead, Write};
 use std::env;
 
 static DEFAULT_MODULE_PATH: &'static str = "/usr/local";
-static LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
+static ENV_LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
 
 pub struct Rmodule<'a> {
     pub cmd: &'a str, // load|list|avail|...
@@ -154,10 +154,10 @@ fn load(rmod: &mut Rmodule) {
 
 fn add_module_to_loadedmodules(name: &str) {
     let loadedmodules: String;
-    match env::var(LOADEDMODULES) {
+    match env::var(ENV_LOADEDMODULES) {
         Ok(list) => loadedmodules = list,
         Err(_) => {
-            env::set_var(LOADEDMODULES, name);
+            env::set_var(ENV_LOADEDMODULES, name);
             return;
         }
     };
@@ -167,12 +167,12 @@ fn add_module_to_loadedmodules(name: &str) {
     loadedmodules.push(name);
 
     let loaded_modules = loadedmodules.join(":");
-    env::set_var(LOADEDMODULES, loaded_modules);
+    env::set_var(ENV_LOADEDMODULES, loaded_modules);
 }
 
 fn is_module_loaded(name: &str) -> bool {
     let loadedmodules: String;
-    match env::var("LOADEDMODULES") {
+    match env::var(ENV_LOADEDMODULES) {
         Ok(list) => loadedmodules = list,
         Err(_) => {
             return false;
