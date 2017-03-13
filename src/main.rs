@@ -35,7 +35,7 @@ fn usage() {
     let error_msg: &str = "Usage: rmodules <shell> <load|unload|list|purge|available> [module \
                            name]";
 
-    println_stderr!("{}", &error_msg);
+    show_warning!("{}", &error_msg);
 }
 
 fn run(args: &Vec<String>) {
@@ -47,6 +47,16 @@ fn run(args: &Vec<String>) {
         usage();
         crash!(1, "{} is not a supported shell", shell);
     }
+
+    // get install dir
+    let mut install_dir: String = env::current_dir().unwrap().to_string_lossy().into_owned();
+
+    match env::var("RMODULES_INSTALL_DIR") {
+        Ok(path) => install_dir = path,
+        Err(_) => {
+            show_warning!("$RMODULES_INSTALL_DIR not found, using {}", install_dir);
+        }
+    };
 
     let modules = rmod::get_module_list();
     let modulepaths = rmod::get_module_paths();
@@ -70,7 +80,7 @@ fn run(args: &Vec<String>) {
     match env::home_dir() {
         Some(path) => tmp_file_path = path,
         None => {
-            println_stderr!("We were unable to find your home directory, checking if /tmp is an \
+            show_warning!("We were unable to find your home directory, checking if /tmp is an \
                              option");
 
             // this is wrong, as we try to use temp again a bit later
@@ -119,8 +129,6 @@ fn run(args: &Vec<String>) {
 
         for cmd in command_list {
             if cmd.starts_with(command) {
-                // TODO: get RMODULE_INSTALLDIR env var and
-                // store it for later use
                 let mut rmod_command: Rmodule = Rmodule {
                     cmd: cmd,
                     arg: modulename,
@@ -128,7 +136,7 @@ fn run(args: &Vec<String>) {
                     search_path: &modulepaths,
                     shell: shell,
                     tmpfile: &tmpfile,
-                    installdir: "/home/frlae/rust/rmodules/",
+                    installdir: &install_dir,
                 };
                 rmod::command(&mut rmod_command);
                 matches = true;
@@ -140,12 +148,12 @@ fn run(args: &Vec<String>) {
         }
     }
 
+    // we want a self destructing tmpfile
+    // so it must delete itself at the end of the run
     let cmd = format!("rm -f {}\n", tmp_file_path.display());
-
-    // TODO: use a match to catch this error
-    //tmpfile.write_all(cmd.as_bytes()).expect("Unable to write data");
     crash_if_err!(1, tmpfile.write_all(cmd.as_bytes()));
 
+    // source tmpfile
     if shell == "tcsh" || shell == "csh" {
         println!(". {}", tmp_file_path.display());
     } else {

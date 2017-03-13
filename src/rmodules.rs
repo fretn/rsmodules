@@ -254,7 +254,7 @@ fn is_module_loaded(name: &str) -> bool {
 }
 
 fn unload(rmod: &mut Rmodule) {
-    println_stderr!("echo 'unload {} {}'", rmod.arg, rmod.shell);
+    println_etderr!("echo 'unload {} {}'", rmod.arg, rmod.shell);
 }
 
 //fn available(module: &str, modules: &Vec<String>, mut tmpfile: &File) {
