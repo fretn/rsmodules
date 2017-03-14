@@ -89,9 +89,44 @@ fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
     }
 }
 
-fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule) -> bool {
-    let cmd = format!(". {0}/module_load_tools.sh && . {1} && env",
+fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, unload: bool) {
+
+    if unload {
+        // parse the module file
+        // replace all the export calls with unset
+        // except for PATH and LD_LIBRARY_PATH (to make sure that
+        // module files don't break the users shell)
+        // also remove the selected_module from the LOADEDMODULES var
+        // by adding prepend_path LOADEDMODULES selectedmodule
+        // to the temp script
+        // save it to a temp file, pass this tempfile
+        // to the Command::new below
+        // also use module_unload_tools.sh for unloading
+
+
+        // I still need to think what to do with
+        // system calls inside module files when we unload
+        // backticks, just regular commands, maybe we should
+        // ignore all of them and only allow the approved set
+        // of bash functions and export calls
+        // maybe we should set an environment variable in the
+        // module_unload_tools.sh, so when people want to
+        // do crazy stuff in their module file, they at least
+        // can catch the unloading of the module
+
+        // or the module file should be split in two parts
+        // a load function and an unload function and let the
+        // creator of the module file handle all the unloading stuff
+
+        // or a mix of the two
+
+        // add rm -rf /tmpfile to the end of this file
+        // so it cleans up
+    }
+
+    let cmd = format!(". {0}/module_load_tools.sh {1} && . {2} && env",
                       rmod.installdir,
+                      selected_module,
                       path.to_str().unwrap());
 
     let output = Command::new("bash")
@@ -116,8 +151,6 @@ fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule) -> bool {
             }
         }
     }
-
-    return true;
 }
 
 fn print_unset_env_var(name: &str, rmod: &mut Rmodule) {
@@ -209,28 +242,10 @@ fn load(rmod: &mut Rmodule) {
     // parse the module file and if successful
     // add it to the LOADEDMODULES env var
     // else unload the module
-    if run_modulefile(&modulefile, rmod) {
-        add_module_to_loadedmodules(selected_module, rmod);
-    }
 
-}
-
-fn add_module_to_loadedmodules(name: &str, rmod: &mut Rmodule) {
-    let loadedmodules: String;
-    match env::var(ENV_LOADEDMODULES) {
-        Ok(list) => loadedmodules = list,
-        Err(_) => {
-            print_set_env_var(ENV_LOADEDMODULES, name, rmod);
-            return;
-        }
-    };
-
-
-    let mut loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
-    loadedmodules.push(name);
-    let loaded_modules = loadedmodules.join(":");
-
-    print_set_env_var(ENV_LOADEDMODULES, loaded_modules.as_ref(), rmod);
+    //What to do when something goes wrong ?
+    // just quit rmodules ?
+    run_modulefile(&modulefile, rmod, selected_module, false);
 
 }
 

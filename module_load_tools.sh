@@ -25,6 +25,8 @@ remove_path ()  {
     export "$1"=`echo -n $a | awk -v RS=: -v ORS=: '$0 != "'$2'"' | sed 's/:$//'`
 }
 
+prepend_path LOADEDMODULES "$1"
+
 #export () {
 #    unset TEST
 #}

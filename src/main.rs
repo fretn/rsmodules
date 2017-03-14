@@ -186,11 +186,11 @@ mod tests {
     use super::is_shell_supported;
 
     #[test]
-	fn supported_shells() {
-		assert_eq!(false, is_shell_supported("randomshellname"));
-		assert_eq!(true, is_shell_supported("bash"));
-		assert_eq!(true, is_shell_supported("zsh"));
-		assert_eq!(true, is_shell_supported("tcsh"));
-		assert_eq!(true, is_shell_supported("csh"));
-	}
+    fn supported_shells() {
+        assert_eq!(false, is_shell_supported("randomshellname"));
+        assert_eq!(true, is_shell_supported("bash"));
+        assert_eq!(true, is_shell_supported("zsh"));
+        assert_eq!(true, is_shell_supported("tcsh"));
+        assert_eq!(true, is_shell_supported("csh"));
+    }
 }

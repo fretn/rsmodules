@@ -7,7 +7,7 @@ module() {
 
 
 # while unloading, append-path and prepend-path are actually remove-path
-# also the c code needs to replace "export BLAH="lmkj" by unset BLAH before
+# also the rust code needs to replace "export BLAH="lmkj" by unset BLAH before
 # running the unload module script
 append_path ()  { 
     a="$1"
