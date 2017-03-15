@@ -1,9 +1,16 @@
 [root]
 name = "rmodules"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
+ "lazy_static 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rhai 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "lazy_static"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "libc"
@@ -18,6 +25,13 @@ dependencies = [
  "libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
+[[package]]
+name = "rhai"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
 [metadata]
+"checksum lazy_static 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "7291b1dd97d331f752620b02dfdbc231df7fc01bf282a00769e1cdb963c460dc"
 "checksum libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)" = "88ee81885f9f04bff991e306fea7c1c60a5f0f9e409e99f6b40e3311a3363135"
 "checksum rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "022e0636ec2519ddae48154b028864bdce4eaf7d35226ab8e65c611be97b189d"
+"checksum rhai 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f03213f04050c88a66c7feeb0a5aae206743d7cea56593acd7824719bedfb582"

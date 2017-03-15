@@ -1,10 +1,12 @@
 [package]
 name = "rmodules"
-version = "0.1.0"
-authors = ["frlae <frlae@psb.ugent.be>"]
+version = "0.2.0"
+authors = ["Frederik Delaere <frederik.delaere@ugent.be>"]
 
 [dependencies]
 rand = "0.3"
+lazy_static = "0.2"
+rhai = "0.4.0"
 
 [[bin]]
 name = "rmodules"

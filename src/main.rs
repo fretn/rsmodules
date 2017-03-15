@@ -4,6 +4,9 @@ use rand::Rng;
 #[macro_use]
 mod macros;
 
+#[macro_use]
+extern crate lazy_static;
+
 #[path = "rmodules.rs"]
 mod rmod;
 
@@ -30,10 +33,16 @@ fn is_shell_supported(shell: &str) -> bool {
     return false;
 }
 
-fn usage() {
+fn usage(in_eval: bool) {
+    let error_msg: &str;
 
-    let error_msg: &str = "Usage: rmodules <shell> <load|unload|list|purge|available> [module \
+    if in_eval {
+        error_msg = "Usage: module <load|unload|list|purge|available|info> [module \
                            name]";
+    } else {
+        error_msg = "Usage: rmodules <shell> <load|unload|list|purge|available|info> [module \
+                           name]";
+    }
 
     show_warning!("{}", &error_msg);
 }
@@ -44,7 +53,7 @@ fn run(args: &Vec<String>) {
     let mut modulename: &str = "";
 
     if !is_shell_supported(shell) {
-        usage();
+        usage(false);
         crash!(1, "{} is not a supported shell", shell);
     }
 
@@ -126,8 +135,18 @@ fn run(args: &Vec<String>) {
         command_list.push("available");
         command_list.push("list");
         command_list.push("purge");
+        command_list.push("info");
+        command_list.push("help");
+        command_list.push("--help");
+        command_list.push("-h");
 
         for cmd in command_list {
+            if command == "help" || command == "--help" || command == "-h" {
+                usage(true);
+                matches = true;
+                break;
+            }
+
             if cmd.starts_with(command) {
                 let mut rmod_command: Rmodule = Rmodule {
                     cmd: cmd,
@@ -144,7 +163,7 @@ fn run(args: &Vec<String>) {
         }
 
         if !matches {
-            usage();
+            usage(false);
         }
     }
 
@@ -154,11 +173,7 @@ fn run(args: &Vec<String>) {
     crash_if_err!(1, tmpfile.write_all(cmd.as_bytes()));
 
     // source tmpfile
-    if shell == "tcsh" || shell == "csh" {
-        println!(". {}", tmp_file_path.display());
-    } else {
-        println!("source {}", tmp_file_path.display());
-    }
+    println!("source {}", tmp_file_path.display());
 }
 
 fn main() {
@@ -169,11 +184,15 @@ fn main() {
         crash!(1, "Try '{0} --help' for more information.", executable!());
     }
 
+    if args.len() == 2 {
+        usage(true);
+    }
+
     if args.len() >= 2 && (&args[1] == "-h" || &args[1] == "--help") {
-        usage();
+        usage(false);
         return;
     } else if args.len() >= 3 && (&args[1] == "-h" || &args[1] == "--help") {
-        usage();
+        usage(false);
         return;
     }
 

@@ -2,7 +2,9 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::io::{BufReader, BufRead, Write};
 use std::env;
-use std::process::Command;
+
+#[path = "script.rs"]
+mod script;
 
 static DEFAULT_MODULE_PATH: &'static str = "/usr/local";
 static ENV_LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
@@ -67,15 +69,17 @@ pub fn get_module_list() -> Vec<String> {
 pub fn command(rmod: &mut Rmodule) {
 
     if rmod.cmd == "load" {
-        load(rmod);
+        module_action(rmod, "load");
     } else if rmod.cmd == "unload" {
-        unload(rmod);
+        module_action(rmod, "unload");
     } else if rmod.cmd == "available" {
         available(rmod);
     } else if rmod.cmd == "list" {
         list(rmod);
     } else if rmod.cmd == "purge" {
         purge(rmod);
+    } else if rmod.cmd == "info" {
+        module_action(rmod, "info");
     }
 }
 
@@ -89,101 +93,36 @@ fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
     }
 }
 
-fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, unload: bool) {
+fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, action: &str) {
 
-    if unload {
-        // parse the module file
-        // replace all the export calls with unset
-        // except for PATH and LD_LIBRARY_PATH (to make sure that
-        // module files don't break the users shell)
-        // also remove the selected_module from the LOADEDMODULES var
-        // by adding prepend_path LOADEDMODULES selectedmodule
-        // to the temp script
-        // save it to a temp file, pass this tempfile
-        // to the Command::new below
-        // also use module_unload_tools.sh for unloading
+    script::run(path, selected_module, action, rmod.shell);
 
+    let output: Vec<String>;
 
-        // I still need to think what to do with
-        // system calls inside module files when we unload
-        // backticks, just regular commands, maybe we should
-        // ignore all of them and only allow the approved set
-        // of bash functions and export calls
-        // maybe we should set an environment variable in the
-        // module_unload_tools.sh, so when people want to
-        // do crazy stuff in their module file, they at least
-        // can catch the unloading of the module
-
-        // or the module file should be split in two parts
-        // a load function and an unload function and let the
-        // creator of the module file handle all the unloading stuff
-
-        // or a mix of the two
-
-        // add rm -rf /tmpfile to the end of this file
-        // so it cleans up
+    if action == "info" {
+        output = script::get_info(rmod.shell);
+    } else {
+        output = script::get_output();
     }
 
-    let cmd = format!(". {0}/module_load_tools.sh {1} && . {2} && env",
-                      rmod.installdir,
-                      selected_module,
-                      path.to_str().unwrap());
-
-    let output = Command::new("bash")
-        .args(&["-c", cmd.as_ref()])
-        .output()
-        .expect("failed to execute process");
-
-    let mut output = String::from_utf8_lossy(&output.stdout);
-    let output = output.to_mut();
-
-    let output: Vec<&str> = output.split('\n').collect();
     for line in output {
-        if line != "" {
-            let split: Vec<&str> = line.splitn(2, '=').collect();
-            if split.len() < 2 {
-                print_unset_env_var(split[0], rmod)
-            } else if split.len() == 2 {
-                print_set_env_var(split[0], split[1], rmod)
-            } else {
-                crash!(1,
-                       "Failed to load modulefile, something in your env breaks rmodules");
-            }
-        }
+        let line = format!("{}\n", line);
+        crash_if_err!(1, rmod.tmpfile.write_all(line.as_bytes()));
     }
 }
 
-fn print_unset_env_var(name: &str, rmod: &mut Rmodule) {
-    let data: String;
-
-    if rmod.shell == "bash" || rmod.shell == "zsh" {
-        data = format!("unset {0}\n", name);
-    } else {
-        data = format!("unsetenv {0}\n", name);
-    }
-
-    crash_if_err!(1, rmod.tmpfile.write_all(data.as_bytes()));
-}
-
-fn print_set_env_var(name: &str, value: &str, rmod: &mut Rmodule) {
-    let data: String;
-
-    if rmod.shell == "bash" || rmod.shell == "zsh" {
-        data = format!("export {0}='{1}'\n", name, value);
-    } else {
-        data = format!("setenv {0} '{1}'\n", name, value);
-    }
-
-    crash_if_err!(1, rmod.tmpfile.write_all(data.as_bytes()));
-}
-
-fn load(rmod: &mut Rmodule) {
+fn module_action(rmod: &mut Rmodule, action: &str) {
 
     let mut reversed_modules = get_module_list();
     reversed_modules.reverse();
     let mut selected_module = rmod.arg;
     let mut modulefile: PathBuf = PathBuf::new();
     let mut found: bool = false;
+
+    if rmod.arg == "" {
+        super::usage(true);
+        return;
+    }
 
     // check if module file exists
     // run over modulepaths, check if a folder/file exists with the wanted 'module' var
@@ -232,24 +171,60 @@ fn load(rmod: &mut Rmodule) {
         crash!(1, "Module {0} not found.", selected_module);
     }
 
+    // check of another version is already loaded
+    // and replace it with the current one
+    let mut replaced_module: bool = false;
+    let mut other: String = String::new();
+    if is_other_version_of_module_loaded(selected_module) && action == "load" {
+        let parts: Vec<&str> = selected_module.split('/').collect();
+        let tmp_selected_module = parts[0];
+
+        other = get_other_version_of_loaded_module(tmp_selected_module);
+
+        if other != "" && other != selected_module {
+            for modulepath in rmod.search_path {
+                let testpath = format!("{}/{}", modulepath, other);
+                if Path::new(&testpath).exists() {
+
+                    if Path::new(&testpath).is_file() {
+                        let tmpmodulefile: PathBuf = PathBuf::from(&testpath);
+                        // unload the module as we found the path to the file
+                        run_modulefile(&tmpmodulefile, rmod, other.as_ref(), "unload");
+                        replaced_module = true;
+                    }
+                }
+            }
+		}
+
+    }
+
     // check if we are already loaded (LOADEDMODULES env var)
-    if is_module_loaded(selected_module) {
-        // unload the module and then load it again ??
+    if is_module_loaded(selected_module) && action == "load" {
+    println_stderr!("hmmpf");
+        // unload the module
+        run_modulefile(&modulefile, rmod, selected_module, "unload");
+        // load the module again
+        run_modulefile(&modulefile, rmod, selected_module, "load");
         return;
     }
 
-    // we already know the path to the module file (see above)
-    // parse the module file and if successful
-    // add it to the LOADEDMODULES env var
-    // else unload the module
+    // don't unload if we are not loaded in the first place
+    if !is_module_loaded(selected_module) && action == "unload" {
+        return;
+    }
 
-    //What to do when something goes wrong ?
-    // just quit rmodules ?
-    run_modulefile(&modulefile, rmod, selected_module, false);
+    // finaly load|unload|info the module
+    run_modulefile(&modulefile, rmod, selected_module, action);
 
+    if replaced_module {
+        if other != "" && selected_module != "" {
+            let msg: String = format!("Info: The previously loaded module {} has been replaced with {}", other, selected_module);
+            write_av_output(&msg, &mut rmod.tmpfile);
+        }
+    }
 }
 
-fn is_module_loaded(name: &str) -> bool {
+pub fn is_module_loaded(name: &str) -> bool {
     let loadedmodules: String;
     match env::var(ENV_LOADEDMODULES) {
         Ok(list) => loadedmodules = list,
@@ -268,11 +243,54 @@ fn is_module_loaded(name: &str) -> bool {
     return false;
 }
 
-fn unload(rmod: &mut Rmodule) {
-    println_stderr!("echo 'unload {} {}'", rmod.arg, rmod.shell);
+pub fn get_other_version_of_loaded_module(name: &str) -> String {
+    let loadedmodules: String;
+    match env::var(ENV_LOADEDMODULES) {
+        Ok(list) => loadedmodules = list,
+        Err(_) => {
+            return String::new();
+        }
+    };
+
+    let parts: Vec<&str> = name.split('/').collect();
+    let part = parts[0];
+
+    let loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
+    for module in loadedmodules {
+        let module_parts: Vec<&str> = module.split('/').collect();
+        let module_part = module_parts[0];
+        if part == module_part {
+            return module.to_string();
+        }
+    }
+
+    return String::new();
 }
 
-//fn available(module: &str, modules: &Vec<String>, mut tmpfile: &File) {
+pub fn is_other_version_of_module_loaded(name: &str) -> bool {
+    let loadedmodules: String;
+    match env::var(ENV_LOADEDMODULES) {
+        Ok(list) => loadedmodules = list,
+        Err(_) => {
+            return false;
+        }
+    };
+
+    let parts: Vec<&str> = name.split('/').collect();
+    let part = parts[0];
+
+    let loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
+    for module in loadedmodules {
+        let module_parts: Vec<&str> = module.split('/').collect();
+        let module_part = module_parts[0];
+        if part == module_part {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 fn available(rmod: &mut Rmodule) {
 
     for avmodule in rmod.list {
@@ -301,9 +319,79 @@ fn write_av_output(line: &str, mut tmpfile: &File) {
 }
 
 fn list(rmod: &mut Rmodule) {
-    println_stderr!("echo 'list {} {}'", rmod.arg, rmod.shell);
+    let loadedmodules: String;
+
+    match env::var(ENV_LOADEDMODULES) {
+        Ok(list) => loadedmodules = list,
+        Err(_) => {
+            return;
+        }
+    };
+
+    let mut loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
+    loadedmodules.retain(|&x| x != "");
+
+    if loadedmodules.len() > 0 {
+        write_av_output("Currently loaded modules:\n", &mut rmod.tmpfile);
+    } else {
+        write_av_output("There are currently no modules loaded.", &mut rmod.tmpfile);
+    }
+    for module in loadedmodules {
+
+        if module != "" {
+            write_av_output(module, &mut rmod.tmpfile);
+        }
+    }
 }
 
 fn purge(rmod: &mut Rmodule) {
-    println_stderr!("echo 'purge {} {}'", rmod.arg, rmod.shell);
+    let loadedmodules: String;
+
+    match env::var(ENV_LOADEDMODULES) {
+        Ok(list) => loadedmodules = list,
+        Err(_) => {
+            return;
+        }
+    };
+
+    let loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
+    for module in loadedmodules {
+
+        if module != "" {
+            let mut rmod_command: Rmodule = Rmodule {
+                cmd: "unload",
+                arg: module,
+                list: rmod.list,
+                search_path: rmod.search_path,
+                shell: rmod.shell,
+                tmpfile: rmod.tmpfile,
+                installdir: rmod.installdir,
+            };
+            command(&mut rmod_command);
+        }
+    }
+
+}
+#[cfg(test)]
+mod tests {
+    use super::is_other_version_of_module_loaded;
+    use super::get_other_version_of_loaded_module;
+    use std::env;
+
+    #[test]
+    fn other_version_of_module_loaded() {
+        env::set_var("LOADEDMODULES", "blast/12.3:blast/11.1");
+        assert_eq!(true, is_other_version_of_module_loaded("blast/11.1"));
+        assert_eq!(true, is_other_version_of_module_loaded("blast/13.4"));
+        assert_eq!(true, is_other_version_of_module_loaded("blast"));
+        assert_eq!(true, is_other_version_of_module_loaded("blast/x86_64/1"));
+        assert_eq!(false, is_other_version_of_module_loaded("perl"));
+        assert_eq!(false, is_other_version_of_module_loaded(""));
+
+        assert_eq!("blast/12.3", get_other_version_of_loaded_module("blast/11.1"));
+        assert_eq!("blast/12.3", get_other_version_of_loaded_module("blast/x86_64/11.1"));
+        assert_eq!("", get_other_version_of_loaded_module("perl"));
+        assert_eq!("", get_other_version_of_loaded_module(""));
+    }
+
 }
