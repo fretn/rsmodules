@@ -1,10 +1,13 @@
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use std::io::{BufReader, BufRead, Write};
+use std::io::Write;
 use std::env;
 
 #[path = "script.rs"]
 mod script;
+
+#[path = "cache.rs"]
+mod cache;
 
 static DEFAULT_MODULE_PATH: &'static str = "/usr/local";
 static ENV_LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
@@ -12,7 +15,7 @@ static ENV_LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
 pub struct Rmodule<'a> {
     pub cmd: &'a str, // load|list|avail|...
     pub arg: &'a str, // blast/12.1 | blast | blast/12
-    pub list: &'a Vec<String>, // list of all av modules
+    //    pub list: &'a Vec<String>, // list of all av modules
     pub search_path: &'a Vec<String>, // module paths
     pub shell: &'a str, // tcsh|csh|bash|zsh
     pub tmpfile: &'a File, // tempfile that will be sourced
@@ -50,11 +53,12 @@ pub fn get_module_list() -> Vec<String> {
         testpath.push(".modulesindex");
 
         if testpath.exists() {
-            parse_modules_cache_file(&testpath, &mut modules);
+            cache::parse_modules_cache_file(&testpath, &mut modules);
             found_cachefile = true;
         } else {
             show_warning!("Cache file: {} doesn't exist.", testpath.display());
-            // TODO: generate cache
+            // TODO: check if we have permission
+            // cache::update(path);
         }
     }
 
@@ -73,24 +77,27 @@ pub fn command(rmod: &mut Rmodule) {
     } else if rmod.cmd == "unload" {
         module_action(rmod, "unload");
     } else if rmod.cmd == "available" {
-        available(rmod);
+        cache::get_module_list(&mut rmod.tmpfile, rmod.arg, rmod.shell);
     } else if rmod.cmd == "list" {
         list(rmod);
     } else if rmod.cmd == "purge" {
         purge(rmod);
     } else if rmod.cmd == "info" {
         module_action(rmod, "info");
+    } else if rmod.cmd == "updatecache" {
+        // TODO : iterate over
+        let modulepaths = get_module_paths();
+        for modulepath in modulepaths {
+            cache::update(modulepath);
+        }
     }
 }
 
-fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
+pub fn get_module_description(path: &PathBuf, selected_module: &str, action: &str) -> Vec<String> {
 
-    // read filename line by line, and push it to modules
-    let file = BufReader::new(File::open(filename).unwrap());
-    for (_, line) in file.lines().enumerate() {
-        let buffer = line.unwrap();
-        modules.push(String::from(buffer));
-    }
+    script::run(path, selected_module, action, "");
+
+    script::get_description()
 }
 
 fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, action: &str) {
@@ -115,6 +122,7 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
 
     let mut reversed_modules = get_module_list();
     reversed_modules.reverse();
+
     let mut selected_module = rmod.arg;
     let mut modulefile: PathBuf = PathBuf::new();
     let mut found: bool = false;
@@ -194,13 +202,13 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
                     }
                 }
             }
-		}
+        }
 
     }
 
     // check if we are already loaded (LOADEDMODULES env var)
     if is_module_loaded(selected_module) && action == "load" {
-    println_stderr!("hmmpf");
+        println_stderr!("hmmpf");
         // unload the module
         run_modulefile(&modulefile, rmod, selected_module, "unload");
         // load the module again
@@ -218,7 +226,10 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
 
     if replaced_module {
         if other != "" && selected_module != "" {
-            let msg: String = format!("Info: The previously loaded module {} has been replaced with {}", other, selected_module);
+            let msg: String = format!("Info: The previously loaded module {} has been replaced \
+                                       with {}",
+                                      other,
+                                      selected_module);
             write_av_output(&msg, &mut rmod.tmpfile);
         }
     }
@@ -291,29 +302,8 @@ pub fn is_other_version_of_module_loaded(name: &str) -> bool {
     return false;
 }
 
-fn available(rmod: &mut Rmodule) {
-
-    for avmodule in rmod.list {
-        if rmod.arg != "" {
-            let avmodule_lc: String = avmodule.to_lowercase();
-            let module_lc: String = rmod.arg.to_lowercase();
-            let avmodule_lc: &str = avmodule_lc.as_ref();
-            let module_lc: &str = module_lc.as_ref();
-
-            // contains is case sensitive, lowercase
-            // everything
-            // TODO: colored output
-            if avmodule_lc.contains(module_lc) {
-                write_av_output(&avmodule, &mut rmod.tmpfile);
-            }
-        } else {
-            write_av_output(&avmodule, &mut rmod.tmpfile);
-        }
-    }
-}
-
 fn write_av_output(line: &str, mut tmpfile: &File) {
-    let data = format!("echo '{}'\n", line);
+    let data = format!("echo \"{}\"\n", line);
     tmpfile.write_all(data.as_bytes()).expect("Unable to write data");
     tmpfile.write_all("\n".as_bytes()).expect("Unable to write data");
 }
@@ -361,7 +351,7 @@ fn purge(rmod: &mut Rmodule) {
             let mut rmod_command: Rmodule = Rmodule {
                 cmd: "unload",
                 arg: module,
-                list: rmod.list,
+                //list: rmod.list,
                 search_path: rmod.search_path,
                 shell: rmod.shell,
                 tmpfile: rmod.tmpfile,
@@ -388,8 +378,10 @@ mod tests {
         assert_eq!(false, is_other_version_of_module_loaded("perl"));
         assert_eq!(false, is_other_version_of_module_loaded(""));
 
-        assert_eq!("blast/12.3", get_other_version_of_loaded_module("blast/11.1"));
-        assert_eq!("blast/12.3", get_other_version_of_loaded_module("blast/x86_64/11.1"));
+        assert_eq!("blast/12.3",
+                   get_other_version_of_loaded_module("blast/11.1"));
+        assert_eq!("blast/12.3",
+                   get_other_version_of_loaded_module("blast/x86_64/11.1"));
         assert_eq!("", get_other_version_of_loaded_module("perl"));
         assert_eq!("", get_other_version_of_loaded_module(""));
     }

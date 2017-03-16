@@ -12,6 +12,10 @@ mod rmod;
 
 use rmod::Rmodule;
 
+extern crate rustc_serialize;
+extern crate bincode;
+extern crate walkdir;
+
 use std::io::Write;
 use std::fs::File;
 use std::path::PathBuf;
@@ -67,7 +71,7 @@ fn run(args: &Vec<String>) {
         }
     };
 
-    let modules = rmod::get_module_list();
+    //let modules = rmod::get_module_list();
     let modulepaths = rmod::get_module_paths();
 
     // create temporary file in the home folder
@@ -136,6 +140,7 @@ fn run(args: &Vec<String>) {
         command_list.push("list");
         command_list.push("purge");
         command_list.push("info");
+        command_list.push("updatecache");
         command_list.push("help");
         command_list.push("--help");
         command_list.push("-h");
@@ -151,7 +156,7 @@ fn run(args: &Vec<String>) {
                 let mut rmod_command: Rmodule = Rmodule {
                     cmd: cmd,
                     arg: modulename,
-                    list: &modules,
+                    //                    list: &modules,
                     search_path: &modulepaths,
                     shell: shell,
                     tmpfile: &tmpfile,

@@ -4,7 +4,6 @@ use std::env;
 use std::sync::Mutex;
 use std::path::PathBuf;
 use std::io::Write;
-use std::fs;
 
 // WARNING: the scripts don't support tabbed indents in if else structures
 
@@ -103,6 +102,12 @@ fn description_dummy(desc: String) {}
 fn getenv_dummy(var: String) -> String {
     String::new()
 }
+#[allow(unused_variables)]
+fn prepend_path_dummy(var: String, val: String) {}
+#[allow(unused_variables)]
+fn append_path_dummy(var: String, val: String) {}
+#[allow(unused_variables)]
+fn setenv_dummy(var: String, val: String) {}
 
 // unload functions
 
@@ -279,6 +284,10 @@ fn description(desc: String) {
     println_stderr!("{}", desc);
 }
 
+fn description_cache(desc: String) {
+    add_to_info_general(desc);
+}
+
 pub fn run(path: &PathBuf, selected_module: &str, action: &str, shell: &str) {
     let mut engine = Engine::new();
 
@@ -333,6 +342,19 @@ pub fn run(path: &PathBuf, selected_module: &str, action: &str, shell: &str) {
         engine.register_fn("getenv", getenv_dummy);
         engine.register_fn("description", description);
 
+    } else if action == "description" {
+        engine.register_fn("setenv", setenv_dummy);
+        engine.register_fn("unsetenv", unsetenv_dummy);
+        engine.register_fn("prepend_path", prepend_path_dummy);
+        engine.register_fn("append_path", append_path_dummy);
+        engine.register_fn("remove_path", remove_path_dummy);
+        engine.register_fn("system", system_dummy);
+        engine.register_fn("depend", depend_dummy);
+        engine.register_fn("conflict", conflict_dummy);
+        engine.register_fn("unload", unload_dummy);
+        engine.register_fn("getenv", getenv_dummy);
+        engine.register_fn("description", description_cache);
+
     }
 
 
@@ -344,6 +366,17 @@ pub fn run(path: &PathBuf, selected_module: &str, action: &str, shell: &str) {
             }
         }
     }
+}
+
+pub fn get_description() -> Vec<String> {
+
+    let mut output: Vec<String> = Vec::new();
+
+    for line in INFO_GENERAL.lock().unwrap().iter() {
+        output.push(format!("{}", line.to_string()));
+    }
+
+    return output;
 }
 
 pub fn get_output() -> Vec<String> {
