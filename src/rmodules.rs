@@ -15,9 +15,9 @@ static ENV_LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
 pub struct Rmodule<'a> {
     pub cmd: &'a str, // load|list|avail|...
     pub arg: &'a str, // blast/12.1 | blast | blast/12
-    //    pub list: &'a Vec<String>, // list of all av modules
     pub search_path: &'a Vec<String>, // module paths
     pub shell: &'a str, // tcsh|csh|bash|zsh
+    pub shell_width: usize,
     pub tmpfile: &'a File, // tempfile that will be sourced
     pub installdir: &'a str, // installation folder
 }
@@ -77,7 +77,7 @@ pub fn command(rmod: &mut Rmodule) {
     } else if rmod.cmd == "unload" {
         module_action(rmod, "unload");
     } else if rmod.cmd == "available" {
-        cache::get_module_list(&mut rmod.tmpfile, rmod.arg, rmod.shell);
+        cache::get_module_list(&mut rmod.tmpfile, rmod.arg, rmod.shell, rmod.shell_width);
     } else if rmod.cmd == "list" {
         list(rmod);
     } else if rmod.cmd == "purge" {
@@ -88,28 +88,28 @@ pub fn command(rmod: &mut Rmodule) {
         // TODO : iterate over
         let modulepaths = get_module_paths();
         for modulepath in modulepaths {
-            cache::update(modulepath);
+            cache::update(modulepath, &mut rmod.tmpfile);
         }
     }
 }
 
-pub fn get_module_description(path: &PathBuf, selected_module: &str, action: &str) -> Vec<String> {
+pub fn get_module_description(path: &PathBuf, action: &str) -> Vec<String> {
 
-    script::run(path, selected_module, action, "");
+    script::run(path, action, "");
 
     script::get_description()
 }
 
 fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, action: &str) {
 
-    script::run(path, selected_module, action, rmod.shell);
+    script::run(path, action, rmod.shell);
 
     let output: Vec<String>;
 
     if action == "info" {
         output = script::get_info(rmod.shell);
     } else {
-        output = script::get_output();
+        output = script::get_output(selected_module, action);
     }
 
     for line in output {
@@ -160,15 +160,19 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
                     // blast or blast/x86_64 but not blas or blast/x86_
                     // because of the above 'exists()' check
 
-                    if module.starts_with(rmod.arg) {
-                        //println_stderr!("{}", module);
-                        selected_module = module;
-                        found = true;
-                        let testpath = format!("{}/{}", modulepath, module);
-                        modulefile = PathBuf::from(&testpath);
+                    // prevent that: module load blast loads blastz
+                    let splitter: Vec<&str> = module.split(rmod.arg).collect();
+                    if splitter.len() > 1 {
+                        if splitter[1].chars().next().unwrap() == '/' &&
+                           module.starts_with(rmod.arg) {
+                            selected_module = module;
+                            found = true;
+                            let testpath = format!("{}/{}", modulepath, module);
+                            modulefile = PathBuf::from(&testpath);
 
-                        // break out of the outer loop
-                        break 'outer;
+                            // break out of the outer loop
+                            break 'outer;
+                        }
                     }
                 }
             }
@@ -208,7 +212,6 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
 
     // check if we are already loaded (LOADEDMODULES env var)
     if is_module_loaded(selected_module) && action == "load" {
-        println_stderr!("hmmpf");
         // unload the module
         run_modulefile(&modulefile, rmod, selected_module, "unload");
         // load the module again
@@ -246,7 +249,7 @@ pub fn is_module_loaded(name: &str) -> bool {
 
     let loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
     for module in loadedmodules {
-        if module == name {
+        if module.starts_with(name) {
             return true;
         }
     }
@@ -320,9 +323,10 @@ fn list(rmod: &mut Rmodule) {
 
     let mut loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
     loadedmodules.retain(|&x| x != "");
+    loadedmodules.sort();
 
     if loadedmodules.len() > 0 {
-        write_av_output("Currently loaded modules:\n", &mut rmod.tmpfile);
+        write_av_output("Currently loaded modules:", &mut rmod.tmpfile);
     } else {
         write_av_output("There are currently no modules loaded.", &mut rmod.tmpfile);
     }
@@ -351,9 +355,9 @@ fn purge(rmod: &mut Rmodule) {
             let mut rmod_command: Rmodule = Rmodule {
                 cmd: "unload",
                 arg: module,
-                //list: rmod.list,
                 search_path: rmod.search_path,
                 shell: rmod.shell,
+                shell_width: rmod.shell_width,
                 tmpfile: rmod.tmpfile,
                 installdir: rmod.installdir,
             };

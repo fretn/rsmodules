@@ -80,7 +80,14 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
     let mut buffer = String::new();
 
     if Path::new(&module_path).is_file() {
-        let file = BufReader::new(File::open(module_path).unwrap());
+        let file: File = match File::open(module_path) {
+            Ok(file) => file,
+            Err(_) => {
+                return false;
+            }
+        };
+
+        let file = BufReader::new(file);
         for (_, line) in file.lines().enumerate() {
             buffer = line.unwrap();
         }
@@ -93,8 +100,7 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
     return false;
 }
 
-// TODO:: check to catch the error when the directory doesn't exist
-pub fn update(modulepath: String) {
+pub fn update(modulepath: String, tmpfile: &File) {
 
     // TODO: check if we have read and write permissions on 'modulepath'
     // list is: path to file, module name, default
@@ -117,6 +123,9 @@ pub fn update(modulepath: String) {
                     // FIXME: this might crash if module name is too short
                     let second = &modulename[1..2];
 
+                    if modulename == ".modulesindex" {
+                        continue;
+                    }
                     // modulename can start with /
                     // also we don't want the .modulesindex or other hidden files
                     if first == '/' && second != "." {
@@ -132,6 +141,7 @@ pub fn update(modulepath: String) {
                             is_version_file = true;
                         }
                     }
+
                     if second != "." && !is_version_file {
                         let default = get_default_version(&modulepath, modulename);
                         list.push((str_path.to_string(), modulename.to_string(), default));
@@ -141,7 +151,6 @@ pub fn update(modulepath: String) {
         }
     }
 
-    //println_stderr!("{:?}", list);
     // now we have all the module files in the current folder
     // we need to parse them to get their description
 
@@ -151,8 +160,7 @@ pub fn update(modulepath: String) {
     for (modulepath, modulename, default) in list {
         let path: PathBuf = PathBuf::from(&modulepath);
 
-        let description: Vec<String> =
-            super::get_module_description(&path, &modulename, "description");
+        let description: Vec<String> = super::get_module_description(&path, "description");
         let description = description.join(" ");
 
         // flags is supposed to be a bitfield
@@ -165,23 +173,39 @@ pub fn update(modulepath: String) {
         //println_stderr!("{}", description);
     }
 
-    let mut writer = BufWriter::new(File::create(format!("{}/.modulesindex", modulepath)).unwrap());
+    let file: File = match File::create(format!("{}/.modulesindex", modulepath)) {
+        Ok(file) => file,
+        Err(_) => {
+            show_warning!("Cannot update {}", modulepath);
+            return;
+        }
+    };
+
+    let mut writer = BufWriter::new(file);
     encode_into(&modules, &mut writer, bincode::SizeLimit::Infinite).unwrap();
+
+    let msg: String = format!("Succesfully updated {}", modulepath);
+    super::write_av_output(&msg, &tmpfile);
 }
 
 pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
 
-    let mut reader = BufReader::new(File::open(filename).unwrap());
+    let file: File = match File::open(filename) {
+        Ok(file) => file,
+        Err(_) => {
+            crash!(1,
+                   "modules_cache_file couldn't open the required index file");
+        }
+    };
+    let mut reader = BufReader::new(file);
     let decoded: Vec<Module> = decode_from(&mut reader, bincode::SizeLimit::Infinite).unwrap();
 
     for module in decoded {
-        //let tmp = format!("{}\t{}", module.name, module.description);
-        //super::write_av_output(&tmp, &tmpfile);
         modules.push(module.name);
     }
 }
 
-pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str) {
+pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usize) {
     let mut bold_start: &str = "$(tput bold)";
     let mut bold_end: &str = "$(tput sgr0)";
 
@@ -195,8 +219,16 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str) {
     let mut longest_name = 0;
     let mut decoded: Vec<Module> = Vec::new();
     for modulepath in modulepaths.clone() {
-        let mut reader = BufReader::new(File::open(format!("{}/.modulesindex", modulepath))
-            .unwrap());
+
+        let file: File = match File::open(format!("{}/.modulesindex", modulepath)) {
+            Ok(file) => file,
+            Err(_) => {
+                continue;
+            }
+
+        };
+
+        let mut reader = BufReader::new(file);
         let decoded_file: Vec<Module> = decode_from(&mut reader, bincode::SizeLimit::Infinite)
             .unwrap();
         for item in decoded_file {
@@ -213,25 +245,40 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str) {
 
     decoded.sort();
 
-
+    let mut previous_first_char: char = '§';
     for module in decoded {
         let tmp: String;
 
-        // TODO: get env var $COLUMNS (if bash) and format output according to that width
-        // in csh you can use: 'stty size'
+        let mut description = module.description;
+        //let width: f64 = (shell_width as f64 - longest_name as f64 - 3.0) * 0.75;
+        //description.truncate(width as usize);
+        description.truncate(shell_width - longest_name - 3);
+
+        let mut default: &str = " ";
+
         if module.flags == 1 {
-            tmp = format!("{}{:width$}{}{}",
+            default = "D";
+        }
+
+        // print loaded modules in bold
+        if super::is_module_loaded(module.name.as_ref()) {
+
+            tmp = format!("{} {}{:width$}{}{}",
+                          default,
                           bold_start,
                           module.name,
                           bold_end,
-                          module.description,
+                          description,
                           width = longest_name);
         } else {
-            tmp = format!("{:width$}{}",
+            tmp = format!("{} {:width$}{}",
+                          default,
                           module.name,
-                          module.description,
+                          description,
                           width = longest_name);
         }
+
+
         if arg != "" {
             let avmodule_lc: String = module.name.to_lowercase();
             let module_lc: String = arg.to_lowercase();
@@ -239,9 +286,21 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str) {
             let module_lc: &str = module_lc.as_ref();
 
             if avmodule_lc.contains(module_lc) {
+                let first_char: char = module.name.chars().next().unwrap();
+                if first_char != previous_first_char {
+                    // add a newline
+                    super::write_av_output("", &tmpfile);
+                }
+                previous_first_char = module.name.chars().next().unwrap();
                 super::write_av_output(&tmp, &tmpfile);
             }
         } else {
+            let first_char: char = module.name.chars().next().unwrap();
+            if first_char != previous_first_char {
+                // add a newline
+                super::write_av_output("", &tmpfile);
+            }
+            previous_first_char = module.name.chars().next().unwrap();
             super::write_av_output(&tmp, &tmpfile);
         }
     }

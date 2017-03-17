@@ -17,7 +17,7 @@ lazy_static! {
     static ref INFO_LD_LIBRARY_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_PYTHONPATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_PERL5LIB: Mutex<Vec<String>> = Mutex::new(vec![]);
-    static ref DEPEND: Mutex<Vec<String>> = Mutex::new(vec![]);
+    static ref LOAD: Mutex<Vec<String>> = Mutex::new(vec![]);
 }
 
 fn init_vars_and_commands() {
@@ -28,7 +28,7 @@ fn init_vars_and_commands() {
     INFO_LD_LIBRARY_PATH.lock().unwrap().clear();
     INFO_PYTHONPATH.lock().unwrap().clear();
     INFO_PERL5LIB.lock().unwrap().clear();
-    DEPEND.lock().unwrap().clear();
+    LOAD.lock().unwrap().clear();
 
     let mut tmp = CONFLICT.lock().unwrap();
     *tmp = false;
@@ -67,8 +67,8 @@ fn add_to_info_perl5lib(data: String) {
     INFO_PERL5LIB.lock().unwrap().push(data);
 }
 
-fn add_to_depend(data: String) {
-    DEPEND.lock().unwrap().push(data);
+fn add_to_load(data: String) {
+    LOAD.lock().unwrap().push(data);
 }
 
 // functions for load and unload
@@ -91,7 +91,7 @@ fn remove_path_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
 fn system_dummy(cmd: String) {}
 #[allow(unused_variables)]
-fn depend_dummy(module: String) {}
+fn load_dummy(module: String) {}
 #[allow(unused_variables)]
 fn conflict_dummy(module: String) {}
 #[allow(unused_variables)]
@@ -108,6 +108,8 @@ fn prepend_path_dummy(var: String, val: String) {}
 fn append_path_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
 fn setenv_dummy(var: String, val: String) {}
+#[allow(unused_variables)]
+fn set_alias_dummy(name: String, val: String) {}
 
 // unload functions
 
@@ -149,8 +151,8 @@ fn append_path_info(var: String, val: String) {
     }
 }
 
-fn depend_info(module: String) {
-    add_to_depend(module);
+fn load_info(module: String) {
+    add_to_load(module);
 }
 // load functions
 
@@ -255,20 +257,34 @@ fn remove_path(var: String, val: String) {
     if *shell == "bash" || *shell == "zsh" {
         add_to_env_vars(format!("export {}=\"{}\"", var, result));
     } else {
-        add_to_env_vars(format!("export {}=\"{}\"", var, result));
+        add_to_env_vars(format!("setenv {} \"{}\"", var, result));
     }
     env::set_var(&var, format!("{}", result));
+}
+
+fn unset_alias(name: String, val: String) {
+    let shell = SHELL.lock().unwrap();
+    if *shell == "bash" || *shell == "zsh" {
+        add_to_commands(format!("unalias \"{}\"", name));
+    } else {
+        add_to_commands(format!("unalias \"{}={}\"", name, val));
+    }
+}
+
+fn set_alias(name: String, val: String) {
+    add_to_commands(format!("alias {}=\"{}\"", name, val));
 }
 
 fn system(cmd: String) {
     add_to_commands(cmd);
 }
 
-fn depend(module: String) {
+fn load(module: String) {
     add_to_commands(format!("module load {}", module));
 }
 
 fn conflict(module: String) {
+
     if super::is_module_loaded(module.as_ref()) {
         show_warning!("This module cannot be loaded while {} is loaded.", module);
         let mut data = CONFLICT.lock().unwrap();
@@ -288,7 +304,7 @@ fn description_cache(desc: String) {
     add_to_info_general(desc);
 }
 
-pub fn run(path: &PathBuf, selected_module: &str, action: &str, shell: &str) {
+pub fn run(path: &PathBuf, action: &str, shell: &str) {
     let mut engine = Engine::new();
 
     init_vars_and_commands();
@@ -306,14 +322,13 @@ pub fn run(path: &PathBuf, selected_module: &str, action: &str, shell: &str) {
         engine.register_fn("append_path", remove_path);
         engine.register_fn("remove_path", remove_path_dummy);
         engine.register_fn("system", system_dummy);
-        engine.register_fn("depend", depend_dummy);
+        engine.register_fn("load", load_dummy);
         engine.register_fn("conflict", conflict_dummy);
         engine.register_fn("unload", unload_dummy);
         engine.register_fn("getenv", getenv);
         engine.register_fn("description", description_dummy);
+        engine.register_fn("set_alias", unset_alias);
 
-        remove_path(String::from(super::ENV_LOADEDMODULES),
-                    String::from(selected_module));
     } else if action == "load" {
         engine.register_fn("setenv", setenv);
         engine.register_fn("unsetenv", unsetenv);
@@ -321,14 +336,13 @@ pub fn run(path: &PathBuf, selected_module: &str, action: &str, shell: &str) {
         engine.register_fn("append_path", append_path);
         engine.register_fn("remove_path", remove_path);
         engine.register_fn("system", system);
-        engine.register_fn("depend", depend);
+        engine.register_fn("load", load);
         engine.register_fn("conflict", conflict);
         engine.register_fn("unload", unload);
         engine.register_fn("getenv", getenv);
         engine.register_fn("description", description_dummy);
+        engine.register_fn("set_alias", set_alias);
 
-        prepend_path(String::from(super::ENV_LOADEDMODULES),
-                     String::from(selected_module));
     } else if action == "info" {
         engine.register_fn("setenv", setenv_info);
         engine.register_fn("unsetenv", unsetenv_dummy);
@@ -336,11 +350,12 @@ pub fn run(path: &PathBuf, selected_module: &str, action: &str, shell: &str) {
         engine.register_fn("append_path", append_path_info);
         engine.register_fn("remove_path", remove_path_dummy);
         engine.register_fn("system", system_dummy);
-        engine.register_fn("depend", depend_info);
+        engine.register_fn("load", load_info);
         engine.register_fn("conflict", conflict_dummy);
         engine.register_fn("unload", unload_dummy);
         engine.register_fn("getenv", getenv_dummy);
         engine.register_fn("description", description);
+        engine.register_fn("set_alias", set_alias_dummy);
 
     } else if action == "description" {
         engine.register_fn("setenv", setenv_dummy);
@@ -349,11 +364,12 @@ pub fn run(path: &PathBuf, selected_module: &str, action: &str, shell: &str) {
         engine.register_fn("append_path", append_path_dummy);
         engine.register_fn("remove_path", remove_path_dummy);
         engine.register_fn("system", system_dummy);
-        engine.register_fn("depend", depend_dummy);
+        engine.register_fn("load", load_dummy);
         engine.register_fn("conflict", conflict_dummy);
         engine.register_fn("unload", unload_dummy);
         engine.register_fn("getenv", getenv_dummy);
         engine.register_fn("description", description_cache);
+        engine.register_fn("set_alias", set_alias);
 
     }
 
@@ -362,7 +378,9 @@ pub fn run(path: &PathBuf, selected_module: &str, action: &str, shell: &str) {
         Ok(result) => println!("{}", result),
         Err(e) => {
             if e.to_string() != "Cast of output failed" {
-                show_warning!("modulescript error: {}", e.to_string());
+                show_warning!("modulescript error: {} ({})",
+                              e.to_string(),
+                              path.to_string_lossy().into_owned());
             }
         }
     }
@@ -379,13 +397,22 @@ pub fn get_description() -> Vec<String> {
     return output;
 }
 
-pub fn get_output() -> Vec<String> {
+pub fn get_output(selected_module: &str, action: &str) -> Vec<String> {
     let data = CONFLICT.lock().unwrap();
 
     if *data == true {
         return Vec::new();
     }
 
+    if action == "unload" {
+        remove_path(String::from(super::ENV_LOADEDMODULES),
+                    String::from(selected_module));
+    } else if action == "load" {
+        prepend_path(String::from(super::ENV_LOADEDMODULES),
+                     String::from(selected_module));
+    }
+
+    // this part must be below the above part
     let mut output: Vec<String> = Vec::new();
 
     for line in ENV_VARS.lock().unwrap().iter() {
@@ -446,7 +473,7 @@ pub fn get_info(shell: &str) -> Vec<String> {
 
     if INFO_PYTHONPATH.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}$PYTHONPATH: {}\"", bold_start, bold_end));
+        output.push(format!("echo \"{}\\$PYTHONPATH: {}\"", bold_start, bold_end));
         got_output = true;
     }
     for line in INFO_PYTHONPATH.lock().unwrap().iter() {
@@ -455,19 +482,19 @@ pub fn get_info(shell: &str) -> Vec<String> {
 
     if INFO_PERL5LIB.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}$PERL5LIB: {}\"", bold_start, bold_end));
+        output.push(format!("echo \"{}\\$PERL5LIB: {}\"", bold_start, bold_end));
         got_output = true;
     }
     for line in INFO_PERL5LIB.lock().unwrap().iter() {
         output.push(format!("echo '{}'", line.to_string()));
     }
 
-    if DEPEND.lock().unwrap().iter().len() > 0 {
+    if LOAD.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
         output.push(format!("echo \"{}Depends on: {}\"", bold_start, bold_end));
         got_output = true;
     }
-    for line in DEPEND.lock().unwrap().iter() {
+    for line in LOAD.lock().unwrap().iter() {
         output.push(format!("echo '{}'", line.to_string()));
     }
 

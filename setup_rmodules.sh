@@ -1,9 +1,10 @@
 #!/bin/bash
 
 module() { 
-    eval `$RMODULES_INSTALL_DIR/target/debug/rmodules bash $*`; 
+	export TERMWIDTH=`/bin/stty size | cut -d" " -f2`;
+	eval `$RMODULES_INSTALL_DIR/rmodules bash,$TERMWIDTH $*`;
 }
 
-export MODULEPATH="/home/frlae/rust/rmodules/modulespath:/home/frlae/rust/rmodules/modulespath2"
-export RMODULES_INSTALL_DIR="/home/frlae/rust/rmodules/"
+export MODULEPATH="/software/shared/rmodulefiles/"
+export RMODULES_INSTALL_DIR="/software/shared/apps/x86_64/rmodules/0.2.0/"
 export LOADEDMODULES=""

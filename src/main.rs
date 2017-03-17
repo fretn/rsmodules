@@ -20,6 +20,7 @@ use std::io::Write;
 use std::fs::File;
 use std::path::PathBuf;
 use std::env;
+use std::str::FromStr;
 
 fn is_shell_supported(shell: &str) -> bool {
 
@@ -41,20 +42,35 @@ fn usage(in_eval: bool) {
     let error_msg: &str;
 
     if in_eval {
-        error_msg = "Usage: module <load|unload|list|purge|available|info> [module \
+        error_msg = "Usage: module <load|unload|list|purge|available|info|updatecache> [module \
                            name]";
     } else {
-        error_msg = "Usage: rmodules <shell> <load|unload|list|purge|available|info> [module \
-                           name]";
+        error_msg = "Usage: rmodules <shell> <load|unload|list|purge|available|info|updatecache> \
+                     [module name]";
     }
 
     show_warning!("{}", &error_msg);
 }
 
 fn run(args: &Vec<String>) {
-    let shell: &str = &args[1];
+    let mut shell: &str = &args[1];
     let command: &str;
     let mut modulename: &str = "";
+    let mut shell_width: usize = 80;
+
+    // the shell argument can either be 'bash', 'tcsh'
+    // or the shellname comma shellwidth
+    // bash,80 or csh,210 or bash,210 etc
+    // if no width is specified, 80 is used as default width
+
+    let shell_split: Vec<&str> = shell.split(',').collect();
+
+    if shell_split.len() == 2 {
+        shell_width = FromStr::from_str(shell_split[1]).unwrap();
+        shell = shell_split[0];
+    }
+
+    ////
 
     if !is_shell_supported(shell) {
         usage(false);
@@ -156,9 +172,9 @@ fn run(args: &Vec<String>) {
                 let mut rmod_command: Rmodule = Rmodule {
                     cmd: cmd,
                     arg: modulename,
-                    //                    list: &modules,
                     search_path: &modulepaths,
                     shell: shell,
+                    shell_width: shell_width,
                     tmpfile: &tmpfile,
                     installdir: &install_dir,
                 };
