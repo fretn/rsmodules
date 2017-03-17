@@ -85,7 +85,6 @@ pub fn command(rmod: &mut Rmodule) {
     } else if rmod.cmd == "info" {
         module_action(rmod, "info");
     } else if rmod.cmd == "updatecache" {
-        // TODO : iterate over
         let modulepaths = get_module_paths();
         for modulepath in modulepaths {
             cache::update(modulepath, &mut rmod.tmpfile);

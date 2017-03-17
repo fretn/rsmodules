@@ -120,8 +120,11 @@ pub fn update(modulepath: String, tmpfile: &File) {
                 if modulename != "" {
 
                     let first = modulename.chars().next().unwrap();
-                    // FIXME: this might crash if module name is too short
-                    let second = &modulename[1..2];
+                    let mut second = "";
+
+                    if modulename.len() >= 2 {
+                        second = &modulename[1..2];
+                    }
 
                     if modulename == ".modulesindex" {
                         continue;
