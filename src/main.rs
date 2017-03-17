@@ -22,6 +22,62 @@ use std::path::PathBuf;
 use std::env;
 use std::str::FromStr;
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
+
+static LONG_HELP: &'static str = "
+
+  rmodules manage your user environment on linux, macos, ...
+  The rmodules package is a tool to help users modifying their environment
+  during a session by using modulefiles.
+  A modulefile contains all the settings needed to configure the shell for
+  using a certain application.
+
+  A modulefile sets or alters environment variables such as PATH,
+  LD_LIBRARY_PATH, MANPATH, PYTHONPATH, PERL5LIB, ...
+
+  Modulefiles can be shared by many users or can be used by individuals
+  by setting up paths in the MODULEPATH environment variable. Once
+  a modulepath is added the cache needs to be updated by invoking
+  module updatecache
+
+  Modulefiles can be loaded and unloaded by the user whenever the
+  module command is available.
+
+  * module [subcommand] <module name>
+
+    subcommands
+    -----------
+
+    * load [(partial) module name]
+    * unload [(partial) module name]
+
+      A partial module name is the part of the modulename
+      before a slash, eg: you have module name 'rmodules/2.0.0'
+      the partial name is 'rmodules'
+
+    * list
+      Lists all the loaded modules
+
+    * purge
+      Unloads all loaded modules
+
+    * available <search string>
+      Lists all the available module.
+      If a <search string> is given then all modules which match
+      the search string will be listed
+
+    * info [(partial) module name]
+      Gives more info about a module. Description, which
+      variables it modifies and/or which commands are executed
+      upon launch.
+
+    * updatecache
+      Updates the .modulesindex file in all the paths that
+      are found in the $MODULEPATHS variable. This ofcourse
+      only works if you have the correct permissions ;)
+";
+
 fn is_shell_supported(shell: &str) -> bool {
 
     let mut shell_list = Vec::new();
@@ -41,15 +97,23 @@ fn is_shell_supported(shell: &str) -> bool {
 fn usage(in_eval: bool) {
     let error_msg: &str;
 
+    println_stderr!("  rmodules {} - {}", VERSION, AUTHORS);
+    println_stderr!("");
+    println_stderr!("  2017 - Ghent University / VIB");
+    println_stderr!("  http://www.psb.ugent.be - http://www.ugent.be - http://www.vib.be");
+    println_stderr!("");
+    println_stderr!("");
+
     if in_eval {
-        error_msg = "Usage: module <load|unload|list|purge|available|info|updatecache> [module \
+        error_msg = "  Usage: module <load|unload|list|purge|available|info|updatecache> [module \
                            name]";
     } else {
-        error_msg = "Usage: rmodules <shell> <load|unload|list|purge|available|info|updatecache> \
-                     [module name]";
+        error_msg = "  Usage: rmodules <shell> \
+                     <load|unload|list|purge|available|info|updatecache> [module name]";
     }
 
-    show_warning!("{}", &error_msg);
+    println_stderr!("{}", &error_msg);
+    println_stderr!("{}", &LONG_HELP);
 }
 
 fn run(args: &Vec<String>) {
