@@ -45,14 +45,17 @@ pub struct Rmodule<'a> {
     pub installdir: &'a str, // installation folder
 }
 
-pub fn get_module_paths() -> Vec<String> {
+pub fn get_module_paths(silent: bool) -> Vec<String> {
     let mut modulepath: String = String::from(DEFAULT_MODULE_PATH);
     let mut modulepaths: Vec<String> = Vec::new();
 
     match env::var("MODULEPATH") {
         Ok(path) => modulepath = path,
         Err(_) => {
-            show_warning!("$MODULEPATH not found, using {}", modulepath);
+            if !silent {
+                show_warning!("$MODULEPATH not found, using {}", modulepath);
+            }
+            return modulepaths;
         }
     };
 
@@ -67,7 +70,7 @@ pub fn get_module_paths() -> Vec<String> {
 pub fn get_module_list() -> Vec<String> {
     let mut modules: Vec<String> = Vec::new();
     let mut found_cachefile: bool = false;
-    let modulepaths = get_module_paths();
+    let modulepaths = get_module_paths(false);
     for path in modulepaths {
         // test if cachefiles exist in the paths
         // if they don't and we have write permission in that folder
@@ -108,7 +111,7 @@ pub fn command(rmod: &mut Rmodule) {
     } else if rmod.cmd == "info" {
         module_action(rmod, "info");
     } else if rmod.cmd == "makecache" {
-        let modulepaths = get_module_paths();
+        let modulepaths = get_module_paths(false);
         for modulepath in modulepaths {
             cache::update(modulepath, &mut rmod.tmpfile);
         }

@@ -240,7 +240,7 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usiz
         bold_end = "\\033[0m";
     }
 
-    let modulepaths = super::get_module_paths();
+    let modulepaths = super::get_module_paths(false);
 
     let mut longest_name = 0;
     let mut decoded: Vec<Module> = Vec::new();
