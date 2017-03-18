@@ -70,7 +70,7 @@ static LONG_HELP: &'static str = "
   Modulefiles can be shared by many users or can be used by individuals
   by setting up paths in the MODULEPATH environment variable. Once
   a modulepath is added the cache needs to be updated by invoking
-  module updatecache
+  module makecache
 
   Modulefiles can be loaded and unloaded by the user whenever the
   module command is available.
@@ -103,7 +103,7 @@ static LONG_HELP: &'static str = "
       variables it modifies and/or which commands are executed
       upon launch.
 
-    * updatecache
+    * makecache
       Updates the .modulesindex file in all the paths that
       are found in the $MODULEPATHS variable. This ofcourse
       only works if you have the correct permissions ;)
@@ -136,11 +136,11 @@ fn usage(in_eval: bool) {
     println_stderr!("");
 
     if in_eval {
-        error_msg = "  Usage: module <load|unload|list|purge|available|info|updatecache> [module \
+        error_msg = "  Usage: module <load|unload|list|purge|available|info|makecache> [module \
                            name]";
     } else {
         error_msg = "  Usage: rmodules <shell> \
-                     <load|unload|list|purge|available|info|updatecache> [module name]";
+                     <load|unload|list|purge|available|info|makecache> [module name]";
     }
 
     println_stderr!("{}", &error_msg);
@@ -169,7 +169,9 @@ fn run(args: &Vec<String>) {
 
     if !is_shell_supported(shell) {
         usage(false);
-        crash!(CRASH_UNSUPPORTED_SHELL, "{} is not a supported shell", shell);
+        crash!(CRASH_UNSUPPORTED_SHELL,
+               "{} is not a supported shell",
+               shell);
     }
 
     // get install dir
@@ -230,7 +232,9 @@ fn run(args: &Vec<String>) {
             match File::create(&tmp_file_path) {
                 Ok(newfile) => tmpfile = newfile,
                 Err(e) => {
-                    crash!(CRASH_FAILED_TO_CREATE_TEMPORARY_FILE, "Failed to create temporary file: {}", e);
+                    crash!(CRASH_FAILED_TO_CREATE_TEMPORARY_FILE,
+                           "Failed to create temporary file: {}",
+                           e);
                     //return;
                 }
             };
@@ -251,10 +255,22 @@ fn run(args: &Vec<String>) {
         command_list.push("list");
         command_list.push("purge");
         command_list.push("info");
-        command_list.push("updatecache");
+        command_list.push("makecache");
         command_list.push("help");
         command_list.push("--help");
         command_list.push("-h");
+        // TODO
+        // "create" -> wizard to create a new mdoule
+        // "addmodulepath" -> wizard to add a path to $MODULEPATH
+        // "removemodulepath" -> wizard to remove a path from $MODULEPATH
+        //  ask to update /etc/profile.d or bashrc or personal_cshrc
+        // "delete" -> deletes a modulefile
+        // "update" -> when you have blast/12.3 as module
+        //  module update blast 13.3 or module update blast/12.3 13.3
+        //  will copy that module file to a new file blast/13.3
+        //  and it will replace all instances of 12.3 in the file with
+        //  13.3
+        //
 
         for cmd in command_list {
             if command == "help" || command == "--help" || command == "-h" {
@@ -286,7 +302,8 @@ fn run(args: &Vec<String>) {
     // we want a self destructing tmpfile
     // so it must delete itself at the end of the run
     let cmd = format!("rm -f {}\n", tmp_file_path.display());
-    crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(cmd.as_bytes()));
+    crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                  tmpfile.write_all(cmd.as_bytes()));
 
     // source tmpfile
     println!("source {}", tmp_file_path.display());
@@ -297,7 +314,32 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
 
     if args.len() == 1 {
-        crash!(CRASH_NO_ARGS, "Try '{0} --help' for more information.", executable!());
+        // if no modulepath variable found, or it is empty
+        // start a wizard to add one to the path
+        // if uid = 0 suggest /usr/local/modulefiles as
+        // module path
+        // else : suggest ~/modulefiles as module path
+        // once a path is created and added to the
+        // $MODULEPATH envvar, start wizard to
+        // create a modulefile
+        // also update the setup_rmodules.(c)sh files
+        // and ask to put them in /etc/profile.d
+        //
+        // if modulepath found, but it is empty
+        // start a wizard to add a module file
+        // if .modulesindex doesn't exist
+        // suggest the makecache command
+        //
+        // if modulepath found, and there are
+        // module files but there is no .modulesindex file
+        // suggest the makecache command
+        //
+        // else
+        // crash with the help
+
+        crash!(CRASH_NO_ARGS,
+               "Try '{0} --help' for more information.",
+               executable!());
     }
 
     if args.len() == 2 {
