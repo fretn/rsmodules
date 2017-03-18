@@ -219,8 +219,8 @@ pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
     let file: File = match File::open(filename) {
         Ok(file) => file,
         Err(_) => {
-            crash!(1,
-                   "modules_cache_file couldn't open the required index file");
+            crash!(super::super::CRASH_COULDNT_OPEN_CACHE_FILE,
+                   "modules_cache_file: couldn't open the required index file");
         }
     };
     let mut reader = BufReader::new(file);

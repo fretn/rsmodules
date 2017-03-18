@@ -45,6 +45,14 @@ use std::path::PathBuf;
 use std::env;
 use std::str::FromStr;
 
+static CRASH_UNSUPPORTED_SHELL: i32 = 1;
+static CRASH_FAILED_TO_CREATE_TEMPORARY_FILE: i32 = 2;
+static CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE: i32 = 3;
+static CRASH_NO_CACHE_FILES_FOUND: i32 = 4;
+static CRASH_MODULE_NOT_FOUND: i32 = 5;
+static CRASH_COULDNT_OPEN_CACHE_FILE: i32 = 5;
+static CRASH_NO_ARGS: i32 = 6;
+
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 
@@ -161,7 +169,7 @@ fn run(args: &Vec<String>) {
 
     if !is_shell_supported(shell) {
         usage(false);
-        crash!(1, "{} is not a supported shell", shell);
+        crash!(CRASH_UNSUPPORTED_SHELL, "{} is not a supported shell", shell);
     }
 
     // get install dir
@@ -222,7 +230,7 @@ fn run(args: &Vec<String>) {
             match File::create(&tmp_file_path) {
                 Ok(newfile) => tmpfile = newfile,
                 Err(e) => {
-                    crash!(1, "Failed to create temporary file: {}", e);
+                    crash!(CRASH_FAILED_TO_CREATE_TEMPORARY_FILE, "Failed to create temporary file: {}", e);
                     //return;
                 }
             };
@@ -278,7 +286,7 @@ fn run(args: &Vec<String>) {
     // we want a self destructing tmpfile
     // so it must delete itself at the end of the run
     let cmd = format!("rm -f {}\n", tmp_file_path.display());
-    crash_if_err!(1, tmpfile.write_all(cmd.as_bytes()));
+    crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(cmd.as_bytes()));
 
     // source tmpfile
     println!("source {}", tmp_file_path.display());
@@ -289,7 +297,7 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
 
     if args.len() == 1 {
-        crash!(1, "Try '{0} --help' for more information.", executable!());
+        crash!(CRASH_NO_ARGS, "Try '{0} --help' for more information.", executable!());
     }
 
     if args.len() == 2 {

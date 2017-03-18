@@ -86,7 +86,7 @@ pub fn get_module_list() -> Vec<String> {
     }
 
     if !found_cachefile {
-        crash!(1, "No cachefiles found.");
+        crash!(super::CRASH_NO_CACHE_FILES_FOUND, "No cachefiles found.");
     }
 
     modules.sort();
@@ -136,7 +136,7 @@ fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, act
 
     for line in output {
         let line = format!("{}\n", line);
-        crash_if_err!(1, rmod.tmpfile.write_all(line.as_bytes()));
+        crash_if_err!(super::CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, rmod.tmpfile.write_all(line.as_bytes()));
     }
 }
 
@@ -202,7 +202,7 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
     }
 
     if !found {
-        crash!(1, "Module {0} not found.", selected_module);
+        crash!(super::CRASH_MODULE_NOT_FOUND, "Module {0} not found.", selected_module);
     }
 
     // check of another version is already loaded
