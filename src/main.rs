@@ -45,8 +45,11 @@ extern crate users;
 
 extern crate shellexpand;
 
+extern crate glob;
+use glob::glob;
 use std::io::Write;
 use std::fs::File;
+use std::fs;
 use std::path::PathBuf;
 use std::env;
 use std::str::FromStr;
@@ -116,6 +119,18 @@ static LONG_HELP: &'static str = "
       only works if you have the correct permissions ;)
 ";
 
+pub fn crash(signal: i32, message: &str) {
+    for entry in glob(&shellexpand::tilde("~/.rmodulestmp*"))
+        .expect("Failed to read glob pattern") {
+        match entry {
+            Ok(path) => fs::remove_file(path).unwrap(),
+            Err(_) => println!("Error removing tmp files"),
+        }
+    }
+
+    crash!(signal, "{}", message);
+}
+
 fn is_shell_supported(shell: &str) -> bool {
 
     let mut shell_list = Vec::new();
@@ -177,9 +192,9 @@ fn run(args: &Vec<String>) {
     if !is_shell_supported(shell) {
         usage(false);
         // TODO: delete temp file
-        crash!(CRASH_UNSUPPORTED_SHELL,
-               "{} is not a supported shell",
-               shell);
+        // see: https://doc.rust-lang.org/glob/glob/index.html
+        crash(CRASH_UNSUPPORTED_SHELL,
+              &format!("{} is not a supported shell", shell));
     }
 
     // get install dir
@@ -322,6 +337,9 @@ fn main() {
 
     let args: Vec<String> = std::env::args().collect();
 
+    // ./rmodules install
+
+    // and skip this automatic wizard thing
     if args.len() == 1 {
 
         if !wizard::run(false) {
