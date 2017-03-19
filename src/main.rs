@@ -321,34 +321,13 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
 
     if args.len() == 1 {
-        // if no modulepath variable found, or it is empty
-        // start a wizard to add one to the path
-        // if uid = 0 suggest /usr/local/modulefiles as
-        // module path
-        // else : suggest ~/modulefiles as module path
-        // once a path is created and added to the
-        // $MODULEPATH envvar, start wizard to
-        // create a modulefile
-        // also update the setup_rmodules.(c)sh files
-        // and ask to put them in /etc/profile.d
-        //
-        // if modulepath found, but it is empty
-        // start a wizard to add a module file
-        // if .modulesindex doesn't exist
-        // suggest the makecache command
-        //
-        // if modulepath found, and there are
-        // module files but there is no .modulesindex file
-        // suggest the makecache command
-        //
-        // else
-        // crash with the help
 
-        if !wizard::run() {
+        if !wizard::run(false) {
             crash!(CRASH_NO_ARGS,
                    "Try '{0} --help' for more information.",
                    executable!());
         }
+        return;
     }
 
     if args.len() == 2 {
