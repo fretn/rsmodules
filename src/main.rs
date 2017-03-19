@@ -176,6 +176,7 @@ fn run(args: &Vec<String>) {
 
     if !is_shell_supported(shell) {
         usage(false);
+        // TODO: delete temp file
         crash!(CRASH_UNSUPPORTED_SHELL,
                "{} is not a supported shell",
                shell);
@@ -308,6 +309,7 @@ fn run(args: &Vec<String>) {
 
     // we want a self destructing tmpfile
     // so it must delete itself at the end of the run
+    // if it crashes we still need to delete the file
     let cmd = format!("rm -f {}\n", tmp_file_path.display());
     crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
                   tmpfile.write_all(cmd.as_bytes()));
