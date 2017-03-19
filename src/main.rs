@@ -33,19 +33,21 @@ extern crate lazy_static;
 #[path = "rmodules.rs"]
 mod rmod;
 
+#[path = "wizard.rs"]
+mod wizard;
+
 use rmod::Rmodule;
 
 extern crate rustc_serialize;
 extern crate bincode;
 extern crate walkdir;
 extern crate users;
-use users::get_current_uid;
 
 extern crate shellexpand;
 
-use std::io::{self, Write, BufRead};
-use std::fs::{File, create_dir_all};
-use std::path::{PathBuf, Path};
+use std::io::Write;
+use std::fs::File;
+use std::path::PathBuf;
 use std::env;
 use std::str::FromStr;
 
@@ -314,89 +316,6 @@ fn run(args: &Vec<String>) {
     println!("source {}", tmp_file_path.display());
 }
 
-fn read_input(msg: &str) -> String {
-    print!("{}: ", msg);
-    io::stdout().flush().unwrap();
-    let mut line = String::new();
-    let stdin = io::stdin();
-    stdin.lock().read_line(&mut line).expect("Could not read line");
-    return line;
-}
-
-fn is_yes(answer: String) -> bool {
-
-    if answer == "Y\n" || answer == "y\n" || answer == "\n" || answer == "yes\n" ||
-       answer == "Yes\n" || answer == "YES\n" {
-        return true;
-    }
-
-    return false;
-}
-
-fn update_setup_rmodules_c_sh() {
-    // no point in setting the env var, we are not running in the alias
-    // env::set_var("MODULEPATH", path);
-    // just update the setup_rmodules.(c)sh files and copy them to /etc/profile.d
-    // if no permissions, tell them if they are an admin to run this as root
-    // or just throw it in .bashrc and .personal_cshrc -> or first check if
-    // /etc/profile.d/rmodules.csh link exists
-
-
-    // println!("and now open a new terminal and type: module");
-}
-
-fn wizard() -> bool {
-    let module_paths: Vec<String> = rmod::get_module_paths(true);
-
-    if module_paths.len() == 0 {
-        //            println!("No $MODULEPATH found, want to add one ? [Y/n]");
-        let mut line = read_input("No $MODULEPATH found, want to add one ? [Y/n]");
-        //          let stdin = io::stdin();
-        //          stdin.lock().read_line(&mut line).expect("Could not read line");
-        if is_yes(line) {
-            let mut path: &str = &shellexpand::tilde("~/modules");
-            if get_current_uid() == 0 {
-                path = "/usr/local/modules";
-            }
-            line = read_input(format!("Please enter a path where you want to save your module \
-                                       files [{}]",
-                                      path)
-                .as_ref());
-
-            if line != "\n" {
-                path = line.as_ref();
-            }
-
-            if Path::new(path).is_dir() {
-                if is_yes(read_input("Path already exists, are you sure you want to continue ? \
-                                      [Y/n]")) {
-
-                    update_setup_rmodules_c_sh();
-                    return true;
-                } else {
-                    return false;
-                }
-
-            } else if Path::new(path).is_file() {
-                crash!(CRASH_MODULEPATH_IS_FILE, "Modulepath cannot be a file");
-            } else {
-                if is_yes(read_input(format!("{} doesn't exist, do you want to create it ? \
-                                              [Y/n]",
-                                             path)
-                    .as_ref())) {
-                    std::fs::create_dir_all(path);
-                    update_setup_rmodules_c_sh();
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        }
-    }
-
-    return false;
-}
-
 fn main() {
 
     let args: Vec<String> = std::env::args().collect();
@@ -425,7 +344,7 @@ fn main() {
         // else
         // crash with the help
 
-        if !wizard() {
+        if !wizard::run() {
             crash!(CRASH_NO_ARGS,
                    "Try '{0} --help' for more information.",
                    executable!());
