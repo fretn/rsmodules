@@ -415,6 +415,10 @@ pub fn get_description() -> Vec<String> {
 
     for line in INFO_GENERAL.lock().unwrap().iter() {
         output.push(format!("{}", line.to_string()));
+        // there can be multiple description calls, but
+        // only store the first line of the description in
+        // the cache file
+        break;
     }
 
     return output;

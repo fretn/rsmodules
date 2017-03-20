@@ -547,8 +547,6 @@ proc cmdargs { cmd args } {
     foreach arg $args {
         #if {$arg != ""} {
             set val [doubleQuoteEscaped $arg]
-            regsub -all "x86_64/" $val "" val
-            regsub -all "i386/" $val "" val
             lappend cmdArgsL "\"$val\""
         #}
     }

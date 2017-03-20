@@ -49,7 +49,7 @@ impl Module {
 
 impl Ord for Module {
     fn cmp(&self, other: &Module) -> Ordering {
-        self.name.cmp(&other.name)
+        self.name.to_lowercase().cmp(&other.name.to_lowercase())
     }
 }
 
@@ -322,12 +322,12 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usiz
                 super::write_av_output(&tmp, &tmpfile);
             }
         } else {
-            let first_char: char = module.name.chars().next().unwrap();
-            if first_char != previous_first_char {
+            let first_char: char = module.name.to_lowercase().chars().next().unwrap();
+            if first_char != previous_first_char{
                 // add a newline
                 super::write_av_output("", &tmpfile);
             }
-            previous_first_char = module.name.chars().next().unwrap();
+            previous_first_char = module.name.to_lowercase().chars().next().unwrap();
             super::write_av_output(&tmp, &tmpfile);
         }
     }
