@@ -162,8 +162,9 @@ pub fn run(recursive: bool) -> bool {
                 }
 
             } else if Path::new(path).is_file() {
-                crash!(super::CRASH_MODULEPATH_IS_FILE,
-                       "Modulepath cannot be a file");
+                super::rmod::crash(super::CRASH_MODULEPATH_IS_FILE,
+                                   "Modulepath cannot be a file");
+                return false;
             } else {
                 if is_yes(read_input(format!("The folder {} doesn't exist, do you want to \
                                               create it ? [Y/n]",

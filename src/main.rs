@@ -45,14 +45,18 @@ extern crate users;
 
 extern crate shellexpand;
 
-extern crate glob;
-use glob::glob;
 use std::io::Write;
 use std::fs::File;
-use std::fs;
 use std::path::PathBuf;
 use std::env;
 use std::str::FromStr;
+use std::sync::Mutex;
+
+lazy_static! {
+    static ref TMPFILE_INITIALIZED: Mutex<bool> = Mutex::new(false);
+    static ref TMPFILE_PATH: Mutex<String> = Mutex::new(String::new());
+}
+
 
 static CRASH_UNSUPPORTED_SHELL: i32 = 1;
 static CRASH_FAILED_TO_CREATE_TEMPORARY_FILE: i32 = 2;
@@ -119,18 +123,6 @@ static LONG_HELP: &'static str = "
       only works if you have the correct permissions ;)
 ";
 
-pub fn crash(signal: i32, message: &str) {
-    for entry in glob(&shellexpand::tilde("~/.rmodulestmp*"))
-        .expect("Failed to read glob pattern") {
-        match entry {
-            Ok(path) => fs::remove_file(path).unwrap(),
-            Err(_) => println!("Error removing tmp files"),
-        }
-    }
-
-    crash!(signal, "{}", message);
-}
-
 fn is_shell_supported(shell: &str) -> bool {
 
     let mut shell_list = Vec::new();
@@ -169,6 +161,14 @@ fn usage(in_eval: bool) {
     println_stderr!("{}", &LONG_HELP);
 }
 
+fn set_global_tmpfile(tmp_file_path: String) {
+    let mut tmp = TMPFILE_PATH.lock().unwrap();
+    *tmp = tmp_file_path;
+
+    let mut tmp = TMPFILE_INITIALIZED.lock().unwrap();
+    *tmp = true;
+}
+
 fn run(args: &Vec<String>) {
     let mut shell: &str = &args[1];
     let command: &str;
@@ -193,8 +193,8 @@ fn run(args: &Vec<String>) {
         usage(false);
         // TODO: delete temp file
         // see: https://doc.rust-lang.org/glob/glob/index.html
-        crash(CRASH_UNSUPPORTED_SHELL,
-              &format!("{} is not a supported shell", shell));
+        rmod::crash(CRASH_UNSUPPORTED_SHELL,
+                    &format!("{} is not a supported shell", shell));
     }
 
     // get install dir
@@ -243,7 +243,10 @@ fn run(args: &Vec<String>) {
     tmp_file_path.push(filename);
 
     match File::create(&tmp_file_path) {
-        Ok(file) => tmpfile = file,
+        Ok(file) => {
+            tmpfile = file;
+            set_global_tmpfile(tmp_file_path.to_str().unwrap().to_string());
+        }
         Err(_) => {
             // home exists but we can't create the temp file in it or
             // worst case, /tmp exists but we can't create the temp file in it
@@ -253,12 +256,14 @@ fn run(args: &Vec<String>) {
             tmp_file_path.push(filename);
 
             match File::create(&tmp_file_path) {
-                Ok(newfile) => tmpfile = newfile,
+                Ok(newfile) => {
+                    tmpfile = newfile;
+                    set_global_tmpfile(tmp_file_path.to_str().unwrap().to_string());
+                }
                 Err(e) => {
-                    crash!(CRASH_FAILED_TO_CREATE_TEMPORARY_FILE,
-                           "Failed to create temporary file: {}",
-                           e);
-                    //return;
+                    rmod::crash(CRASH_FAILED_TO_CREATE_TEMPORARY_FILE,
+                                &format!("Failed to create temporary file: {}", e));
+                    return;
                 }
             };
         }
@@ -333,7 +338,13 @@ fn run(args: &Vec<String>) {
     println!("source {}", tmp_file_path.display());
 }
 
+fn init() {
+    let mut tmp = TMPFILE_INITIALIZED.lock().unwrap();
+    *tmp = false;
+}
+
 fn main() {
+    init();
 
     let args: Vec<String> = std::env::args().collect();
 

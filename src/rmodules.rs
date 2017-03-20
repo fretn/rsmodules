@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 use std::fs::File;
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::io::Write;
 use std::env;
@@ -44,6 +45,20 @@ pub struct Rmodule<'a> {
     pub tmpfile: &'a File, // tempfile that will be sourced
     pub installdir: &'a str, // installation folder
 }
+
+pub fn crash(signal: i32, message: &str) {
+
+    let tmp_file_path = super::TMPFILE_PATH.lock().unwrap();
+    let tmpfile_initialized = super::TMPFILE_INITIALIZED.lock().unwrap();
+
+    if *tmpfile_initialized {
+        let ref path = *tmp_file_path;
+        fs::remove_file(path).unwrap();
+    }
+
+    crash!(signal, "{}", message);
+}
+
 
 pub fn get_module_paths(silent: bool) -> Vec<String> {
     let mut modulepath: String = String::from(DEFAULT_MODULE_PATH);
@@ -89,8 +104,7 @@ pub fn get_module_list() -> Vec<String> {
     }
 
     if !found_cachefile {
-        // TODO: delete temp file
-        crash!(super::CRASH_NO_CACHE_FILES_FOUND, "No cachefiles found.");
+        crash(super::CRASH_NO_CACHE_FILES_FOUND, "No cachefiles found.");
     }
 
     modules.sort();
@@ -140,7 +154,7 @@ fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, act
 
     for line in output {
         let line = format!("{}\n", line);
-        // TODO: delete temp file
+        // TODO: delete temp file ?
         crash_if_err!(super::CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
                       rmod.tmpfile.write_all(line.as_bytes()));
     }
@@ -209,10 +223,8 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
     }
 
     if !found {
-        // TODO: delete temp file
-        crash!(super::CRASH_MODULE_NOT_FOUND,
-               "Module {0} not found.",
-               selected_module);
+        crash(super::CRASH_MODULE_NOT_FOUND,
+              &format!("Module {0} not found.", selected_module));
     }
 
     // check of another version is already loaded
