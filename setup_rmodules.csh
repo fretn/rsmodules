@@ -10,6 +10,7 @@ set mod_av=`setenv RMODULES_AV_LIST; $RMODULES_INSTALL_DIR/rmodules csh avail | 
 
 complete module \
 'n#load#$mod_av#' \
+'n#info#$mod_av#' \
 'n#unload#$mod_av#' \
-'p#1#(load unload avail \
+'p#1#(info load unload available \
     purge list)#'

@@ -57,14 +57,9 @@ _module() {
     opts="-h --help"
 
     case "$prev" in
-    add|load)    COMPREPLY=( $(compgen -W "$(_module_not_yet_loaded)" -- "$cur") );;
-    rm|remove|unload|switch|swap)
+    info|load)    COMPREPLY=( $(compgen -W "$(_module_not_yet_loaded)" -- "$cur") );;
+    unload)
             COMPREPLY=( $(IFS=: compgen -W "${LOADEDMODULES}" -- "$cur") );;
-    unuse)        COMPREPLY=( $(IFS=: compgen -W "${MODULEPATH}" -- "$cur") );;
-    use|*-a*)    ;;            # let readline handle the completion
-    -u|--userlvl)    COMPREPLY=( $(compgen -W "novice expert advanced" -- "$cur") );;
-    display|help|show|whatis)
-            COMPREPLY=( $(compgen -W "$(_module_avail)" -- "$cur") );;
     *) if test $COMP_CWORD -gt 2
        then
         _module_long_arg_list "$cur"
