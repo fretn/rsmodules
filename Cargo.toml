@@ -1,6 +1,6 @@
 [package]
 name = "rmodules"
-version = "0.4.3"
+version = "0.4.4"
 authors = ["Frederik Delaere <frederik.delaere@ugent.be>"]
 
 [dependencies]

@@ -25,6 +25,7 @@ use std::io::{BufWriter, BufReader, BufRead, Write};
 use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::cmp::Ordering;
+use std::env;
 
 use walkdir::WalkDir;
 extern crate bincode;
@@ -231,6 +232,13 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usiz
 
     let modulepaths = super::get_module_paths(false);
 
+    let simple_list: bool;
+
+    match env::var("RMODULES_AV_LIST") {
+        Ok(_) => simple_list = true,
+        Err(_) => simple_list = false,
+    };
+
     let mut longest_name = 0;
     let mut decoded: Vec<Module> = Vec::new();
     for modulepath in modulepaths.clone() {
@@ -273,22 +281,27 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usiz
             default = "D";
         }
 
-        // print loaded modules in bold
-        if super::is_module_loaded(module.name.as_ref()) {
-
-            tmp = format!("{} {}{:width$}{}{}",
-                          default,
-                          bold_start,
-                          module.name,
-                          bold_end,
-                          description,
-                          width = longest_name);
+        if simple_list {
+            tmp = format!("{}", module.name);
         } else {
-            tmp = format!("{} {:width$}{}",
-                          default,
-                          module.name,
-                          description,
-                          width = longest_name);
+
+            // print loaded modules in bold
+            if super::is_module_loaded(module.name.as_ref()) {
+
+                tmp = format!("{} {}{:width$}{}{}",
+                              default,
+                              bold_start,
+                              module.name,
+                              bold_end,
+                              description,
+                              width = longest_name);
+            } else {
+                tmp = format!("{} {:width$}{}",
+                              default,
+                              module.name,
+                              description,
+                              width = longest_name);
+            }
         }
 
 
@@ -300,21 +313,29 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usiz
 
             if avmodule_lc.contains(module_lc) {
                 let first_char: char = module.name.chars().next().unwrap();
-                if first_char != previous_first_char {
+                if first_char != previous_first_char && !simple_list {
                     // add a newline
                     super::write_av_output("", &tmpfile);
                 }
                 previous_first_char = module.name.chars().next().unwrap();
-                super::write_av_output(&tmp, &tmpfile);
+                if simple_list {
+                    println!("{}", &tmp);
+                } else {
+                    super::write_av_output(&tmp, &tmpfile);
+                }
             }
         } else {
             let first_char: char = module.name.to_lowercase().chars().next().unwrap();
-            if first_char != previous_first_char {
+            if first_char != previous_first_char && !simple_list {
                 // add a newline
                 super::write_av_output("", &tmpfile);
             }
             previous_first_char = module.name.to_lowercase().chars().next().unwrap();
-            super::write_av_output(&tmp, &tmpfile);
+            if simple_list {
+                println!("{}", &tmp);
+            } else {
+                super::write_av_output(&tmp, &tmpfile);
+            }
         }
     }
 }

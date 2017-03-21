@@ -335,7 +335,19 @@ fn run(args: &Vec<String>) {
                   tmpfile.write_all(cmd.as_bytes()));
 
     // source tmpfile
-    println!("source {}", tmp_file_path.display());
+    let simple_list: bool;
+
+    match env::var("RMODULES_AV_LIST") {
+        Ok(_) => simple_list = true,
+        Err(_) => simple_list = false,
+    };
+
+    // when above env var is set, we just output to stdout
+    // this is used for scripts that want to parse the module av output
+    // for example for tab completion
+    if !simple_list {
+        println!("source {}", tmp_file_path.display());
+    }
 }
 
 fn init() {
