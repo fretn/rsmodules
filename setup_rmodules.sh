@@ -13,12 +13,7 @@ export LOADEDMODULES=""
 # Bash commandline completion (bash 3.0 and above) for Modules 3.2.10
 #
 _module_avail() {
-    export RMODULES_AV_LIST=1; /software/shared/apps/x86_64/rmodules/0.2.0/rmodules bash avail 2>&1 | sed '
-        /:$/d;
-        /:ERROR:/d;
-        s#^\(.*\)/\(.\+\)(default)#\1\n\1\/\2#;
-        s#/(default)##g;
-        s#/*$##g;'
+    /software/shared/apps/x86_64/rmodules/0.2.0/rmodules noshell avail
 }
 
 _module_not_yet_loaded() {

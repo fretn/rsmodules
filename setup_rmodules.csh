@@ -6,7 +6,7 @@ setenv RMODULES_INSTALL_DIR "/software/shared/apps/x86_64/rmodules/0.2.0/"
 setenv LOADEDMODULES ""
 
 # this should be a function, so everytime it is called the info is updated
-set mod_av=`setenv RMODULES_AV_LIST; $RMODULES_INSTALL_DIR/rmodules csh avail | & sed '/:$/d;/:ERROR:/d;s#^\(.*\)/\(.\+\)(default)#\1\n\1\/\2#;s#/(default)##g;s#/*$##g;'`
+set mod_av="`$RMODULES_INSTALL_DIR/rmodules noshell avail`"
 
 complete module \
 'n#load#$mod_av#' \

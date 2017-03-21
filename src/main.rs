@@ -46,7 +46,7 @@ extern crate users;
 extern crate shellexpand;
 
 use std::io::Write;
-use std::fs::File;
+use std::fs::{File, remove_file};
 use std::path::PathBuf;
 use std::env;
 use std::str::FromStr;
@@ -64,7 +64,7 @@ static CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE: i32 = 3;
 static CRASH_NO_CACHE_FILES_FOUND: i32 = 4;
 static CRASH_MODULE_NOT_FOUND: i32 = 5;
 static CRASH_COULDNT_OPEN_CACHE_FILE: i32 = 5;
-static CRASH_NO_ARGS: i32 = 6;
+//static CRASH_NO_ARGS: i32 = 6;
 static CRASH_MODULEPATH_IS_FILE: i32 = 7;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -131,6 +131,10 @@ fn is_shell_supported(shell: &str) -> bool {
     shell_list.push("csh");
     shell_list.push("bash");
     shell_list.push("zsh");
+    // when noshell is selected, all output is printed
+    // to stdout instead of the temp file
+    // noshell is also useful for debugging purposes
+    shell_list.push("noshell");
 
     if shell_list.contains(&shell) {
         return true;
@@ -158,6 +162,12 @@ fn usage(in_eval: bool) {
     }
 
     println_stderr!("{}", &error_msg);
+    if !in_eval {
+        println_stderr!("  Supported shells: bash, zsh, csh, tcsh and noshell");
+        println_stderr!("");
+        println_stderr!("  When noshell is selected all output is printed to stdout,");
+        println_stderr!("  module available also then prints a nice list without gaps.");
+    }
     println_stderr!("{}", &LONG_HELP);
 }
 
@@ -191,8 +201,6 @@ fn run(args: &Vec<String>) {
 
     if !is_shell_supported(shell) {
         usage(false);
-        // TODO: delete temp file
-        // see: https://doc.rust-lang.org/glob/glob/index.html
         rmod::crash(CRASH_UNSUPPORTED_SHELL,
                     &format!("{} is not a supported shell", shell));
     }
@@ -207,7 +215,6 @@ fn run(args: &Vec<String>) {
         }
     };
 
-    //let modules = rmod::get_module_list();
     let modulepaths = rmod::get_module_paths(false);
 
     // create temporary file in the home folder
@@ -226,11 +233,12 @@ fn run(args: &Vec<String>) {
 
     let mut tmp_file_path: PathBuf;
 
+
     match env::home_dir() {
         Some(path) => tmp_file_path = path,
         None => {
             show_warning!("We were unable to find your home directory, checking if /tmp is an \
-                             option");
+                            option");
 
             // this is wrong, as we try to use temp again a bit later
             tmp_file_path = env::temp_dir();
@@ -327,26 +335,21 @@ fn run(args: &Vec<String>) {
         }
     }
 
-    // we want a self destructing tmpfile
-    // so it must delete itself at the end of the run
-    // if it crashes we still need to delete the file
-    let cmd = format!("rm -f {}\n", tmp_file_path.display());
-    crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
-                  tmpfile.write_all(cmd.as_bytes()));
-
-    // source tmpfile
-    let simple_list: bool;
-
-    match env::var("RMODULES_AV_LIST") {
-        Ok(_) => simple_list = true,
-        Err(_) => simple_list = false,
-    };
-
-    // when above env var is set, we just output to stdout
+    // when noshell is choosen, we just output to stdout
     // this is used for scripts that want to parse the module av output
     // for example for tab completion
-    if !simple_list {
+    if shell != "noshell" {
+        // we want a self destructing tmpfile
+        // so it must delete itself at the end of the run
+        // if it crashes we still need to delete the file
+        let cmd = format!("rm -f {}\n", tmp_file_path.display());
+        crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                      tmpfile.write_all(cmd.as_bytes()));
+
+        // source tmpfile
         println!("source {}", tmp_file_path.display());
+    } else {
+        remove_file(tmp_file_path.to_str().unwrap().to_string()).unwrap();
     }
 }
 
@@ -366,9 +369,12 @@ fn main() {
     if args.len() == 1 {
 
         if !wizard::run(false) {
+            usage(false);
+            /*
             crash!(CRASH_NO_ARGS,
                    "Try '{0} --help' for more information.",
                    executable!());
+                   */
         }
         return;
     }

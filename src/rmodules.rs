@@ -128,7 +128,7 @@ pub fn command(rmod: &mut Rmodule) {
     } else if rmod.cmd == "makecache" {
         let modulepaths = get_module_paths(false);
         for modulepath in modulepaths {
-            cache::update(modulepath, &mut rmod.tmpfile);
+            cache::update(modulepath, &mut rmod.tmpfile, rmod.shell);
         }
     }
 }
@@ -155,8 +155,12 @@ fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, act
     for line in output {
         let line = format!("{}\n", line);
         // TODO: delete temp file ?
-        crash_if_err!(super::CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
-                      rmod.tmpfile.write_all(line.as_bytes()));
+        if rmod.shell == "noshell" {
+            println!("{}", line);
+        } else {
+            crash_if_err!(super::CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                          rmod.tmpfile.write_all(line.as_bytes()));
+        }
     }
 }
 
@@ -277,7 +281,7 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
                                        with {}",
                                       other,
                                       selected_module);
-            write_av_output(&msg, &mut rmod.tmpfile);
+            write_av_output(&msg, &mut rmod.tmpfile, rmod.shell);
         }
     }
 }
@@ -355,10 +359,14 @@ pub fn is_other_version_of_module_loaded(name: &str) -> bool {
     return false;
 }
 
-fn write_av_output(line: &str, mut tmpfile: &File) {
-    let data = format!("echo \"{}\"\n", line);
-    tmpfile.write_all(data.as_bytes()).expect("Unable to write data");
-    tmpfile.write_all("\n".as_bytes()).expect("Unable to write data");
+fn write_av_output(line: &str, mut tmpfile: &File, shell: &str) {
+    if shell == "noshell" {
+        println!("{}", line);
+    } else {
+        let data = format!("echo \"{}\"\n", line);
+        tmpfile.write_all(data.as_bytes()).expect("Unable to write data");
+        tmpfile.write_all("\n".as_bytes()).expect("Unable to write data");
+    }
 }
 
 fn list(rmod: &mut Rmodule) {
@@ -376,14 +384,16 @@ fn list(rmod: &mut Rmodule) {
     loadedmodules.sort();
 
     if loadedmodules.len() > 0 {
-        write_av_output("Currently loaded modules:", &mut rmod.tmpfile);
+        write_av_output("Currently loaded modules:", &mut rmod.tmpfile, rmod.shell);
     } else {
-        write_av_output("There are currently no modules loaded.", &mut rmod.tmpfile);
+        write_av_output("There are currently no modules loaded.",
+                        &mut rmod.tmpfile,
+                        rmod.shell);
     }
     for module in loadedmodules {
 
         if module != "" {
-            write_av_output(module, &mut rmod.tmpfile);
+            write_av_output(module, &mut rmod.tmpfile, rmod.shell);
         }
     }
 }

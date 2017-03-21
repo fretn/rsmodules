@@ -25,7 +25,6 @@ use std::io::{BufWriter, BufReader, BufRead, Write};
 use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::cmp::Ordering;
-use std::env;
 
 use walkdir::WalkDir;
 extern crate bincode;
@@ -111,7 +110,7 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
     return false;
 }
 
-pub fn update(modulepath: String, tmpfile: &File) {
+pub fn update(modulepath: String, tmpfile: &File, shell: &str) {
 
     // TODO: check if we have read and write permissions on 'modulepath'
 
@@ -200,7 +199,7 @@ pub fn update(modulepath: String, tmpfile: &File) {
 
     let msg: String = format!("The index file {} was succesfully updated.", &file_str);
 
-    super::write_av_output(&msg, &tmpfile);
+    super::write_av_output(&msg, &tmpfile, shell);
 }
 
 pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
@@ -232,12 +231,14 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usiz
 
     let modulepaths = super::get_module_paths(false);
 
-    let simple_list: bool;
+    let mut simple_list: bool = false;
 
-    match env::var("RMODULES_AV_LIST") {
-        Ok(_) => simple_list = true,
-        Err(_) => simple_list = false,
-    };
+    // prints a nice list for module av
+    // no gaps, no default, no description
+    // usefull for parsing, eg for bash completion
+    if shell == "noshell" {
+        simple_list = true;
+    }
 
     let mut longest_name = 0;
     let mut decoded: Vec<Module> = Vec::new();
@@ -315,26 +316,26 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usiz
                 let first_char: char = module.name.chars().next().unwrap();
                 if first_char != previous_first_char && !simple_list {
                     // add a newline
-                    super::write_av_output("", &tmpfile);
+                    super::write_av_output("", &tmpfile, shell);
                 }
                 previous_first_char = module.name.chars().next().unwrap();
                 if simple_list {
                     println!("{}", &tmp);
                 } else {
-                    super::write_av_output(&tmp, &tmpfile);
+                    super::write_av_output(&tmp, &tmpfile, shell);
                 }
             }
         } else {
             let first_char: char = module.name.to_lowercase().chars().next().unwrap();
             if first_char != previous_first_char && !simple_list {
                 // add a newline
-                super::write_av_output("", &tmpfile);
+                super::write_av_output("", &tmpfile, shell);
             }
             previous_first_char = module.name.to_lowercase().chars().next().unwrap();
             if simple_list {
                 println!("{}", &tmp);
             } else {
-                super::write_av_output(&tmp, &tmpfile);
+                super::write_av_output(&tmp, &tmpfile, shell);
             }
         }
     }
