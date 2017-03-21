@@ -25,8 +25,10 @@ extern crate rhai;
 use self::rhai::{Engine, FnRegister};
 use std::env;
 use std::sync::Mutex;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf, is_separator};
 use std::io::Write;
+use std::fs::{metadata, read_dir};
+use std::os::unix::fs::PermissionsExt;
 
 // WARNING: the scripts don't support tabbed indents in if else structures
 
@@ -35,6 +37,7 @@ lazy_static! {
     static ref COMMANDS: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref CONFLICT: Mutex<bool> = Mutex::new(false);
     static ref SHELL: Mutex<String> = Mutex::new({String::from("bash")});
+    static ref INFO_DESCRIPTION: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_GENERAL: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_LD_LIBRARY_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
@@ -46,6 +49,7 @@ lazy_static! {
 fn init_vars_and_commands() {
     ENV_VARS.lock().unwrap().clear();
     COMMANDS.lock().unwrap().clear();
+    INFO_DESCRIPTION.lock().unwrap().clear();
     INFO_GENERAL.lock().unwrap().clear();
     INFO_PATH.lock().unwrap().clear();
     INFO_LD_LIBRARY_PATH.lock().unwrap().clear();
@@ -320,7 +324,7 @@ fn unload(module: String) {
 }
 
 fn description(desc: String) {
-    println_stderr!("{}", desc);
+    INFO_DESCRIPTION.lock().unwrap().push(desc.replace("\"", "\\\""));
 }
 
 fn description_cache(desc: String) {
@@ -465,6 +469,17 @@ pub fn get_info(shell: &str) -> Vec<String> {
         bold_end = "\\033[0m";
     }
 
+    if INFO_DESCRIPTION.lock().unwrap().iter().len() > 0 {
+        got_output = true;
+    }
+    for line in INFO_DESCRIPTION.lock().unwrap().iter() {
+        if shell == "bash" || shell == "zsh" {
+            output.push(format!("echo $\"{}\"", line.to_string()));
+        } else {
+            output.push(format!("echo \"{}\"", line.to_string()));
+        }
+    }
+
     if INFO_GENERAL.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
         output.push(format!("echo \"{}Sets the following variables: {}\"",
@@ -525,11 +540,98 @@ pub fn get_info(shell: &str) -> Vec<String> {
         output.push(format!("echo '{}'", line.to_string()));
     }
 
-    if got_output {
-        output.push(format!("echo ''\n"));
+    output.push(format!("echo ''"));
+    output.push(format!("echo \"{}Try one of these commands to run the program: {}\"",
+                        bold_start,
+                        bold_end));
+
+    let mut execs: Vec<String> = Vec::new();
+    for line in INFO_PATH.lock().unwrap().iter() {
+
+        if Path::new(line).is_dir() {
+            for entry in read_dir(line).unwrap() {
+
+                let path = entry.unwrap().path();
+
+                if path.is_dir() {
+                    continue;
+                }
+
+                if is_executable_file(&path) {
+                    execs.push(format!("echo '{}'", strip_dir(path.to_str().unwrap())));
+                    got_output = true;
+                }
+            }
+        }
     }
 
-    // TODO: print all executable files in PATH
+    execs.sort();
+    for exec in execs {
+        output.push(exec);
+    }
+
+    if got_output {
+        output.push(format!("echo ''"));
+    }
+
 
     return output;
+}
+
+// thx uucore
+fn strip_dir(fullname: &str) -> String {
+    // Remove all platform-specific path separators from the end
+    let mut path: String = fullname.chars().rev().skip_while(|&ch| is_separator(ch)).collect();
+
+    // Undo reverse
+    path = path.chars().rev().collect();
+
+    // Convert to path buffer and get last path component
+    let pb = PathBuf::from(path);
+    match pb.components().last() {
+        Some(c) => c.as_os_str().to_str().unwrap().to_owned(),
+        None => "".to_owned(),
+    }
+}
+
+fn is_executable_file(path: &PathBuf) -> bool {
+    let meta = metadata(path).unwrap();
+    let perm = meta.permissions();
+
+    let mut octal_number = 0;
+    let mut decimal_number = perm.mode();
+    let mut i: u32 = 1;
+    while decimal_number != 0 {
+        octal_number += (decimal_number % 8) * i;
+        decimal_number /= 8;
+        i *= 10;
+    }
+
+    let perm: String = octal_number.to_string();
+    let perm = perm.split("");
+    let mut counter = 0;
+    for p in perm {
+        if p != "" {
+            let mut perms = p.parse::<i32>().unwrap();
+
+            if perms - 4 >= 0 {
+                perms = perms - 4;
+            }
+
+            if perms - 2 >= 0 {
+                perms = perms - 2;
+            }
+
+            if perms - 1 >= 0 {
+                //                perms = perms - 1;
+                if counter == 2 {
+                    return true;
+                }
+            }
+            counter += 1;
+
+        }
+    }
+
+    return false;
 }

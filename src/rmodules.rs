@@ -91,7 +91,7 @@ pub fn get_module_list() -> Vec<String> {
         // if they don't and we have write permission in that folder
         // we should create the cache
         let mut testpath = PathBuf::from(path);
-        testpath.push(".modulesindex");
+        testpath.push(cache::MODULESINDEX);
 
         if testpath.exists() {
             cache::parse_modules_cache_file(&testpath, &mut modules);

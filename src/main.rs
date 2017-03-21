@@ -119,7 +119,7 @@ static LONG_HELP: &'static str = "
 
     * makecache
       Updates the .modulesindex file in all the paths that
-      are found in the $MODULEPATHS variable. This ofcourse
+      are found in the $MODULEPATH variable. This ofcourse
       only works if you have the correct permissions ;)
 ";
 

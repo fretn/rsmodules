@@ -30,6 +30,8 @@ use walkdir::WalkDir;
 extern crate bincode;
 use bincode::rustc_serialize::{encode_into, decode_from};
 
+pub static MODULESINDEX: &'static str = ".modulesindex";
+
 #[derive(RustcEncodable, RustcDecodable, Clone, Eq)]
 struct Module {
     name: String,
@@ -75,21 +77,6 @@ fn add_module(name: String, description: String, flags: i64, modules: &mut Vec<M
 }
 
 
-/*
-fn is_dir(entry: &walkdir::DirEntry) -> bool {
-    let str_path: &str = entry.file_name().to_str().unwrap();
-    let path: PathBuf = PathBuf::from(str_path);
-    path.is_dir()
-}
-
-fn is_hidden(entry: &walkdir::DirEntry) -> bool {
-    entry.file_name()
-        .to_str()
-        .map(|s| s.starts_with("."))
-        .unwrap_or(false)
-}
-*/
-
 fn get_default_version(modulepath: &str, modulename: &str) -> bool {
     let parts: Vec<&str> = modulename.split('/').collect();
     let mut groupname: &str = "";
@@ -126,13 +113,13 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
 pub fn update(modulepath: String, tmpfile: &File) {
 
     // TODO: check if we have read and write permissions on 'modulepath'
+
     // list is: path to file, module name, default
     let mut list: Vec<(String, String, bool)> = Vec::new();
     let module_path = Path::new(&modulepath);
 
     for entry in WalkDir::new(module_path).into_iter().filter_map(|e| e.ok()) {
 
-        //let str_path: String = entry.file_name().to_str().unwrap().to_string();
         let str_path: &str = entry.path().to_str().unwrap();
 
         let part: Vec<&str> = str_path.split(&modulepath).collect();
@@ -149,7 +136,7 @@ pub fn update(modulepath: String, tmpfile: &File) {
                         second = &modulename[1..2];
                     }
 
-                    if modulename == ".modulesindex" {
+                    if modulename == MODULESINDEX {
                         continue;
                     }
                     // modulename can start with /
@@ -196,13 +183,13 @@ pub fn update(modulepath: String, tmpfile: &File) {
             flags = 1;
         }
         add_module(modulename, description, flags, &mut modules);
-        //println_stderr!("{}", description);
     }
 
-    let file: File = match File::create(format!("{}/.modulesindex", modulepath)) {
+    let file_str = format!("{}/{}", modulepath, MODULESINDEX);
+    let file: File = match File::create(&file_str) {
         Ok(file) => file,
         Err(_) => {
-            show_warning!("Cannot update {}", modulepath);
+            show_warning!("Something went wrong while trying to update: {}", &file_str);
             return;
         }
     };
@@ -210,7 +197,8 @@ pub fn update(modulepath: String, tmpfile: &File) {
     let mut writer = BufWriter::new(file);
     encode_into(&modules, &mut writer, bincode::SizeLimit::Infinite).unwrap();
 
-    let msg: String = format!("Succesfully updated {}", modulepath);
+    let msg: String = format!("The index file {} was succesfully updated.", &file_str);
+
     super::write_av_output(&msg, &tmpfile);
 }
 
@@ -247,7 +235,7 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usiz
     let mut decoded: Vec<Module> = Vec::new();
     for modulepath in modulepaths.clone() {
 
-        let file: File = match File::open(format!("{}/.modulesindex", modulepath)) {
+        let file: File = match File::open(format!("{}/{}", modulepath, MODULESINDEX)) {
             Ok(file) => file,
             Err(_) => {
                 continue;
@@ -277,8 +265,6 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usiz
         let tmp: String;
 
         let mut description = module.description;
-        //let width: f64 = (shell_width as f64 - longest_name as f64 - 3.0) * 0.75;
-        //description.truncate(width as usize);
         description.truncate(shell_width - longest_name - 3);
 
         let mut default: &str = " ";
@@ -323,7 +309,7 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usiz
             }
         } else {
             let first_char: char = module.name.to_lowercase().chars().next().unwrap();
-            if first_char != previous_first_char{
+            if first_char != previous_first_char {
                 // add a newline
                 super::write_av_output("", &tmpfile);
             }
