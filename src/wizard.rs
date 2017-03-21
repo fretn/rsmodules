@@ -22,9 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-use std::io::{self, Write, BufRead};
+use std::io::{self, Write, BufRead, BufReader};
 use std::fs::create_dir_all;
-use std::path::Path;
+use std::os::unix::fs::symlink;
+use std::path::{Path, PathBuf};
+use std::fs::File;
+use std::fs::OpenOptions;
+use std::env;
 extern crate shellexpand;
 
 
@@ -55,7 +59,7 @@ fn print_title(title: &str) {
     println!("");
 }
 
-fn update_setup_rmodules_c_sh(recursive: bool) {
+fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
     // no point in setting the env var, we are not running in the alias
     // env::set_var("MODULEPATH", path);
     // just update the setup_rmodules.(c)sh files and copy them to /etc/profile.d
@@ -65,35 +69,182 @@ fn update_setup_rmodules_c_sh(recursive: bool) {
 
 
     // do we create the rmodules.(c)sh files from code ?
+    let executable_path = PathBuf::from(env::current_exe().unwrap());
+    let executable_path = executable_path.parent();
+    let current_path_sh: &str = &format!("{}/setup_rmodules.sh",
+                                         executable_path.unwrap().display());
+    let current_path_csh: &str = &format!("{}/setup_rmodules.csh",
+                                          executable_path.unwrap().display());
+
+    if !Path::new(current_path_sh).is_file() {
+        crash!(super::CRASH_MISSING_INIT_FILES,
+               "{} should be in the same folder as {}",
+               current_path_sh,
+               env::current_exe().unwrap().display());
+    } else {
+        // TODO
+        // add path to the file
+        // use detect_line but with a regex: export MODULEPATH="(randomshit)"
+        // and replace with export MODULEPATH="(randomshit):OURNEWPATH"
+    }
+
+    if !Path::new(current_path_csh).is_file() {
+        crash!(super::CRASH_MISSING_INIT_FILES,
+               "{} should be in the same folder as {}",
+               current_path_csh,
+               env::current_exe().unwrap().display());
+    } else {
+        // TODO
+        // add path to the file
+        // use detect_line but with a regex: setenv MODULEPATH "(randomshit)"
+        // and replace with setenv MODULEPATH "(randomshit):OURNEWPATH"
+    }
 
     if get_current_uid() == 0 {
-        if !Path::new("/etc/profile.d/rmodules.sh").exists() ||
-           !Path::new("/etc/profile.d/rmodules.csh").exists() {
-            println!("");
-            if !recursive {
-                print_title("ENVIRONMENT SETUP");
-            }
-            if is_yes(read_input("rmodules is not setup yet to autoload when a user \
-                                opens a terminal.\n    Do you want to do this now ? [Y/n]")) {}
+        let path_sh: &str = "/etc/profile.d/rmodules.sh";
+        let path_csh: &str = "/etc/profile.d/rmodules.csh";
 
-        }
-    } else {
-        let path_sh: &str = &shellexpand::tilde("~/rmodules.sh");
-        let path_csh: &str = &shellexpand::tilde("~/rmodules.csh");
         if !Path::new(path_sh).exists() || !Path::new(path_csh).exists() {
             println!("");
             if !recursive {
                 print_title("ENVIRONMENT SETUP");
             }
-            // want to link rmodules to /home and add it to bashrc
+            if is_yes(read_input("rmodules is not setup yet to autoload when a user \
+                                opens a terminal.\n    Do you want to do this now ? [Y/n]")) {
+
+                match symlink(current_path_sh, path_sh) {
+                    Ok(_) => println!("    - Created symlink {} => {}", current_path_sh, path_sh),
+                    Err(msg) => {
+                        println!("    - Could not create symlink {} => {} ({})",
+                                 current_path_sh,
+                                 path_sh,
+                                 msg)
+                    }
+                }
+
+                match symlink(current_path_csh, path_csh) {
+                    Ok(_) => println!("    - Created symlink {} => {}", current_path_csh, path_csh),
+                    Err(msg) => {
+                        println!("    - Could not create symlink {} => {} ({})",
+                                 current_path_csh,
+                                 path_csh,
+                                 msg)
+                    }
+                }
+                // TODO: create symlinks
+            }
+
+        }
+    } else {
+        let path_sh: &str = &shellexpand::tilde("~/.rmodules.sh");
+        let path_csh: &str = &shellexpand::tilde("~/.rmodules.csh");
+
+
+        if !Path::new(path_sh).exists() || !Path::new(path_csh).exists() ||
+           !detect_line("source ~/.rmodules.sh", &shellexpand::tilde("~/.bashrc")) ||
+           !detect_line("source ~/.rmodules.csh", &shellexpand::tilde("~/.cshrc")) {
+            println!("");
+            if !recursive {
+                print_title("ENVIRONMENT SETUP");
+            }
+            if is_yes(read_input("rmodules is not setup yet to autoload when you \
+                                open a new terminal.\n    Do you want to do this now ? [Y/n]")) {
+                // want to link rmodules to /home and add it to bashrc
+                // read .cshrc and .bashrc line by line
+                // to detect if source ~/rmodules.(c)sh exists in it
+                // read filename line by line, and push it to modules
+
+                match symlink(current_path_sh, path_sh) {
+                    Ok(_) => println!("    - Created symlink {} => {}", current_path_sh, path_sh),
+                    Err(msg) => {
+                        println!("    - Could not create symlink {} => {} ({})",
+                                 current_path_sh,
+                                 path_sh,
+                                 msg)
+                    }
+                }
+
+                match symlink(current_path_csh, path_csh) {
+                    Ok(_) => println!("    - Created symlink {} => {}", current_path_csh, path_csh),
+                    Err(msg) => {
+                        println!("    - Could not create symlink {} => {} ({})",
+                                 current_path_csh,
+                                 path_csh,
+                                 msg)
+                    }
+                }
+
+                let mut bash_updated: bool = true;
+                let mut csh_updated: bool = true;
+
+                if !detect_line("source ~/.rmodules.sh", &shellexpand::tilde("~/.bashrc")) {
+                    bash_updated = append_line("source ~/.rmodules.sh",
+                                               &shellexpand::tilde("~/.bashrc"));
+                }
+
+                if !detect_line("source ~/.rmodules.csh", &shellexpand::tilde("~/.cshrc")) {
+                    csh_updated = append_line("source ~/.rmodules.csh",
+                                              &shellexpand::tilde("~/.cshrc"));
+                }
+
+                if bash_updated || csh_updated {
+                    println!("\n    On next login the command 'module' will be available.");
+                    println!("    To have it active in the current terminal, type this:");
+                }
+                if bash_updated {
+                    println!("    bash or zsh : source ~/.rmodules.sh");
+                }
+                if csh_updated {
+                    println!("    csh or tcsh : source ~/.rmodules.csh");
+                }
+
+            }
 
         }
     }
 
-
     // println!("and now open a new terminal and type: module");
 }
 
+fn append_line(line: &str, filename: &str) -> bool {
+
+    let mut file: File;
+    match OpenOptions::new().write(true).append(true).open(filename) {
+        Ok(fileresult) => file = fileresult,
+        Err(e) => {
+            println_stderr!("\n    - Cannot append to file {} ({})", filename, e);
+            return false;
+        }
+    }
+
+    if let Err(e) = writeln!(file, "{}", line) {
+        super::rmod::crash(super::CRASH_CANNOT_ADD_TO_ENV,
+                           &format!("Cannot append to file {} ({})", filename, e));
+    }
+
+    return true;
+}
+
+fn detect_line(line: &str, file: &str) -> bool {
+    if Path::new(file).is_file() {
+        let file: File = match File::open(file) {
+            Ok(file) => file,
+            Err(_) => {
+                return false;
+            }
+        };
+
+        let file = BufReader::new(file);
+        for (_, entry) in file.lines().enumerate() {
+            let buffer = entry.unwrap();
+            if buffer == line {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
 // if no modulepath variable found, or it is empty
 // start a wizard to add one to the path
 // if uid = 0 suggest /usr/local/modulefiles as
@@ -155,7 +306,7 @@ pub fn run(recursive: bool) -> bool {
                 if is_yes(read_input("Path already exists, are you sure you want to continue ? \
                                       [Y/n]")) {
 
-                    update_setup_rmodules_c_sh(false);
+                    update_setup_rmodules_c_sh(false, path);
                     return true;
                 } else {
                     return run(true);
@@ -172,13 +323,12 @@ pub fn run(recursive: bool) -> bool {
                     .as_ref())) {
 
                     create_dir_all(path).unwrap();
-                    update_setup_rmodules_c_sh(false);
-
+                    update_setup_rmodules_c_sh(false, path);
                     return true;
                 } else {
                     println!("");
                     println!("   ==== WARNING: Don't forget to create: {} ====", path);
-                    update_setup_rmodules_c_sh(false);
+                    update_setup_rmodules_c_sh(false, path);
                     return true;
                 }
             }

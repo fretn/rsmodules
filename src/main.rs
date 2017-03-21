@@ -66,6 +66,8 @@ static CRASH_MODULE_NOT_FOUND: i32 = 5;
 static CRASH_COULDNT_OPEN_CACHE_FILE: i32 = 5;
 //static CRASH_NO_ARGS: i32 = 6;
 static CRASH_MODULEPATH_IS_FILE: i32 = 7;
+static CRASH_CANNOT_ADD_TO_ENV: i32 = 8;
+static CRASH_MISSING_INIT_FILES: i32 = 9;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
