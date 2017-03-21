@@ -65,10 +65,7 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
     // just update the setup_rmodules.(c)sh files and copy them to /etc/profile.d
     // if no permissions, tell them if they are an admin to run this as root
     // or just throw it in .bashrc and .personal_cshrc -> or first check if
-    // /etc/profile.d/rmodules.csh link exists
 
-
-    // do we create the rmodules.(c)sh files from code ?
     let executable_path = PathBuf::from(env::current_exe().unwrap());
     let executable_path = executable_path.parent();
     let current_path_sh: &str = &format!("{}/setup_rmodules.sh",
@@ -76,6 +73,7 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
     let current_path_csh: &str = &format!("{}/setup_rmodules.csh",
                                           executable_path.unwrap().display());
 
+    // update init files before we link them
     if !Path::new(current_path_sh).is_file() {
         crash!(super::CRASH_MISSING_INIT_FILES,
                "{} should be in the same folder as {}",
@@ -112,8 +110,14 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
             if is_yes(read_input("rmodules is not setup yet to autoload when a user \
                                 opens a terminal.\n    Do you want to do this now ? [Y/n]")) {
 
+                let mut bash_success: bool = false;
+                let mut csh_success: bool = false;
+                println!("");
                 match symlink(current_path_sh, path_sh) {
-                    Ok(_) => println!("    - Created symlink {} => {}", current_path_sh, path_sh),
+                    Ok(_) => {
+                        println!("    - Created symlink {} => {}", current_path_sh, path_sh);
+                        bash_success = true;
+                    }
                     Err(msg) => {
                         println!("    - Could not create symlink {} => {} ({})",
                                  current_path_sh,
@@ -123,7 +127,10 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 }
 
                 match symlink(current_path_csh, path_csh) {
-                    Ok(_) => println!("    - Created symlink {} => {}", current_path_csh, path_csh),
+                    Ok(_) => {
+                        println!("    - Created symlink {} => {}", current_path_csh, path_csh);
+                        csh_success = true;
+                    }
                     Err(msg) => {
                         println!("    - Could not create symlink {} => {} ({})",
                                  current_path_csh,
@@ -131,7 +138,13 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                                  msg)
                     }
                 }
-                // TODO: create symlinks
+
+                if bash_success || csh_success {
+                    println!("\n    On next login the command 'module' will be available.");
+                    println!("    To have it active in the current terminal, type this:");
+                    println!("    bash or zsh : source {}", current_path_sh);
+                    println!("    csh or tcsh : source {}", current_path_csh);
+                }
             }
 
         }
@@ -177,12 +190,22 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 let mut bash_updated: bool = true;
                 let mut csh_updated: bool = true;
 
-                if !detect_line("source ~/.rmodules.sh", &shellexpand::tilde("~/.bashrc")) {
+                let detected_sh: bool = detect_line("source ~/.rmodules.sh",
+                                                    &shellexpand::tilde("~/.bashrc"));
+                let detected_csh: bool = detect_line("source ~/.rmodules.csh",
+                                                     &shellexpand::tilde("~/.cshrc"));
+
+
+                if !detected_sh || !detected_csh {
+                    println!("");
+                }
+
+                if !detected_sh {
                     bash_updated = append_line("source ~/.rmodules.sh",
                                                &shellexpand::tilde("~/.bashrc"));
                 }
 
-                if !detect_line("source ~/.rmodules.csh", &shellexpand::tilde("~/.cshrc")) {
+                if !detected_csh {
                     csh_updated = append_line("source ~/.rmodules.csh",
                                               &shellexpand::tilde("~/.cshrc"));
                 }
@@ -212,7 +235,7 @@ fn append_line(line: &str, filename: &str) -> bool {
     match OpenOptions::new().write(true).append(true).open(filename) {
         Ok(fileresult) => file = fileresult,
         Err(e) => {
-            println_stderr!("\n    - Cannot append to file {} ({})", filename, e);
+            println!("    - Cannot append to file {} ({})", filename, e);
             return false;
         }
     }
@@ -221,6 +244,8 @@ fn append_line(line: &str, filename: &str) -> bool {
         super::rmod::crash(super::CRASH_CANNOT_ADD_TO_ENV,
                            &format!("Cannot append to file {} ({})", filename, e));
     }
+
+    println!("    - Succesfully added '{}' to {}", line, filename);
 
     return true;
 }
