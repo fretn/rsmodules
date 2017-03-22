@@ -229,8 +229,8 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
     }
 
     if !found {
-        crash(super::CRASH_MODULE_NOT_FOUND,
-              &format!("Module {0} not found.", selected_module));
+        println_stderr!("Module {0} not found.", selected_module);
+        ::std::process::exit(super::CRASH_MODULE_NOT_FOUND);
     }
 
     // check of another version is already loaded

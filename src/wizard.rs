@@ -30,7 +30,7 @@ use std::fs::File;
 use std::fs::OpenOptions;
 use std::env;
 extern crate shellexpand;
-
+use regex::Regex;
 
 use users::get_current_uid;
 
@@ -73,6 +73,11 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
     let current_path_csh: &str = &format!("{}/setup_rmodules.csh",
                                           executable_path.unwrap().display());
 
+    let bash_result: bool;
+    let csh_result: bool;
+    let bash_result2: bool;
+    let csh_result2: bool;
+
     // update init files before we link them
     if !Path::new(current_path_sh).is_file() {
         crash!(super::CRASH_MISSING_INIT_FILES,
@@ -80,10 +85,15 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                current_path_sh,
                env::current_exe().unwrap().display());
     } else {
-        // TODO
         // add path to the file
-        // use detect_line but with a regex: export MODULEPATH="(randomshit)"
-        // and replace with export MODULEPATH="(randomshit):OURNEWPATH"
+        // use detect_line but with a regex: export MODULEPATH="(randomblah)"
+        // and replace with export MODULEPATH="(randomblah):OURNEWPATH"
+        bash_result = add_path(path, current_path_sh, "MODULEPATH", true);
+        bash_result2 = add_path(&format!("{}", executable_path.unwrap().display()),
+                                current_path_sh,
+                                "RMODULES_INSTALL_DIR",
+                                false);
+
     }
 
     if !Path::new(current_path_csh).is_file() {
@@ -92,10 +102,27 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                current_path_csh,
                env::current_exe().unwrap().display());
     } else {
-        // TODO
         // add path to the file
-        // use detect_line but with a regex: setenv MODULEPATH "(randomshit)"
-        // and replace with setenv MODULEPATH "(randomshit):OURNEWPATH"
+        // use detect_line but with a regex: setenv MODULEPATH "(randomblah)"
+        // and replace with setenv MODULEPATH "(randomblah):OURNEWPATH"
+        csh_result = add_path(path, current_path_csh, "MODULEPATH", true);
+        csh_result2 = add_path(&format!("{}", executable_path.unwrap().display()),
+                               current_path_csh,
+                               "RMODULES_INSTALL_DIR",
+                               false);
+    }
+
+    if (bash_result || bash_result2) && (csh_result || csh_result2) {
+        println!("");
+        println!("    Successfully modified:");
+    }
+
+    if bash_result || bash_result2 {
+        println!("    - {}", current_path_sh);
+    }
+
+    if csh_result || csh_result2 {
+        println!("    - {}", current_path_csh);
     }
 
     if get_current_uid() == 0 {
@@ -108,18 +135,18 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 print_title("ENVIRONMENT SETUP");
             }
             if is_yes(read_input("rmodules is not setup yet to autoload when a user \
-                                opens a terminal.\n    Do you want to do this now ? [Y/n]")) {
+                                opens a terminal. Do you want to do this now ? [Y/n]")) {
 
                 let mut bash_success: bool = false;
                 let mut csh_success: bool = false;
                 println!("");
                 match symlink(current_path_sh, path_sh) {
                     Ok(_) => {
-                        println!("    - Created symlink {} => {}", current_path_sh, path_sh);
+                        println!("    - Created symlink {} -> {}", current_path_sh, path_sh);
                         bash_success = true;
                     }
                     Err(msg) => {
-                        println!("    - Could not create symlink {} => {} ({})",
+                        println!("    - Could not create symlink {} -> {} ({})",
                                  current_path_sh,
                                  path_sh,
                                  msg)
@@ -167,6 +194,8 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 // to detect if source ~/rmodules.(c)sh exists in it
                 // read filename line by line, and push it to modules
 
+                println!("");
+
                 match symlink(current_path_sh, path_sh) {
                     Ok(_) => println!("    - Created symlink {} => {}", current_path_sh, path_sh),
                     Err(msg) => {
@@ -212,7 +241,7 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
 
                 if bash_updated || csh_updated {
                     println!("\n    On next login the command 'module' will be available.");
-                    println!("    To have it active in the current terminal, type this:");
+                    println!("\n    To have it active in the current terminal, type this:");
                 }
                 if bash_updated {
                     println!("    bash or zsh : source ~/.rmodules.sh");
@@ -220,6 +249,7 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 if csh_updated {
                     println!("    csh or tcsh : source ~/.rmodules.csh");
                 }
+                println!("");
 
             }
 
@@ -269,6 +299,101 @@ fn detect_line(line: &str, file: &str) -> bool {
 
     return false;
 }
+
+// go over the file line by line, do we have
+// a export MODULEPATH="" match, replace it
+// same for setenv MODULEPATH ""
+fn add_path(newpath: &str, filename: &str, variable: &str, append: bool) -> bool {
+    let mut newbuffer: Vec<String> = Vec::new();
+
+    if Path::new(filename).is_file() {
+        let file: File = match File::open(filename) {
+            Ok(file) => file,
+            Err(_) => {
+                return false;
+            }
+        };
+
+        let file = BufReader::new(file);
+        for (_, entry) in file.lines().enumerate() {
+            let buffer = entry.unwrap();
+            newbuffer.push(set_path(&buffer, newpath, variable, append));
+        }
+    }
+
+    if newbuffer.len() > 0 {
+        let mut file: File = match OpenOptions::new().write(true).open(filename) {
+            Ok(fileresult) => fileresult,
+            Err(e) => {
+                println!("    - Cannot write to file {} ({})", filename, e);
+                return false;
+            }
+        };
+
+        for newline in newbuffer {
+            if let Err(e) = writeln!(file, "{}", newline) {
+                super::rmod::crash(super::CRASH_CANNOT_ADD_TO_ENV,
+                                   &format!("Cannot write to file {} ({})", filename, e));
+            }
+        }
+
+    }
+
+    return true;
+}
+
+// match against export MODULEPATH="" and setenv MODULEPATH ""
+// and add the new path to it
+fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
+
+    let re = if variable == "MODULEPATH" {
+        Regex::new(r#"^\s*(?P<export>export|setenv)\s+MODULEPATH(?P<equals>[= ]?)"(?P<value>.*)""#)
+            .unwrap()
+    } else {
+        Regex::new(r#"^\s*(?P<export>export|setenv)\s+RMODULES_INSTALL_DIR(?P<equals>[= ]?)" \
+            (?P<value>.*)""#)
+            .unwrap()
+    };
+
+    let mut output: String = input.to_string();
+    for cap in re.captures_iter(input) {
+
+        let value = &cap["value"];
+        let value: Vec<&str> = value.split(':').collect();
+
+        for existing_path in &value {
+            if existing_path.to_string() == path.to_string() {
+                return String::from(input);
+            }
+        }
+
+        if append {
+            if value.len() > 0 && !(value.len() == 1 && value[0] == "") {
+                output = format!(r#"{} {}{}"{}:{}""#,
+                                 &cap["export"],
+                                 variable,
+                                 &cap["equals"],
+                                 &cap["value"],
+                                 path);
+            } else {
+                output = format!(r#"{} {}{}"{}""#,
+                                 &cap["export"],
+                                 variable,
+                                 &cap["equals"],
+                                 path);
+            }
+        } else {
+            output = format!(r#"{} {}{}"{}""#,
+                             &cap["export"],
+                             variable,
+                             &cap["equals"],
+                             path);
+        }
+    }
+
+    return output;
+}
+
 // if no modulepath variable found, or it is empty
 // start a wizard to add one to the path
 // if uid = 0 suggest /usr/local/modulefiles as
@@ -323,6 +448,8 @@ pub fn run(recursive: bool) -> bool {
                 .as_ref());
 
             if line != "\n" {
+                let len = line.len();
+                line.truncate(len - 1);
                 path = line.as_ref();
             }
 
@@ -347,6 +474,8 @@ pub fn run(recursive: bool) -> bool {
                     .as_ref())) {
 
                     create_dir_all(path).unwrap();
+                    println!("");
+                    println!("    - Succesfully created {}", path);
                     update_setup_rmodules_c_sh(false, path);
                     return true;
                 } else {

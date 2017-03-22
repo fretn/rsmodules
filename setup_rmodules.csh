@@ -1,8 +1,8 @@
 #!/bin/csh
 
 alias module 'setenv TERMWIDTH `stty size |& tee /dev/null | cut -d" " -f2` ; eval `$RMODULES_INSTALL_DIR/rmodules csh,$TERMWIDTH ' \!'*` '
-setenv MODULEPATH "/software/shared/rmodulefiles/"
-setenv RMODULES_INSTALL_DIR "/software/shared/apps/x86_64/rmodules/0.2.0/"
+setenv MODULEPATH "/software/shared/rmodulefiles/:/home/frlae/modules"
+setenv RMODULES_INSTALL_DIR "/home/frlae/rust/rmodules"
 setenv LOADEDMODULES ""
 
 # this should be a function, so everytime it is called the info is updated

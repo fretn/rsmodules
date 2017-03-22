@@ -44,6 +44,7 @@ extern crate walkdir;
 extern crate users;
 
 extern crate shellexpand;
+extern crate regex;
 
 use std::io::Write;
 use std::fs::{File, remove_file};
@@ -74,7 +75,7 @@ const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 
 static LONG_HELP: &'static str = "
 
-  rmodules manage your user environment on linux, macos, ...
+  rmodules manages your user environment on linux, macOS.
   The rmodules package is a tool to help users modifying their environment
   during a session by using modulefiles.
   A modulefile contains all the settings needed to configure the shell for
@@ -168,7 +169,8 @@ fn usage(in_eval: bool) {
         println_stderr!("  Supported shells: bash, zsh, csh, tcsh and noshell");
         println_stderr!("");
         println_stderr!("  When noshell is selected all output is printed to stdout,");
-        println_stderr!("  module available also then prints a nice list without gaps.");
+        println_stderr!("  module available will then print a nice list without gaps, which is");
+        println_stderr!("  makes your life easier when you want to parse this output.");
     }
     println_stderr!("{}", &LONG_HELP);
 }

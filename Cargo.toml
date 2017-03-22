@@ -1,6 +1,6 @@
 [package]
 name = "rmodules"
-version = "0.4.4"
+version = "0.4.5"
 authors = ["Frederik Delaere <frederik.delaere@ugent.be>"]
 
 [dependencies]
@@ -12,6 +12,7 @@ bincode = "0.6.1"
 rustc-serialize = "0.3.23"
 users = "0.5.0"
 shellexpand = "1.0.0"
+regex = "0.2.1"
 
 [[bin]]
 name = "rmodules"
