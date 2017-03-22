@@ -195,7 +195,12 @@ fn run(args: &Vec<String>) {
     let shell_split: Vec<&str> = shell.split(',').collect();
 
     if shell_split.len() == 2 {
-        shell_width = FromStr::from_str(shell_split[1]).unwrap();
+        if shell_split[1] != "" {
+            shell_width = match FromStr::from_str(shell_split[1]) {
+                Ok(w) => w,
+                Err(_) => 80,
+            };
+        }
         shell = shell_split[0];
     }
 

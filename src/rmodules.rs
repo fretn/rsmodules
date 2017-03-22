@@ -128,7 +128,9 @@ pub fn command(rmod: &mut Rmodule) {
     } else if rmod.cmd == "makecache" {
         let modulepaths = get_module_paths(false);
         for modulepath in modulepaths {
-            cache::update(modulepath, &mut rmod.tmpfile, rmod.shell);
+            if modulepath != "" {
+                cache::update(modulepath, &mut rmod.tmpfile, rmod.shell);
+            }
         }
     }
 }

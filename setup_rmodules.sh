@@ -1,7 +1,7 @@
 #!/bin/bash
 
 module() { 
-	export TERMWIDTH=`/bin/stty size | cut -d" " -f2`;
+	export TERMWIDTH=`/bin/stty size 2>&1 | cut -d" " -f2`;
 	eval `$RMODULES_INSTALL_DIR/rmodules bash,$TERMWIDTH $*`;
 }
 

@@ -231,14 +231,13 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
 
 fn append_line(line: &str, filename: &str) -> bool {
 
-    let mut file: File;
-    match OpenOptions::new().write(true).append(true).open(filename) {
-        Ok(fileresult) => file = fileresult,
+    let mut file: File = match OpenOptions::new().write(true).append(true).open(filename) {
+        Ok(fileresult) => fileresult,
         Err(e) => {
             println!("    - Cannot append to file {} ({})", filename, e);
             return false;
         }
-    }
+    };
 
     if let Err(e) = writeln!(file, "{}", line) {
         super::rmod::crash(super::CRASH_CANNOT_ADD_TO_ENV,
