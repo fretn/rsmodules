@@ -150,7 +150,7 @@ fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, act
     if action == "info" {
         data = script::get_info(rmod.shell);
     } else {
-        data = script::get_output(selected_module, action);
+        data = script::get_output(selected_module, action, rmod.shell);
     }
 
     for line in data {
@@ -360,8 +360,10 @@ pub fn is_other_version_of_module_loaded(name: &str) -> bool {
 }
 
 fn echo(line: &str, shell: &str) {
-    if shell == "noshell" || shell == "python" {
+    if shell == "noshell" {
         println!("{}", line);
+    } else if shell == "python" {
+        println!("print(\"{}\")", line);
     } else {
         let data = format!("echo \"{}\"\n", line);
         output(data);

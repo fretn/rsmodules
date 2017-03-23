@@ -33,7 +33,7 @@ use std::os::unix::fs::PermissionsExt;
 // WARNING: the scripts don't support tabbed indents in if else structures
 
 lazy_static! {
-    static ref ENV_VARS: Mutex<Vec<String>> = Mutex::new(vec![]);
+    static ref ENV_VARS: Mutex<Vec<(String, String)>> = Mutex::new(vec![]);
     static ref COMMANDS: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref CONFLICT: Mutex<bool> = Mutex::new(false);
     static ref SHELL: Mutex<String> = Mutex::new({String::from("bash")});
@@ -66,8 +66,8 @@ fn set_shell(shell: &str) {
     *tmp = shell.to_string();
 }
 
-fn add_to_env_vars(data: String) {
-    ENV_VARS.lock().unwrap().push(data);
+fn add_to_env_vars(variable: &str, value: &str) {
+    ENV_VARS.lock().unwrap().push((variable.to_string(), value.to_string()));
 }
 
 fn add_to_commands(data: String) {
@@ -184,26 +184,19 @@ fn load_info(module: String) {
 // load functions
 
 fn setenv(var: String, val: String) {
-    let shell = SHELL.lock().unwrap();
-    if *shell == "bash" || *shell == "zsh" {
-        add_to_env_vars(format!("export {}=\"{}\"", var, val));
-    } else if *shell == "python" {
-        println!("os.environ[\"{}\"] = \"{}\";", var, val);
-    } else {
-        add_to_env_vars(format!("setenv {} \"{}\"", var, val));
-    }
+    add_to_env_vars(&var, &val);
     env::set_var(&var, format!("{}", val));
 }
 
 fn unsetenv(var: String) {
     let shell = SHELL.lock().unwrap();
     if *shell == "bash" || *shell == "zsh" {
-        add_to_env_vars(format!("unset \"{}\"", var));
+        add_to_commands(format!("unset \"{}\"", var));
     } else if *shell == "python" {
-        println!("os.environ[\"{}\"] = \"\";", var);
-        println!("del os.environ[\"{}\"];", var);
+        add_to_commands(format!("os.environ[\"{}\"] = \"\";", var));
+        add_to_commands(format!("del os.environ[\"{}\"];", var));
     } else {
-        add_to_env_vars(format!("unsetenv \"{}\"", var));
+        add_to_commands(format!("unsetenv \"{}\"", var));
     }
     env::remove_var(&var);
 }
@@ -211,7 +204,6 @@ fn unsetenv(var: String) {
 fn prepend_path(var: String, val: String) {
     let mut current_val: String = String::from("");
     let mut notfound: bool = false;
-    let shell = SHELL.lock().unwrap();
 
     match env::var(&var) {
         Ok(res) => current_val = res,
@@ -222,22 +214,11 @@ fn prepend_path(var: String, val: String) {
     };
 
     if notfound {
-        if *shell == "bash" || *shell == "zsh" {
-            add_to_env_vars(format!("export {}=\"{}\"", var, val));
-        } else if *shell == "python" {
-            println!("os.environ[\"{}\"] = \"{}\";", var, val);
-        } else {
-            add_to_env_vars(format!("setenv {} \"{}\"", var, val));
-        }
+        add_to_env_vars(&var, &val);
         env::set_var(&var, format!("{}", val));
     } else {
-        if *shell == "bash" || *shell == "zsh" {
-            add_to_env_vars(format!("export {}=\"{}:{}\"", var, val, current_val));
-        } else if *shell == "python" {
-            println!("os.environ[\"{}\"] = \"{}:{}\";", var, val, current_val);
-        } else {
-            add_to_env_vars(format!("setenv {} \"{}:{}\"", var, val, current_val));
-        }
+        let final_val = format!("{}:{}", val, current_val);
+        add_to_env_vars(&var, &final_val);
         env::set_var(&var, format!("{}:{}", val, current_val));
     }
 }
@@ -245,7 +226,6 @@ fn prepend_path(var: String, val: String) {
 fn append_path(var: String, val: String) {
     let mut current_val: String = String::from("");
     let mut notfound: bool = false;
-    let shell = SHELL.lock().unwrap();
 
     match env::var(&var) {
         Ok(res) => current_val = res,
@@ -256,30 +236,17 @@ fn append_path(var: String, val: String) {
     };
 
     if notfound {
-        if *shell == "bash" || *shell == "zsh" {
-            add_to_env_vars(format!("export {}=\"{}\"", var, val));
-        } else if *shell == "python" {
-            println!("os.environ[\"{}\"] = \"{}\";", var, val);
-        } else {
-            add_to_env_vars(format!("setenv {} \"{}\"", var, val));
-        }
-
+        add_to_env_vars(&var, &val);
         env::set_var(&var, format!("{}", val));
     } else {
-        if *shell == "bash" || *shell == "zsh" {
-            add_to_env_vars(format!("export {}=\"{}:{}\"", var, current_val, val));
-        } else if *shell == "python" {
-            println!("os.environ[\"{}\"] = \"{}:{}\";", var, current_val, val);
-        } else {
-            add_to_env_vars(format!("setenv {} \"{}:{}\"", var, current_val, val));
-        }
+        let final_val = format!("{}:{}", current_val, val);
+        add_to_env_vars(&var, &final_val);
         env::set_var(&var, format!("{}:{}", current_val, val));
     }
 }
 
 fn remove_path(var: String, val: String) {
     let current_val: String;
-    let shell = SHELL.lock().unwrap();
 
     match env::var(&var) {
         Ok(res) => current_val = res,
@@ -294,13 +261,7 @@ fn remove_path(var: String, val: String) {
 
     let result = values.join(":");
 
-    if *shell == "bash" || *shell == "zsh" {
-        add_to_env_vars(format!("export {}=\"{}\"", var, result));
-    } else if *shell == "python" {
-        println!("os.environ[\"{}\"] = \"{}\";", var, result);
-    } else {
-        add_to_env_vars(format!("setenv {} \"{}\"", var, result));
-    }
+    add_to_env_vars(&var, &result);
     env::set_var(&var, format!("{}", result));
 }
 
@@ -328,7 +289,12 @@ fn system(cmd: String) {
 }
 
 fn load(module: String) {
-    add_to_commands(format!("module load {}", module));
+    let shell = SHELL.lock().unwrap();
+    if *shell != "python" {
+        add_to_commands(format!("module load {}", module));
+    } else {
+        add_to_commands(format!("module(\"load\",\"{}\")", module));
+    }
 }
 
 fn conflict(module: String) {
@@ -341,8 +307,12 @@ fn conflict(module: String) {
 }
 
 fn unload(module: String) {
-    // FIXME: doesn't work for python yet
-    add_to_commands(format!("module unload {}", module));
+    let shell = SHELL.lock().unwrap();
+    if *shell != "python" {
+        add_to_commands(format!("module unload {}", module));
+    } else {
+        add_to_commands(format!("module(\"unload\",\"{}\")", module));
+    }
 }
 
 fn description(desc: String) {
@@ -450,7 +420,7 @@ pub fn get_description() -> Vec<String> {
     return output;
 }
 
-pub fn get_output(selected_module: &str, action: &str) -> Vec<String> {
+pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<String> {
 
     let data = CONFLICT.lock().unwrap();
 
@@ -469,8 +439,16 @@ pub fn get_output(selected_module: &str, action: &str) -> Vec<String> {
     // this part must be below the above part
     let mut output: Vec<String> = Vec::new();
 
-    for line in ENV_VARS.lock().unwrap().iter() {
-        output.push(line.to_string());
+    for result in ENV_VARS.lock().unwrap().iter() {
+        let mut data: String = String::new();
+        if shell == "bash" || shell == "zsh" {
+            data = format!("export {}=\"{}\"", result.0, result.1);
+        } else if shell == "tcsh" || shell == "csh" {
+            data = format!("setenv {} \"{}\"", result.0, result.1);
+        } else if shell == "python" {
+            data = format!("os.environ[\"{}\"] = \"{}\";", result.0, result.1);
+        }
+        output.push(data);
     }
 
     for line in COMMANDS.lock().unwrap().iter() {
