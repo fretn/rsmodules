@@ -80,7 +80,7 @@ pub fn get_module_paths(silent: bool) -> Vec<String> {
     return modulepaths;
 }
 
-pub fn get_module_list() -> Vec<String> {
+pub fn get_module_list(shell: &str) -> Vec<String> {
     let mut modules: Vec<String> = Vec::new();
     let mut found_cachefile: bool = false;
     let modulepaths = get_module_paths(false);
@@ -88,16 +88,18 @@ pub fn get_module_list() -> Vec<String> {
         // test if cachefiles exist in the paths
         // if they don't and we have write permission in that folder
         // we should create the cache
-        let mut testpath = PathBuf::from(path);
+        let mut testpath = PathBuf::from(&path);
         testpath.push(cache::MODULESINDEX);
 
         if testpath.exists() {
             cache::parse_modules_cache_file(&testpath, &mut modules);
             found_cachefile = true;
         } else {
-            show_warning!("Cache file: {} doesn't exist.", testpath.display());
-            // TODO: check if we have permission
-            // cache::update(path);
+            show_warning!("Creating missing .modulesindex file: {}", testpath.display());
+            if cache::update(path, shell) {
+                cache::parse_modules_cache_file(&testpath, &mut modules);
+                found_cachefile = true;
+            }
         }
     }
 
@@ -165,7 +167,7 @@ fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, act
 
 fn module_action(rmod: &mut Rmodule, action: &str) {
 
-    let mut reversed_modules = get_module_list();
+    let mut reversed_modules = get_module_list(rmod.shell);
     reversed_modules.reverse();
 
     let mut selected_module = rmod.arg;

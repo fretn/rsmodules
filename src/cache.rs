@@ -110,7 +110,7 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
     return false;
 }
 
-pub fn update(modulepath: String, shell: &str) {
+pub fn update(modulepath: String, shell: &str) -> bool {
 
     // TODO: check if we have read and write permissions on 'modulepath'
 
@@ -190,7 +190,7 @@ pub fn update(modulepath: String, shell: &str) {
         Ok(file) => file,
         Err(_) => {
             show_warning!("Something went wrong while trying to update: {}", &file_str);
-            return;
+            return false;
         }
     };
 
@@ -200,6 +200,8 @@ pub fn update(modulepath: String, shell: &str) {
     let msg: String = format!("The index file {} was succesfully updated.", &file_str);
 
     super::echo(&msg, shell);
+
+    return true;
 }
 
 pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
