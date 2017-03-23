@@ -328,7 +328,6 @@ fn system(cmd: String) {
 }
 
 fn load(module: String) {
-    // FIXME: doesn't work for python yet
     add_to_commands(format!("module load {}", module));
 }
 
@@ -452,6 +451,7 @@ pub fn get_description() -> Vec<String> {
 }
 
 pub fn get_output(selected_module: &str, action: &str) -> Vec<String> {
+
     let data = CONFLICT.lock().unwrap();
 
     if *data == true {

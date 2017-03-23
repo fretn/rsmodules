@@ -21,11 +21,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use std::fs::File;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::io::Write;
 use std::env;
+use super::output;
 
 #[path = "script.rs"]
 mod script;
@@ -42,7 +42,6 @@ pub struct Rmodule<'a> {
     pub search_path: &'a Vec<String>, // module paths
     pub shell: &'a str, // tcsh|csh|bash|zsh
     pub shell_width: usize,
-    pub tmpfile: &'a File, // tempfile that will be sourced
     pub installdir: &'a str, // installation folder
 }
 
@@ -118,7 +117,7 @@ pub fn command(rmod: &mut Rmodule) {
     } else if rmod.cmd == "unload" {
         module_action(rmod, "unload");
     } else if rmod.cmd == "available" {
-        cache::get_module_list(&mut rmod.tmpfile, rmod.arg, rmod.shell, rmod.shell_width);
+        cache::get_module_list(rmod.arg, rmod.shell, rmod.shell_width);
     } else if rmod.cmd == "list" {
         list(rmod);
     } else if rmod.cmd == "purge" {
@@ -129,7 +128,7 @@ pub fn command(rmod: &mut Rmodule) {
         let modulepaths = get_module_paths(false);
         for modulepath in modulepaths {
             if modulepath != "" {
-                cache::update(modulepath, &mut rmod.tmpfile, rmod.shell);
+                cache::update(modulepath, rmod.shell);
             }
         }
     }
@@ -146,22 +145,21 @@ fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, act
 
     script::run(path, action, rmod.shell);
 
-    let output: Vec<String>;
+    let data: Vec<String>;
 
     if action == "info" {
-        output = script::get_info(rmod.shell);
+        data = script::get_info(rmod.shell);
     } else {
-        output = script::get_output(selected_module, action);
+        data = script::get_output(selected_module, action);
     }
 
-    for line in output {
+    for line in data {
         let line = format!("{}\n", line);
-        // TODO: delete temp file ?
+
         if rmod.shell == "noshell" || rmod.shell == "python" {
             println!("{}", line);
         } else {
-            crash_if_err!(super::CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
-                          rmod.tmpfile.write_all(line.as_bytes()));
+            output(line);
         }
     }
 }
@@ -283,7 +281,7 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
                                        with {}",
                                       other,
                                       selected_module);
-            write_av_output(&msg, &mut rmod.tmpfile, rmod.shell);
+            echo(&msg, rmod.shell);
         }
     }
 }
@@ -361,13 +359,12 @@ pub fn is_other_version_of_module_loaded(name: &str) -> bool {
     return false;
 }
 
-fn write_av_output(line: &str, mut tmpfile: &File, shell: &str) {
+fn echo(line: &str, shell: &str) {
     if shell == "noshell" || shell == "python" {
         println!("{}", line);
     } else {
         let data = format!("echo \"{}\"\n", line);
-        tmpfile.write_all(data.as_bytes()).expect("Unable to write data");
-        tmpfile.write_all("\n".as_bytes()).expect("Unable to write data");
+        output(data);
     }
 }
 
@@ -386,16 +383,14 @@ fn list(rmod: &mut Rmodule) {
     loadedmodules.sort();
 
     if loadedmodules.len() > 0 {
-        write_av_output("Currently loaded modules:", &mut rmod.tmpfile, rmod.shell);
+        echo("Currently loaded modules:", rmod.shell);
     } else {
-        write_av_output("There are currently no modules loaded.",
-                        &mut rmod.tmpfile,
-                        rmod.shell);
+        echo("There are currently no modules loaded.", rmod.shell);
     }
     for module in loadedmodules {
 
         if module != "" {
-            write_av_output(module, &mut rmod.tmpfile, rmod.shell);
+            echo(module, rmod.shell);
         }
     }
 }
@@ -420,7 +415,6 @@ fn purge(rmod: &mut Rmodule) {
                 search_path: rmod.search_path,
                 shell: rmod.shell,
                 shell_width: rmod.shell_width,
-                tmpfile: rmod.tmpfile,
                 installdir: rmod.installdir,
             };
             command(&mut rmod_command);

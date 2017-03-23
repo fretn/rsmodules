@@ -110,7 +110,7 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
     return false;
 }
 
-pub fn update(modulepath: String, tmpfile: &File, shell: &str) {
+pub fn update(modulepath: String, shell: &str) {
 
     // TODO: check if we have read and write permissions on 'modulepath'
 
@@ -199,7 +199,7 @@ pub fn update(modulepath: String, tmpfile: &File, shell: &str) {
 
     let msg: String = format!("The index file {} was succesfully updated.", &file_str);
 
-    super::write_av_output(&msg, &tmpfile, shell);
+    super::echo(&msg, shell);
 }
 
 pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
@@ -220,7 +220,7 @@ pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
     }
 }
 
-pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usize) {
+pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
     let mut bold_start: &str = "$(tput bold)";
     let mut bold_end: &str = "$(tput sgr0)";
 
@@ -316,26 +316,26 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usiz
                 let first_char: char = module.name.chars().next().unwrap();
                 if first_char != previous_first_char && !simple_list {
                     // add a newline
-                    super::write_av_output("", &tmpfile, shell);
+                    super::echo("", shell);
                 }
                 previous_first_char = module.name.chars().next().unwrap();
                 if simple_list {
                     println!("{}", &tmp);
                 } else {
-                    super::write_av_output(&tmp, &tmpfile, shell);
+                    super::echo(&tmp, shell);
                 }
             }
         } else {
             let first_char: char = module.name.to_lowercase().chars().next().unwrap();
             if first_char != previous_first_char && !simple_list {
                 // add a newline
-                super::write_av_output("", &tmpfile, shell);
+                super::echo("", shell);
             }
             previous_first_char = module.name.to_lowercase().chars().next().unwrap();
             if simple_list {
                 println!("{}", &tmp);
             } else {
-                super::write_av_output(&tmp, &tmpfile, shell);
+                super::echo(&tmp, shell);
             }
         }
     }

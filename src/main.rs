@@ -56,6 +56,7 @@ use std::sync::Mutex;
 lazy_static! {
     static ref TMPFILE_INITIALIZED: Mutex<bool> = Mutex::new(false);
     static ref TMPFILE_PATH: Mutex<String> = Mutex::new(String::new());
+    static ref OUTPUT_BUFFER: Mutex<Vec<String>> = Mutex::new(vec![]);
 }
 
 
@@ -168,7 +169,8 @@ fn usage(in_eval: bool) {
 
     println_stderr!("{}", &error_msg);
     if !in_eval {
-        println_stderr!("  Supported shells: bash, zsh, csh, tcsh, python(experimental) and noshell");
+        println_stderr!("  Supported shells: bash, zsh, csh, tcsh, python(experimental) and \
+                         noshell");
         println_stderr!("");
         println_stderr!("  When noshell is selected all output is printed to stdout,");
         println_stderr!("  module available will then print a nice list without gaps, which is");
@@ -333,7 +335,6 @@ fn run(args: &Vec<String>) {
                     search_path: &modulepaths,
                     shell: shell,
                     shell_width: shell_width,
-                    tmpfile: &tmpfile,
                     installdir: &install_dir,
                 };
                 rmod::command(&mut rmod_command);
@@ -353,15 +354,29 @@ fn run(args: &Vec<String>) {
         // we want a self destructing tmpfile
         // so it must delete itself at the end of the run
         // if it crashes we still need to delete the file
+
         let cmd = format!("rm -f {}\n", tmp_file_path.display());
-        crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
-                      tmpfile.write_all(cmd.as_bytes()));
+
+        let mut output_buffer = OUTPUT_BUFFER.lock().unwrap();
+        let ref mut output_buffer = *output_buffer;
+        output_buffer.push(cmd);
+
+        for line in output_buffer {
+            crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                          tmpfile.write_all(line.as_bytes()));
+        }
 
         // source tmpfile
         println!("source {}", tmp_file_path.display());
     } else {
         remove_file(tmp_file_path.to_str().unwrap().to_string()).unwrap();
     }
+}
+
+pub fn output(line: String) {
+    let mut output_buffer = OUTPUT_BUFFER.lock().unwrap();
+    let ref mut output_buffer = *output_buffer;
+    output_buffer.push(line);
 }
 
 fn init() {
