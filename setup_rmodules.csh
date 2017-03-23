@@ -1,8 +1,8 @@
 #!/bin/csh
 
 alias module 'setenv TERMWIDTH `stty size |& tee /dev/null | cut -d" " -f2` ; eval `$RMODULES_INSTALL_DIR/rmodules csh,$TERMWIDTH ' \!'*` '
-setenv MODULEPATH "/software/shared/rmodulefiles/:/home/frlae/modules"
-setenv RMODULES_INSTALL_DIR "/home/frlae/rust/rmodules"
+setenv MODULEPATH ""
+setenv RMODULES_INSTALL_DIR ""
 setenv LOADEDMODULES ""
 setenv PYTHONPATH "$RMODULES_INSTALL_DIR:$PYTHONPATH"
 setenv PERL5LIB "$RMODULES_INSTALL_DIR:$PERL5LIB"

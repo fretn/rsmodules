@@ -149,10 +149,19 @@ fn is_shell_supported(shell: &str) -> bool {
     return false;
 }
 
+#[cfg(debug_assertions)]
+fn release_debug() -> String {
+    return String::from(" (debug)");
+}
+#[cfg(not(debug_assertions))]
+fn release_debug() -> String {
+    return String::from("");
+}
+
 fn usage(in_eval: bool) {
     let error_msg: &str;
 
-    println_stderr!("  rmodules {} - {}", VERSION, AUTHORS);
+    println_stderr!("  rmodules {}{} - {}", VERSION, release_debug(), AUTHORS);
     println_stderr!("");
     println_stderr!("  2017 - Ghent University / VIB");
     println_stderr!("  http://www.psb.ugent.be - http://www.ugent.be - http://www.vib.be");
@@ -217,16 +226,6 @@ fn run(args: &Vec<String>) {
         rmod::crash(CRASH_UNSUPPORTED_SHELL,
                     &format!("{} is not a supported shell", shell));
     }
-
-    // get install dir
-    let mut install_dir: String = env::current_dir().unwrap().to_string_lossy().into_owned();
-
-    match env::var("RMODULES_INSTALL_DIR") {
-        Ok(path) => install_dir = path,
-        Err(_) => {
-            show_warning!("$RMODULES_INSTALL_DIR not found, using {}", install_dir);
-        }
-    };
 
     let modulepaths = rmod::get_module_paths(false);
 
@@ -335,7 +334,6 @@ fn run(args: &Vec<String>) {
                     search_path: &modulepaths,
                     shell: shell,
                     shell_width: shell_width,
-                    installdir: &install_dir,
                 };
                 rmod::command(&mut rmod_command);
                 matches = true;

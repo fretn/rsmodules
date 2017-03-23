@@ -42,7 +42,6 @@ pub struct Rmodule<'a> {
     pub search_path: &'a Vec<String>, // module paths
     pub shell: &'a str, // tcsh|csh|bash|zsh
     pub shell_width: usize,
-    pub installdir: &'a str, // installation folder
 }
 
 pub fn crash(signal: i32, message: &str) {
@@ -419,7 +418,6 @@ fn purge(rmod: &mut Rmodule) {
                 search_path: rmod.search_path,
                 shell: rmod.shell,
                 shell_width: rmod.shell_width,
-                installdir: rmod.installdir,
             };
             command(&mut rmod_command);
         }

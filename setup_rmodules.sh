@@ -5,8 +5,8 @@ module() {
 	eval `$RMODULES_INSTALL_DIR/rmodules bash,$TERMWIDTH $*`;
 }
 
-export MODULEPATH="/usr/local/modules/:/home/frlae/rust/rmodules/modulespath/:/home/frlae/rust/rmodules/modulespath2/"
-export RMODULES_INSTALL_DIR="/home/frlae/rust/rmodules"
+export MODULEPATH=""
+export RMODULES_INSTALL_DIR=""
 export LOADEDMODULES=""
 export PYTHONPATH="$RMODULES_INSTALL_DIR:$PYTHONPATH"
 export PERL5LIB="$RMODULES_INSTALL_DIR:$PERL5LIB"
