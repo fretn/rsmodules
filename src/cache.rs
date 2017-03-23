@@ -249,7 +249,22 @@ pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
         let file: File = match File::open(format!("{}/{}", modulepath, MODULESINDEX)) {
             Ok(file) => file,
             Err(_) => {
-                continue;
+                println_stderr!("Creating missing index file: {}/{}",
+                                modulepath,
+                                MODULESINDEX);
+                if update(modulepath.clone(), shell) {
+                    match File::open(format!("{}/{}", modulepath, MODULESINDEX)) {
+                        Ok(file) => file,
+                        Err(_) => {
+                            // for some unknown reason we cannot open the file
+                            // while we could generate it in the update function
+                            // let's be honest: we're screwed
+                            continue;
+                        }
+                    }
+                } else {
+                    continue;
+                }
             }
 
         };

@@ -95,7 +95,8 @@ pub fn get_module_list(shell: &str) -> Vec<String> {
             cache::parse_modules_cache_file(&testpath, &mut modules);
             found_cachefile = true;
         } else {
-            show_warning!("Creating missing .modulesindex file: {}", testpath.display());
+            show_warning!("Creating missing .modulesindex file: {}",
+                          testpath.display());
             if cache::update(path, shell) {
                 cache::parse_modules_cache_file(&testpath, &mut modules);
                 found_cachefile = true;
