@@ -1,5 +1,5 @@
 sub module {
-    eval `/home/frlae/rust/rmodules/rmodules perl @_`;
+    eval `$ENV{"RMODULES_INSTALL_DIR"}/rmodules perl @_`;
 
 }
 
