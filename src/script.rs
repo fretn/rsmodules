@@ -551,11 +551,6 @@ pub fn get_info(shell: &str) -> Vec<String> {
         output.push(format!("echo '{}'", line.to_string()));
     }
 
-    output.push(format!("echo ''"));
-    output.push(format!("echo \"{}Try one of these commands to run the program: {}\"",
-                        bold_start,
-                        bold_end));
-
     let mut execs: Vec<String> = Vec::new();
     for line in INFO_PATH.lock().unwrap().iter() {
 
@@ -574,6 +569,13 @@ pub fn get_info(shell: &str) -> Vec<String> {
                 }
             }
         }
+    }
+
+    if execs.len() > 0 {
+        output.push(format!("echo ''"));
+        output.push(format!("echo \"{}Try one of these commands to run the program: {}\"",
+                            bold_start,
+                            bold_end));
     }
 
     execs.sort();

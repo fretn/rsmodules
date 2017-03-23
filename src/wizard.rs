@@ -226,11 +226,11 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 }
 
                 if !detected_sh {
-                    bash_updated = append_line("source ~/.rmodules.sh", &shellexpand::tilde("~/.bashrc"));
+                    bash_updated = append_line("source ~/.rmodules.sh", &shellexpand::tilde("~/.bashrc"), true);
                 }
 
                 if !detected_csh {
-                    csh_updated = append_line("source ~/.rmodules.csh", &shellexpand::tilde("~/.cshrc"));
+                    csh_updated = append_line("source ~/.rmodules.csh", &shellexpand::tilde("~/.cshrc"), true);
                 }
 
                 if bash_updated || csh_updated {
@@ -251,15 +251,17 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
     }
 
 
-    // search for modules (run makecache), if none found,
-    // ask to create a dummy module
-
-    // println!("and now open a new terminal and type: module");
+    append_line("prepend_path(\"PATH\",\"~/bin\")", &format!("{}/testmodule", path), false);
+    append_line("description(\"This is just a sample module, which adds ~/bin to your path\")", &format!("{}/testmodule", path), false);
+    // create a dummy modules
+    // and update the cache
+    // tell them to run the module avail command
+    println!("    Now run the command module available");
 }
 
-fn append_line(line: &str, filename: &str) -> bool {
+fn append_line(line: &str, filename: &str, verbose: bool) -> bool {
 
-    let mut file: File = match OpenOptions::new().write(true).append(true).open(filename) {
+    let mut file: File = match OpenOptions::new().write(true).append(true).create(true).open(filename) {
         Ok(fileresult) => fileresult,
         Err(e) => {
             println!("    - Cannot append to file {} ({})", filename, e);
@@ -272,7 +274,9 @@ fn append_line(line: &str, filename: &str) -> bool {
                            &format!("Cannot append to file {} ({})", filename, e));
     }
 
-    println!("    - Succesfully added '{}' to {}", line, filename);
+    if verbose {
+        println!("    - Succesfully added '{}' to {}", line, filename);
+    }
 
     return true;
 }
