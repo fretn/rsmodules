@@ -157,7 +157,7 @@ fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, act
     for line in output {
         let line = format!("{}\n", line);
         // TODO: delete temp file ?
-        if rmod.shell == "noshell" {
+        if rmod.shell == "noshell" || rmod.shell == "python" {
             println!("{}", line);
         } else {
             crash_if_err!(super::CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
@@ -362,7 +362,7 @@ pub fn is_other_version_of_module_loaded(name: &str) -> bool {
 }
 
 fn write_av_output(line: &str, mut tmpfile: &File, shell: &str) {
-    if shell == "noshell" {
+    if shell == "noshell" || shell == "python" {
         println!("{}", line);
     } else {
         let data = format!("echo \"{}\"\n", line);

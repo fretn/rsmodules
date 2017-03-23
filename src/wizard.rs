@@ -256,6 +256,10 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
         }
     }
 
+
+    // search for modules (run makecache), if none found,
+    // ask to create a dummy module
+
     // println!("and now open a new terminal and type: module");
 }
 

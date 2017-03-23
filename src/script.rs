@@ -187,6 +187,8 @@ fn setenv(var: String, val: String) {
     let shell = SHELL.lock().unwrap();
     if *shell == "bash" || *shell == "zsh" {
         add_to_env_vars(format!("export {}=\"{}\"", var, val));
+    } else if *shell == "python" {
+        println!("os.environ[\"{}\"] = \"{}\";", var, val);
     } else {
         add_to_env_vars(format!("setenv {} \"{}\"", var, val));
     }
@@ -197,6 +199,9 @@ fn unsetenv(var: String) {
     let shell = SHELL.lock().unwrap();
     if *shell == "bash" || *shell == "zsh" {
         add_to_env_vars(format!("unset \"{}\"", var));
+    } else if *shell == "python" {
+        println!("os.environ[\"{}\"] = \"\";", var);
+        println!("del os.environ[\"{}\"];", var);
     } else {
         add_to_env_vars(format!("unsetenv \"{}\"", var));
     }
@@ -219,6 +224,8 @@ fn prepend_path(var: String, val: String) {
     if notfound {
         if *shell == "bash" || *shell == "zsh" {
             add_to_env_vars(format!("export {}=\"{}\"", var, val));
+        } else if *shell == "python" {
+            println!("os.environ[\"{}\"] = \"{}\";", var, val);
         } else {
             add_to_env_vars(format!("setenv {} \"{}\"", var, val));
         }
@@ -226,6 +233,8 @@ fn prepend_path(var: String, val: String) {
     } else {
         if *shell == "bash" || *shell == "zsh" {
             add_to_env_vars(format!("export {}=\"{}:{}\"", var, val, current_val));
+        } else if *shell == "python" {
+            println!("os.environ[\"{}\"] = \"{}:{}\";", var, val, current_val);
         } else {
             add_to_env_vars(format!("setenv {} \"{}:{}\"", var, val, current_val));
         }
@@ -249,6 +258,8 @@ fn append_path(var: String, val: String) {
     if notfound {
         if *shell == "bash" || *shell == "zsh" {
             add_to_env_vars(format!("export {}=\"{}\"", var, val));
+        } else if *shell == "python" {
+            println!("os.environ[\"{}\"] = \"{}\";", var, val);
         } else {
             add_to_env_vars(format!("setenv {} \"{}\"", var, val));
         }
@@ -257,6 +268,8 @@ fn append_path(var: String, val: String) {
     } else {
         if *shell == "bash" || *shell == "zsh" {
             add_to_env_vars(format!("export {}=\"{}:{}\"", var, current_val, val));
+        } else if *shell == "python" {
+            println!("os.environ[\"{}\"] = \"{}:{}\";", var, current_val, val);
         } else {
             add_to_env_vars(format!("setenv {} \"{}:{}\"", var, current_val, val));
         }
@@ -283,6 +296,8 @@ fn remove_path(var: String, val: String) {
 
     if *shell == "bash" || *shell == "zsh" {
         add_to_env_vars(format!("export {}=\"{}\"", var, result));
+    } else if *shell == "python" {
+        println!("os.environ[\"{}\"] = \"{}\";", var, result);
     } else {
         add_to_env_vars(format!("setenv {} \"{}\"", var, result));
     }
@@ -293,20 +308,27 @@ fn unset_alias(name: String, val: String) {
     let shell = SHELL.lock().unwrap();
     if *shell == "bash" || *shell == "zsh" {
         add_to_commands(format!("unalias \"{}\"", name));
-    } else {
+    } else if *shell == "tcsh" || *shell == "csh" {
         add_to_commands(format!("unalias \"{}={}\"", name, val));
     }
 }
 
 fn set_alias(name: String, val: String) {
-    add_to_commands(format!("alias {}=\"{}\"", name, val));
+    let shell = SHELL.lock().unwrap();
+    if *shell != "python" {
+        add_to_commands(format!("alias {}=\"{}\"", name, val));
+    }
 }
 
 fn system(cmd: String) {
-    add_to_commands(cmd);
+    let shell = SHELL.lock().unwrap();
+    if *shell != "python" {
+        add_to_commands(cmd);
+    }
 }
 
 fn load(module: String) {
+    // FIXME: doesn't work for python yet
     add_to_commands(format!("module load {}", module));
 }
 
@@ -320,6 +342,7 @@ fn conflict(module: String) {
 }
 
 fn unload(module: String) {
+    // FIXME: doesn't work for python yet
     add_to_commands(format!("module unload {}", module));
 }
 

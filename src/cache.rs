@@ -236,7 +236,7 @@ pub fn get_module_list(tmpfile: &File, arg: &str, shell: &str, shell_width: usiz
     // prints a nice list for module av
     // no gaps, no default, no description
     // usefull for parsing, eg for bash completion
-    if shell == "noshell" {
+    if shell == "noshell" || shell == "python" {
         simple_list = true;
     }
 
