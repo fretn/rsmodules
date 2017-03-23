@@ -45,8 +45,8 @@ fn read_input(msg: &str) -> String {
 
 fn is_yes(answer: String) -> bool {
 
-    if answer == "Y\n" || answer == "y\n" || answer == "\n" || answer == "yes\n" ||
-       answer == "Yes\n" || answer == "YES\n" {
+    if answer == "Y\n" || answer == "y\n" || answer == "\n" || answer == "yes\n" || answer == "Yes\n" ||
+       answer == "YES\n" {
         return true;
     }
 
@@ -68,10 +68,8 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
 
     let executable_path = PathBuf::from(env::current_exe().unwrap());
     let executable_path = executable_path.parent();
-    let current_path_sh: &str = &format!("{}/setup_rmodules.sh",
-                                         executable_path.unwrap().display());
-    let current_path_csh: &str = &format!("{}/setup_rmodules.csh",
-                                          executable_path.unwrap().display());
+    let current_path_sh: &str = &format!("{}/setup_rmodules.sh", executable_path.unwrap().display());
+    let current_path_csh: &str = &format!("{}/setup_rmodules.csh", executable_path.unwrap().display());
 
     let bash_result: bool;
     let csh_result: bool;
@@ -219,10 +217,8 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 let mut bash_updated: bool = true;
                 let mut csh_updated: bool = true;
 
-                let detected_sh: bool = detect_line("source ~/.rmodules.sh",
-                                                    &shellexpand::tilde("~/.bashrc"));
-                let detected_csh: bool = detect_line("source ~/.rmodules.csh",
-                                                     &shellexpand::tilde("~/.cshrc"));
+                let detected_sh: bool = detect_line("source ~/.rmodules.sh", &shellexpand::tilde("~/.bashrc"));
+                let detected_csh: bool = detect_line("source ~/.rmodules.csh", &shellexpand::tilde("~/.cshrc"));
 
 
                 if !detected_sh || !detected_csh {
@@ -230,13 +226,11 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 }
 
                 if !detected_sh {
-                    bash_updated = append_line("source ~/.rmodules.sh",
-                                               &shellexpand::tilde("~/.bashrc"));
+                    bash_updated = append_line("source ~/.rmodules.sh", &shellexpand::tilde("~/.bashrc"));
                 }
 
                 if !detected_csh {
-                    csh_updated = append_line("source ~/.rmodules.csh",
-                                              &shellexpand::tilde("~/.cshrc"));
+                    csh_updated = append_line("source ~/.rmodules.csh", &shellexpand::tilde("~/.cshrc"));
                 }
 
                 if bash_updated || csh_updated {
@@ -351,12 +345,9 @@ fn add_path(newpath: &str, filename: &str, variable: &str, append: bool) -> bool
 fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
 
     let re = if variable == "MODULEPATH" {
-        Regex::new(r#"^\s*(?P<export>export|setenv)\s+MODULEPATH(?P<equals>[= ]?)"(?P<value>.*)""#)
-            .unwrap()
+        Regex::new(r#"^\s*(?P<export>export|setenv)\s+MODULEPATH(?P<equals>[= ]?)"(?P<value>.*)""#).unwrap()
     } else {
-        Regex::new(r#"^\s*(?P<export>export|setenv)\s+RMODULES_INSTALL_DIR(?P<equals>[= ]?)" \
-            (?P<value>.*)""#)
-            .unwrap()
+        Regex::new(r#"^\s*(?P<export>export|setenv)\s+RMODULES_INSTALL_DIR(?P<equals>[= ]?)"(?P<value>.*)""#).unwrap()
     };
 
     let mut output: String = input.to_string();

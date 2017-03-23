@@ -253,8 +253,7 @@ pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
         };
 
         let mut reader = BufReader::new(file);
-        let decoded_file: Vec<Module> = decode_from(&mut reader, bincode::SizeLimit::Infinite)
-            .unwrap();
+        let decoded_file: Vec<Module> = decode_from(&mut reader, bincode::SizeLimit::Infinite).unwrap();
         for item in decoded_file {
             decoded.push(item);
         }

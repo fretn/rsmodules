@@ -209,8 +209,7 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
                     let splitter: Vec<&str> = module.split(rmod.arg).collect();
                     if splitter.len() > 1 {
                         // FIXME: replace with: splitter[1].starts_with("/")
-                        if splitter[1].chars().next().unwrap() == '/' &&
-                           module.starts_with(rmod.arg) {
+                        if splitter[1].chars().next().unwrap() == '/' && module.starts_with(rmod.arg) {
                             selected_module = module;
                             found = true;
                             let testpath = format!("{}/{}", modulepath, module);
