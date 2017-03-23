@@ -139,8 +139,8 @@ fn is_shell_supported(shell: &str) -> bool {
     // to stdout instead of the temp file
     // noshell is also useful for debugging purposes
     shell_list.push("noshell");
-    // experimental python support
     shell_list.push("python");
+    shell_list.push("perl");
 
     if shell_list.contains(&shell) {
         return true;
@@ -169,7 +169,7 @@ fn usage(in_eval: bool) {
 
     println_stderr!("{}", &error_msg);
     if !in_eval {
-        println_stderr!("  Supported shells: bash, zsh, csh, tcsh, python(experimental) and \
+        println_stderr!("  Supported shells: bash, zsh, csh, tcsh, python, perl and \
                          noshell");
         println_stderr!("");
         println_stderr!("  When noshell is selected all output is printed to stdout,");
@@ -350,7 +350,7 @@ fn run(args: &Vec<String>) {
     // when noshell is choosen, we just output to stdout
     // this is used for scripts that want to parse the module av output
     // for example for tab completion
-    if shell != "noshell" && shell != "python" {
+    if shell != "noshell" && shell != "python" && shell != "perl" {
         // we want a self destructing tmpfile
         // so it must delete itself at the end of the run
         // if it crashes we still need to delete the file

@@ -192,6 +192,8 @@ fn unsetenv(var: String) {
     let shell = SHELL.lock().unwrap();
     if *shell == "bash" || *shell == "zsh" {
         add_to_commands(format!("unset \"{}\"", var));
+    } else if *shell == "perl" {
+        add_to_commands(format!("undef \"{}\"", var));
     } else if *shell == "python" {
         add_to_commands(format!("os.environ[\"{}\"] = \"\";", var));
         add_to_commands(format!("del os.environ[\"{}\"];", var));
@@ -276,24 +278,27 @@ fn unset_alias(name: String, val: String) {
 
 fn set_alias(name: String, val: String) {
     let shell = SHELL.lock().unwrap();
-    if *shell != "python" {
+    if *shell != "python" && *shell != "perl" {
         add_to_commands(format!("alias {}=\"{}\"", name, val));
     }
 }
 
 fn system(cmd: String) {
     let shell = SHELL.lock().unwrap();
-    if *shell != "python" {
+    if *shell != "python" && *shell != "perl" {
         add_to_commands(cmd);
     }
 }
 
 fn load(module: String) {
     let shell = SHELL.lock().unwrap();
-    if *shell != "python" {
-        add_to_commands(format!("module load {}", module));
-    } else {
+
+    if *shell == "python" {
         add_to_commands(format!("module(\"load\",\"{}\")", module));
+    } else if *shell == "perl" {
+        add_to_commands(format!("module(\"load\",\"{}\");", module));
+    } else {
+        add_to_commands(format!("module load {}", module));
     }
 }
 
@@ -308,10 +313,13 @@ fn conflict(module: String) {
 
 fn unload(module: String) {
     let shell = SHELL.lock().unwrap();
-    if *shell != "python" {
-        add_to_commands(format!("module unload {}", module));
-    } else {
+
+    if *shell == "python" {
         add_to_commands(format!("module(\"unload\",\"{}\")", module));
+    } else if *shell == "perl" {
+        add_to_commands(format!("module(\"unload\",\"{}\");", module));
+    } else {
+        add_to_commands(format!("module unload {}", module));
     }
 }
 
@@ -447,6 +455,8 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
             data = format!("setenv {} \"{}\"", result.0, result.1);
         } else if shell == "python" {
             data = format!("os.environ[\"{}\"] = \"{}\";", result.0, result.1);
+        } else if shell == "perl" {
+            data = format!("$ENV{{\"{}\"}} = \"{}\";", result.0, result.1);
         }
         output.push(data);
     }

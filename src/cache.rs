@@ -236,7 +236,7 @@ pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
     // prints a nice list for module av
     // no gaps, no default, no description
     // usefull for parsing, eg for bash completion
-    if shell == "noshell" || shell == "python" {
+    if shell == "noshell" || shell == "python" || shell == "perl" {
         simple_list = true;
     }
 

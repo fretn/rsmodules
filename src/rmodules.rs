@@ -156,7 +156,7 @@ fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, act
     for line in data {
         let line = format!("{}\n", line);
 
-        if rmod.shell == "noshell" || rmod.shell == "python" {
+        if rmod.shell == "noshell" || rmod.shell == "python" || rmod.shell == "perl" {
             println!("{}", line);
         } else {
             output(line);
@@ -364,6 +364,8 @@ fn echo(line: &str, shell: &str) {
         println!("{}", line);
     } else if shell == "python" {
         println!("print(\"{}\")", line);
+    } else if shell == "perl" {
+        println!("print(\"{}\\n\");", line);
     } else {
         let data = format!("echo \"{}\"\n", line);
         output(data);
