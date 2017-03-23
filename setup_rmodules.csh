@@ -4,6 +4,8 @@ alias module 'setenv TERMWIDTH `stty size |& tee /dev/null | cut -d" " -f2` ; ev
 setenv MODULEPATH "/software/shared/rmodulefiles/:/home/frlae/modules"
 setenv RMODULES_INSTALL_DIR "/home/frlae/rust/rmodules"
 setenv LOADEDMODULES ""
+setenv PYTHONPATH "$RMODULES_INSTALL_DIR:$PYTHONPATH"
+setenv PERL5LIB "$RMODULES_INSTALL_DIR:$PERL5LIB"
 
 # this should be a function, so everytime it is called the info is updated
 set mod_av="`$RMODULES_INSTALL_DIR/rmodules noshell avail`"

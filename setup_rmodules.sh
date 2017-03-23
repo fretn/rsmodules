@@ -8,12 +8,14 @@ module() {
 export MODULEPATH="/usr/local/modules/:/home/frlae/rust/rmodules/modulespath/:/home/frlae/rust/rmodules/modulespath2/"
 export RMODULES_INSTALL_DIR="/home/frlae/rust/rmodules"
 export LOADEDMODULES=""
+export PYTHONPATH="$RMODULES_INSTALL_DIR:$PYTHONPATH"
+export PERL5LIB="$RMODULES_INSTALL_DIR:$PERL5LIB"
 
 #
 # Bash commandline completion (bash 3.0 and above) for Modules 3.2.10
 #
 _module_avail() {
-    /software/shared/apps/x86_64/rmodules/0.2.0/rmodules noshell avail
+    $RMODULES_INSTALL_DIR/rmodules noshell avail
 }
 
 _module_not_yet_loaded() {
