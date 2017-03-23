@@ -245,18 +245,18 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 }
                 println!("");
 
+                // create a dummy modules
+                append_line("prepend_path(\"PATH\",\"~/bin\")", &format!("{}/testmodule", path), false);
+                append_line("description(\"This is just a sample module, which adds ~/bin to your path\")", &format!("{}/testmodule", path), false);
+                // tell them to run the module avail command
+                println!("    Now run the command: module available");
+
             }
 
         }
     }
 
 
-    append_line("prepend_path(\"PATH\",\"~/bin\")", &format!("{}/testmodule", path), false);
-    append_line("description(\"This is just a sample module, which adds ~/bin to your path\")", &format!("{}/testmodule", path), false);
-    // create a dummy modules
-    // and update the cache
-    // tell them to run the module avail command
-    println!("    Now run the command module available");
 }
 
 fn append_line(line: &str, filename: &str, verbose: bool) -> bool {
