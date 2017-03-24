@@ -2,5 +2,6 @@ target
 *.rs.bk
 modulespath
 modulespath2
-rmodules
+rsmodules
 *.pyc
+releases
