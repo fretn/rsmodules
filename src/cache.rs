@@ -286,11 +286,17 @@ pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
     decoded.sort();
 
     let mut previous_first_char: char = '§';
+    let mut previous_description: String = String::new();
     for module in decoded {
         let tmp: String;
 
-        let mut description = module.description;
+        let mut description = module.description.clone();
         description.truncate(shell_width - longest_name - 3);
+
+        if module.description == previous_description {
+            description = String::new();
+        }
+        previous_description = module.description;
 
         let mut default: &str = " ";
 

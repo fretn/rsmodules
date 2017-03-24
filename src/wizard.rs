@@ -279,7 +279,7 @@ fn append_line(line: &str, filename: &str, verbose: bool) -> bool {
 
     if let Err(e) = writeln!(file, "{}", line) {
         super::rsmod::crash(super::CRASH_CANNOT_ADD_TO_ENV,
-                           &format!("Cannot append to file {} ({})", filename, e));
+                            &format!("Cannot append to file {} ({})", filename, e));
     }
 
     if verbose {
@@ -343,7 +343,7 @@ fn add_path(newpath: &str, filename: &str, variable: &str, append: bool) -> bool
         for newline in newbuffer {
             if let Err(e) = writeln!(file, "{}", newline) {
                 super::rsmod::crash(super::CRASH_CANNOT_ADD_TO_ENV,
-                                   &format!("Cannot write to file {} ({})", filename, e));
+                                    &format!("Cannot write to file {} ({})", filename, e));
             }
         }
 
@@ -472,7 +472,7 @@ pub fn run(recursive: bool) -> bool {
 
             } else if Path::new(path).is_file() {
                 super::rsmod::crash(super::CRASH_MODULEPATH_IS_FILE,
-                                   "Modulepath cannot be a file");
+                                    "Modulepath cannot be a file");
                 return false;
             } else {
                 if is_yes(read_input(format!("The folder {} doesn't exist, do you want to \

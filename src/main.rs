@@ -224,7 +224,7 @@ fn run(args: &Vec<String>) {
     if !is_shell_supported(shell) {
         usage(false);
         rsmod::crash(CRASH_UNSUPPORTED_SHELL,
-                    &format!("{} is not a supported shell", shell));
+                     &format!("{} is not a supported shell", shell));
     }
 
     let modulepaths = rsmod::get_module_paths(false);
@@ -282,7 +282,7 @@ fn run(args: &Vec<String>) {
                 }
                 Err(e) => {
                     rsmod::crash(CRASH_FAILED_TO_CREATE_TEMPORARY_FILE,
-                                &format!("Failed to create temporary file: {}", e));
+                                 &format!("Failed to create temporary file: {}", e));
                     return;
                 }
             };
