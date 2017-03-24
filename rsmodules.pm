@@ -1,5 +1,5 @@
 sub module {
-    eval `$ENV{"RMODULES_INSTALL_DIR"}/rmodules perl @_`;
+    eval `$ENV{"RSMODULES_INSTALL_DIR"}/rsmodules perl @_`;
 
 }
 

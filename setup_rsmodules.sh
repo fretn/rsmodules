@@ -2,20 +2,20 @@
 
 module() { 
 	export TERMWIDTH=`/bin/stty size 2>&1 | cut -d" " -f2`;
-	eval `$RMODULES_INSTALL_DIR/rmodules bash,$TERMWIDTH $*`;
+	eval `$RSMODULES_INSTALL_DIR/rsmodules bash,$TERMWIDTH $*`;
 }
 
 export MODULEPATH=""
-export RMODULES_INSTALL_DIR=""
+export RSMODULES_INSTALL_DIR=""
 export LOADEDMODULES=""
-export PYTHONPATH="$RMODULES_INSTALL_DIR:$PYTHONPATH"
-export PERL5LIB="$RMODULES_INSTALL_DIR:$PERL5LIB"
+export PYTHONPATH="$RSMODULES_INSTALL_DIR:$PYTHONPATH"
+export PERL5LIB="$RSMODULES_INSTALL_DIR:$PERL5LIB"
 
 #
 # Bash commandline completion (bash 3.0 and above) for Modules 3.2.10
 #
 _module_avail() {
-    $RMODULES_INSTALL_DIR/rmodules noshell avail
+    $RSMODULES_INSTALL_DIR/rsmodules noshell avail
 }
 
 _module_not_yet_loaded() {

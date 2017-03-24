@@ -1,5 +1,5 @@
 import os
-from rmodules import module
+from rsmodules import module
 module("load","blast")
 print(os.environ["LOADEDMODULES"])
 module("list","")

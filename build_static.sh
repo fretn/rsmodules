@@ -8,5 +8,5 @@ fi
 
 # then build
 cargo build --release --target=$TOOLCHAIN
-strip target/$TOOLCHAIN/release/rmodules
-cp target/$TOOLCHAIN/release/rmodules .
+strip target/$TOOLCHAIN/release/rsmodules
+cp target/$TOOLCHAIN/release/rsmodules .

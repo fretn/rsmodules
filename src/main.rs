@@ -30,13 +30,13 @@ mod macros;
 #[macro_use]
 extern crate lazy_static;
 
-#[path = "rmodules.rs"]
-mod rmod;
+#[path = "rsmodules.rs"]
+mod rsmod;
 
 #[path = "wizard.rs"]
 mod wizard;
 
-use rmod::Rmodule;
+use rsmod::Rsmodule;
 
 extern crate rustc_serialize;
 extern crate bincode;
@@ -76,8 +76,8 @@ const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 
 static LONG_HELP: &'static str = "
 
-  rmodules manages your user environment on linux, macOS.
-  The rmodules package is a tool to help users modifying their environment
+  RSModules manages your user environment on linux, macOS.
+  The RSModules package is a tool to help users modifying their environment
   during a session by using modulefiles.
   A modulefile contains all the settings needed to configure the shell for
   using a certain application.
@@ -102,8 +102,8 @@ static LONG_HELP: &'static str = "
     * unload [(partial) module name]
 
       A partial module name is the part of the modulename
-      before a slash, eg: you have module name 'rmodules/2.0.0'
-      the partial name is 'rmodules'
+      before a slash, eg: you have module name 'rsmodules/2.0.0'
+      the partial name is 'rsmodules'
 
     * list
       Lists all the loaded modules
@@ -161,7 +161,7 @@ fn release_debug() -> String {
 fn usage(in_eval: bool) {
     let error_msg: &str;
 
-    println_stderr!("  rmodules {}{} - {}", VERSION, release_debug(), AUTHORS);
+    println_stderr!("  RSModules {}{} - {}", VERSION, release_debug(), AUTHORS);
     println_stderr!("");
     println_stderr!("  2017 - Ghent University / VIB");
     println_stderr!("  http://www.psb.ugent.be - http://www.ugent.be - http://www.vib.be");
@@ -172,7 +172,7 @@ fn usage(in_eval: bool) {
         error_msg = "  Usage: module <load|unload|list|purge|available|info|makecache> [module \
                            name]";
     } else {
-        error_msg = "  Usage: rmodules <shell> \
+        error_msg = "  Usage: rsmodules <shell> \
                      <load|unload|list|purge|available|info|makecache> [module name]";
     }
 
@@ -223,18 +223,18 @@ fn run(args: &Vec<String>) {
 
     if !is_shell_supported(shell) {
         usage(false);
-        rmod::crash(CRASH_UNSUPPORTED_SHELL,
+        rsmod::crash(CRASH_UNSUPPORTED_SHELL,
                     &format!("{} is not a supported shell", shell));
     }
 
-    let modulepaths = rmod::get_module_paths(false);
+    let modulepaths = rsmod::get_module_paths(false);
 
     // create temporary file in the home folder
     // if the file cannot be created try to create it
     // in /tmp, if that fails, the program exits
     //
-    // ~/.rmodulestmpXXXXXXXX
-    // /tmp/.rmodulestmpXXXXXXXX
+    // ~/.rsmodulestmpXXXXXXXX
+    // /tmp/.rsmodulestmpXXXXXXXX
 
     let mut tmpfile: File;
 
@@ -258,7 +258,7 @@ fn run(args: &Vec<String>) {
         }
     };
 
-    let filename: String = format!(".rmodulestmp{}", rstr);
+    let filename: String = format!(".rsmodulestmp{}", rstr);
     let filename: &str = filename.as_ref();
     tmp_file_path.push(filename);
 
@@ -271,7 +271,7 @@ fn run(args: &Vec<String>) {
             // home exists but we can't create the temp file in it or
             // worst case, /tmp exists but we can't create the temp file in it
             tmp_file_path = env::temp_dir();
-            let filename: String = format!(".rmodulestmp{}", rstr);
+            let filename: String = format!(".rsmodulestmp{}", rstr);
             let filename: &str = filename.as_ref();
             tmp_file_path.push(filename);
 
@@ -281,7 +281,7 @@ fn run(args: &Vec<String>) {
                     set_global_tmpfile(tmp_file_path.to_str().unwrap().to_string());
                 }
                 Err(e) => {
-                    rmod::crash(CRASH_FAILED_TO_CREATE_TEMPORARY_FILE,
+                    rsmod::crash(CRASH_FAILED_TO_CREATE_TEMPORARY_FILE,
                                 &format!("Failed to create temporary file: {}", e));
                     return;
                 }
@@ -328,14 +328,14 @@ fn run(args: &Vec<String>) {
             }
 
             if cmd.starts_with(command) {
-                let mut rmod_command: Rmodule = Rmodule {
+                let mut rsmod_command: Rsmodule = Rsmodule {
                     cmd: cmd,
                     arg: modulename,
                     search_path: &modulepaths,
                     shell: shell,
                     shell_width: shell_width,
                 };
-                rmod::command(&mut rmod_command);
+                rsmod::command(&mut rsmod_command);
                 matches = true;
             }
         }
@@ -387,7 +387,7 @@ fn main() {
 
     let args: Vec<String> = std::env::args().collect();
 
-    // ./rmodules install
+    // ./rsmodules install
 
     // and skip this automatic wizard thing
     if args.len() == 1 {

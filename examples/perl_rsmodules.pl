@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-use rmodules;
+use rsmodules;
 
 module("load","blast");
 

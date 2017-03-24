@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # this is an example to find all tcl module files in a /blah/modulefiles folder
-# and migrate them to rhaiscript in /blah/rmodulefiles
+# and migrate them to rhaiscript in /blah/rsmodulefiles
 
 for file in `find /software/shared/modulefiles/ -type f`
 do
-    target="`echo $file | sed 's/modulefiles/rmodulefiles/'`"
+    target="`echo $file | sed 's/modulefiles/rsmodulefiles/'`"
     target_filename="`basename $target`"
     target_dirname="`dirname $target`"
 

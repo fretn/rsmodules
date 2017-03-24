@@ -59,17 +59,17 @@ fn print_title(title: &str) {
     println!("");
 }
 
-fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
+fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
     // no point in setting the env var, we are not running in the alias
     // env::set_var("MODULEPATH", path);
-    // just update the setup_rmodules.(c)sh files and copy them to /etc/profile.d
+    // just update the setup_rsmodules.(c)sh files and copy them to /etc/profile.d
     // if no permissions, tell them if they are an admin to run this as root
     // or just throw it in .bashrc and .personal_cshrc -> or first check if
 
     let executable_path = PathBuf::from(env::current_exe().unwrap());
     let executable_path = executable_path.parent();
-    let current_path_sh: &str = &format!("{}/setup_rmodules.sh", executable_path.unwrap().display());
-    let current_path_csh: &str = &format!("{}/setup_rmodules.csh", executable_path.unwrap().display());
+    let current_path_sh: &str = &format!("{}/setup_rsmodules.sh", executable_path.unwrap().display());
+    let current_path_csh: &str = &format!("{}/setup_rsmodules.csh", executable_path.unwrap().display());
 
     let bash_result: bool;
     let csh_result: bool;
@@ -89,7 +89,7 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
         bash_result = add_path(path, current_path_sh, "MODULEPATH", true);
         bash_result2 = add_path(&format!("{}", executable_path.unwrap().display()),
                                 current_path_sh,
-                                "RMODULES_INSTALL_DIR",
+                                "RSMODULES_INSTALL_DIR",
                                 false);
 
     }
@@ -106,7 +106,7 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
         csh_result = add_path(path, current_path_csh, "MODULEPATH", true);
         csh_result2 = add_path(&format!("{}", executable_path.unwrap().display()),
                                current_path_csh,
-                               "RMODULES_INSTALL_DIR",
+                               "RSMODULES_INSTALL_DIR",
                                false);
     }
 
@@ -124,15 +124,15 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
     }
 
     if get_current_uid() == 0 {
-        let path_sh: &str = "/etc/profile.d/rmodules.sh";
-        let path_csh: &str = "/etc/profile.d/rmodules.csh";
+        let path_sh: &str = "/etc/profile.d/rsmodules.sh";
+        let path_csh: &str = "/etc/profile.d/rsmodules.csh";
 
         if !Path::new(path_sh).exists() || !Path::new(path_csh).exists() {
             println!("");
             if !recursive {
                 print_title("ENVIRONMENT SETUP");
             }
-            if is_yes(read_input("rmodules is not setup yet to autoload when a user \
+            if is_yes(read_input("rsmodules is not setup yet to autoload when a user \
                                 opens a terminal. Do you want to do this now ? [Y/n]")) {
 
                 let mut bash_success: bool = false;
@@ -174,22 +174,22 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
 
         }
     } else {
-        let path_sh: &str = &shellexpand::tilde("~/.rmodules.sh");
-        let path_csh: &str = &shellexpand::tilde("~/.rmodules.csh");
+        let path_sh: &str = &shellexpand::tilde("~/.rsmodules.sh");
+        let path_csh: &str = &shellexpand::tilde("~/.rsmodules.csh");
 
 
         if !Path::new(path_sh).exists() || !Path::new(path_csh).exists() ||
-           !detect_line("source ~/.rmodules.sh", &shellexpand::tilde("~/.bashrc")) ||
-           !detect_line("source ~/.rmodules.csh", &shellexpand::tilde("~/.cshrc")) {
+           !detect_line("source ~/.rsmodules.sh", &shellexpand::tilde("~/.bashrc")) ||
+           !detect_line("source ~/.rsmodules.csh", &shellexpand::tilde("~/.cshrc")) {
             println!("");
             if !recursive {
                 print_title("ENVIRONMENT SETUP");
             }
-            if is_yes(read_input("rmodules is not setup yet to autoload when you \
+            if is_yes(read_input("rsmodules is not setup yet to autoload when you \
                                 open a new terminal.\n    Do you want to do this now ? [Y/n]")) {
-                // want to link rmodules to /home and add it to bashrc
+                // want to link rsmodules to /home and add it to bashrc
                 // read .cshrc and .bashrc line by line
-                // to detect if source ~/rmodules.(c)sh exists in it
+                // to detect if source ~/rsmodules.(c)sh exists in it
                 // read filename line by line, and push it to modules
 
                 println!("");
@@ -217,8 +217,8 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 let mut bash_updated: bool = true;
                 let mut csh_updated: bool = true;
 
-                let detected_sh: bool = detect_line("source ~/.rmodules.sh", &shellexpand::tilde("~/.bashrc"));
-                let detected_csh: bool = detect_line("source ~/.rmodules.csh", &shellexpand::tilde("~/.cshrc"));
+                let detected_sh: bool = detect_line("source ~/.rsmodules.sh", &shellexpand::tilde("~/.bashrc"));
+                let detected_csh: bool = detect_line("source ~/.rsmodules.csh", &shellexpand::tilde("~/.cshrc"));
 
 
                 if !detected_sh || !detected_csh {
@@ -226,13 +226,13 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 }
 
                 if !detected_sh {
-                    bash_updated = append_line("source ~/.rmodules.sh",
+                    bash_updated = append_line("source ~/.rsmodules.sh",
                                                &shellexpand::tilde("~/.bashrc"),
                                                true);
                 }
 
                 if !detected_csh {
-                    csh_updated = append_line("source ~/.rmodules.csh",
+                    csh_updated = append_line("source ~/.rsmodules.csh",
                                               &shellexpand::tilde("~/.cshrc"),
                                               true);
                 }
@@ -242,10 +242,10 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                     println!("\n    To have it active in the current terminal, type this:");
                 }
                 if bash_updated {
-                    println!("    bash or zsh : source ~/.rmodules.sh");
+                    println!("    bash or zsh : source ~/.rsmodules.sh");
                 }
                 if csh_updated {
-                    println!("    csh or tcsh : source ~/.rmodules.csh");
+                    println!("    csh or tcsh : source ~/.rsmodules.csh");
                 }
                 println!("");
 
@@ -278,7 +278,7 @@ fn append_line(line: &str, filename: &str, verbose: bool) -> bool {
     };
 
     if let Err(e) = writeln!(file, "{}", line) {
-        super::rmod::crash(super::CRASH_CANNOT_ADD_TO_ENV,
+        super::rsmod::crash(super::CRASH_CANNOT_ADD_TO_ENV,
                            &format!("Cannot append to file {} ({})", filename, e));
     }
 
@@ -342,7 +342,7 @@ fn add_path(newpath: &str, filename: &str, variable: &str, append: bool) -> bool
 
         for newline in newbuffer {
             if let Err(e) = writeln!(file, "{}", newline) {
-                super::rmod::crash(super::CRASH_CANNOT_ADD_TO_ENV,
+                super::rsmod::crash(super::CRASH_CANNOT_ADD_TO_ENV,
                                    &format!("Cannot write to file {} ({})", filename, e));
             }
         }
@@ -359,7 +359,7 @@ fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
     let re = if variable == "MODULEPATH" {
         Regex::new(r#"^\s*(?P<export>export|setenv)\s+MODULEPATH(?P<equals>[= ]?)"(?P<value>.*)""#).unwrap()
     } else {
-        Regex::new(r#"^\s*(?P<export>export|setenv)\s+RMODULES_INSTALL_DIR(?P<equals>[= ]?)"(?P<value>.*)""#).unwrap()
+        Regex::new(r#"^\s*(?P<export>export|setenv)\s+RSMODULES_INSTALL_DIR(?P<equals>[= ]?)"(?P<value>.*)""#).unwrap()
     };
 
     let mut output: String = input.to_string();
@@ -409,7 +409,7 @@ fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
 // once a path is created and added to the
 // $MODULEPATH envvar, start wizard to
 // create a modulefile
-// also update the setup_rmodules.(c)sh files
+// also update the setup_rsmodules.(c)sh files
 // and ask to put them in /etc/profile.d
 //
 // if modulepath found, but it is empty
@@ -425,14 +425,14 @@ fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
 // crash with the help
 
 pub fn run(recursive: bool) -> bool {
-    let module_paths: Vec<String> = super::rmod::get_module_paths(true);
+    let module_paths: Vec<String> = super::rsmod::get_module_paths(true);
 
     if module_paths.len() == 0 {
 
 
-        // TODO: ask if we have to copy rmodules to a different folder
+        // TODO: ask if we have to copy rsmodules to a different folder
         // before we continue
-        // "it looks like rmodules isn't setup yet, blabla, do you want to"
+        // "it looks like rsmodules isn't setup yet, blabla, do you want to"
 
 
         println!("");
@@ -464,14 +464,14 @@ pub fn run(recursive: bool) -> bool {
                 if is_yes(read_input("Path already exists, are you sure you want to continue ? \
                                       [Y/n]")) {
 
-                    update_setup_rmodules_c_sh(false, path);
+                    update_setup_rsmodules_c_sh(false, path);
                     return true;
                 } else {
                     return run(true);
                 }
 
             } else if Path::new(path).is_file() {
-                super::rmod::crash(super::CRASH_MODULEPATH_IS_FILE,
+                super::rsmod::crash(super::CRASH_MODULEPATH_IS_FILE,
                                    "Modulepath cannot be a file");
                 return false;
             } else {
@@ -483,12 +483,12 @@ pub fn run(recursive: bool) -> bool {
                     create_dir_all(path).unwrap();
                     println!("");
                     println!("    - Succesfully created {}", path);
-                    update_setup_rmodules_c_sh(false, path);
+                    update_setup_rsmodules_c_sh(false, path);
                     return true;
                 } else {
                     println!("");
                     println!("   ==== WARNING: Don't forget to create: {} ====", path);
-                    update_setup_rmodules_c_sh(false, path);
+                    update_setup_rsmodules_c_sh(false, path);
                     return true;
                 }
             }

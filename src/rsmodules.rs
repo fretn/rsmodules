@@ -36,7 +36,7 @@ mod cache;
 static DEFAULT_MODULE_PATH: &'static str = "/usr/local";
 static ENV_LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
 
-pub struct Rmodule<'a> {
+pub struct Rsmodule<'a> {
     pub cmd: &'a str, // load|list|avail|...
     pub arg: &'a str, // blast/12.1 | blast | blast/12
     pub search_path: &'a Vec<String>, // module paths
@@ -112,25 +112,25 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
     return modules;
 }
 
-pub fn command(rmod: &mut Rmodule) {
+pub fn command(rsmod: &mut Rsmodule) {
 
-    if rmod.cmd == "load" {
-        module_action(rmod, "load");
-    } else if rmod.cmd == "unload" {
-        module_action(rmod, "unload");
-    } else if rmod.cmd == "available" {
-        cache::get_module_list(rmod.arg, rmod.shell, rmod.shell_width);
-    } else if rmod.cmd == "list" {
-        list(rmod);
-    } else if rmod.cmd == "purge" {
-        purge(rmod);
-    } else if rmod.cmd == "info" {
-        module_action(rmod, "info");
-    } else if rmod.cmd == "makecache" {
+    if rsmod.cmd == "load" {
+        module_action(rsmod, "load");
+    } else if rsmod.cmd == "unload" {
+        module_action(rsmod, "unload");
+    } else if rsmod.cmd == "available" {
+        cache::get_module_list(rsmod.arg, rsmod.shell, rsmod.shell_width);
+    } else if rsmod.cmd == "list" {
+        list(rsmod);
+    } else if rsmod.cmd == "purge" {
+        purge(rsmod);
+    } else if rsmod.cmd == "info" {
+        module_action(rsmod, "info");
+    } else if rsmod.cmd == "makecache" {
         let modulepaths = get_module_paths(false);
         for modulepath in modulepaths {
             if modulepath != "" {
-                cache::update(modulepath, rmod.shell);
+                cache::update(modulepath, rsmod.shell);
             }
         }
     }
@@ -143,22 +143,22 @@ pub fn get_module_description(path: &PathBuf, action: &str) -> Vec<String> {
     script::get_description()
 }
 
-fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, action: &str) {
+fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, action: &str) {
 
-    script::run(path, action, rmod.shell);
+    script::run(path, action, rsmod.shell);
 
     let data: Vec<String>;
 
     if action == "info" {
-        data = script::get_info(rmod.shell);
+        data = script::get_info(rsmod.shell);
     } else {
-        data = script::get_output(selected_module, action, rmod.shell);
+        data = script::get_output(selected_module, action, rsmod.shell);
     }
 
     for line in data {
         let line = format!("{}\n", line);
 
-        if rmod.shell == "noshell" || rmod.shell == "python" || rmod.shell == "perl" {
+        if rsmod.shell == "noshell" || rsmod.shell == "python" || rsmod.shell == "perl" {
             println!("{}", line);
         } else {
             output(line);
@@ -166,16 +166,16 @@ fn run_modulefile(path: &PathBuf, rmod: &mut Rmodule, selected_module: &str, act
     }
 }
 
-fn module_action(rmod: &mut Rmodule, action: &str) {
+fn module_action(rsmod: &mut Rsmodule, action: &str) {
 
-    let mut reversed_modules = get_module_list(rmod.shell);
+    let mut reversed_modules = get_module_list(rsmod.shell);
     reversed_modules.reverse();
 
-    let mut selected_module = rmod.arg;
+    let mut selected_module = rsmod.arg;
     let mut modulefile: PathBuf = PathBuf::new();
     let mut found: bool = false;
 
-    if rmod.arg == "" {
+    if rsmod.arg == "" {
         super::usage(true);
         return;
     }
@@ -188,8 +188,8 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
     // then we need to load the Default version
     // or just the latest one
 
-    'outer: for modulepath in rmod.search_path {
-        let testpath = format!("{}/{}", modulepath, rmod.arg);
+    'outer: for modulepath in rsmod.search_path {
+        let testpath = format!("{}/{}", modulepath, rsmod.arg);
         if Path::new(&testpath).exists() {
 
             // we got it, now we need to figure out if its a partial match or not
@@ -209,10 +209,10 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
                     // because of the above 'exists()' check
 
                     // prevent that: module load blast loads blastz
-                    let splitter: Vec<&str> = module.0.split(rmod.arg).collect();
+                    let splitter: Vec<&str> = module.0.split(rsmod.arg).collect();
                     if splitter.len() > 1 {
 
-                        if found && module.0.starts_with(rmod.arg) && module.1 == 1 {
+                        if found && module.0.starts_with(rsmod.arg) && module.1 == 1 {
                             selected_module = module.0.as_ref();
                             let testpath = format!("{}/{}", modulepath, module.0);
                             modulefile = PathBuf::from(&testpath);
@@ -220,12 +220,12 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
                             break 'outer;
                         }
 
-                        if found && !module.0.starts_with(rmod.arg) {
+                        if found && !module.0.starts_with(rsmod.arg) {
                             break 'outer;
                         }
 
                         // FIXME: replace with: splitter[1].starts_with("/")
-                        if !found && splitter[1].chars().next().unwrap() == '/' && module.0.starts_with(rmod.arg) {
+                        if !found && splitter[1].chars().next().unwrap() == '/' && module.0.starts_with(rsmod.arg) {
                             selected_module = module.0.as_ref();
                             found = true;
                             let testpath = format!("{}/{}", modulepath, module.0);
@@ -257,14 +257,14 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
         other = get_other_version_of_loaded_module(tmp_selected_module);
 
         if other != "" && other != selected_module {
-            for modulepath in rmod.search_path {
+            for modulepath in rsmod.search_path {
                 let testpath = format!("{}/{}", modulepath, other);
                 if Path::new(&testpath).exists() {
 
                     if Path::new(&testpath).is_file() {
                         let tmpmodulefile: PathBuf = PathBuf::from(&testpath);
                         // unload the module as we found the path to the file
-                        run_modulefile(&tmpmodulefile, rmod, other.as_ref(), "unload");
+                        run_modulefile(&tmpmodulefile, rsmod, other.as_ref(), "unload");
                         replaced_module = true;
                     }
                 }
@@ -276,9 +276,9 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
     // check if we are already loaded (LOADEDMODULES env var)
     if is_module_loaded(selected_module) && action == "load" {
         // unload the module
-        run_modulefile(&modulefile, rmod, selected_module, "unload");
+        run_modulefile(&modulefile, rsmod, selected_module, "unload");
         // load the module again
-        run_modulefile(&modulefile, rmod, selected_module, "load");
+        run_modulefile(&modulefile, rsmod, selected_module, "load");
         return;
     }
 
@@ -288,7 +288,7 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
     }
 
     // finaly load|unload|info the module
-    run_modulefile(&modulefile, rmod, selected_module, action);
+    run_modulefile(&modulefile, rsmod, selected_module, action);
 
     if replaced_module {
         if other != "" && selected_module != "" {
@@ -296,7 +296,7 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
                                        with {}",
                                       other,
                                       selected_module);
-            echo(&msg, rmod.shell);
+            echo(&msg, rsmod.shell);
         }
     }
 }
@@ -387,7 +387,7 @@ fn echo(line: &str, shell: &str) {
     }
 }
 
-fn list(rmod: &mut Rmodule) {
+fn list(rsmod: &mut Rsmodule) {
     let loadedmodules: String;
 
     match env::var(ENV_LOADEDMODULES) {
@@ -402,19 +402,19 @@ fn list(rmod: &mut Rmodule) {
     loadedmodules.sort();
 
     if loadedmodules.len() > 0 {
-        echo("Currently loaded modules:", rmod.shell);
+        echo("Currently loaded modules:", rsmod.shell);
     } else {
-        echo("There are currently no modules loaded.", rmod.shell);
+        echo("There are currently no modules loaded.", rsmod.shell);
     }
     for module in loadedmodules {
 
         if module != "" {
-            echo(module, rmod.shell);
+            echo(module, rsmod.shell);
         }
     }
 }
 
-fn purge(rmod: &mut Rmodule) {
+fn purge(rsmod: &mut Rsmodule) {
     let loadedmodules: String;
 
     match env::var(ENV_LOADEDMODULES) {
@@ -428,14 +428,14 @@ fn purge(rmod: &mut Rmodule) {
     for module in loadedmodules {
 
         if module != "" {
-            let mut rmod_command: Rmodule = Rmodule {
+            let mut rsmod_command: Rsmodule = Rsmodule {
                 cmd: "unload",
                 arg: module,
-                search_path: rmod.search_path,
-                shell: rmod.shell,
-                shell_width: rmod.shell_width,
+                search_path: rsmod.search_path,
+                shell: rsmod.shell,
+                shell_width: rsmod.shell_width,
             };
-            command(&mut rmod_command);
+            command(&mut rsmod_command);
         }
     }
 

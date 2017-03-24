@@ -1,5 +1,5 @@
 [root]
-name = "rmodules"
+name = "rsmodules"
 version = "0.4.9"
 dependencies = [
  "bincode 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
