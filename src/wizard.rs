@@ -226,11 +226,15 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 }
 
                 if !detected_sh {
-                    bash_updated = append_line("source ~/.rmodules.sh", &shellexpand::tilde("~/.bashrc"), true);
+                    bash_updated = append_line("source ~/.rmodules.sh",
+                                               &shellexpand::tilde("~/.bashrc"),
+                                               true);
                 }
 
                 if !detected_csh {
-                    csh_updated = append_line("source ~/.rmodules.csh", &shellexpand::tilde("~/.cshrc"), true);
+                    csh_updated = append_line("source ~/.rmodules.csh",
+                                              &shellexpand::tilde("~/.cshrc"),
+                                              true);
                 }
 
                 if bash_updated || csh_updated {
@@ -246,8 +250,12 @@ fn update_setup_rmodules_c_sh(recursive: bool, path: &str) {
                 println!("");
 
                 // create a dummy modules
-                append_line("prepend_path(\"PATH\",\"~/bin\")", &format!("{}/testmodule", path), false);
-                append_line("description(\"This is just a sample module, which adds ~/bin to your path\")", &format!("{}/testmodule", path), false);
+                append_line("prepend_path(\"PATH\",\"~/bin\")",
+                            &format!("{}/testmodule", path),
+                            false);
+                append_line("description(\"This is just a sample module, which adds ~/bin to your path\")",
+                            &format!("{}/testmodule", path),
+                            false);
                 // tell them to run the module avail command
                 println!("    Now run the command: module available");
 

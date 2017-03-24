@@ -80,8 +80,8 @@ pub fn get_module_paths(silent: bool) -> Vec<String> {
     return modulepaths;
 }
 
-pub fn get_module_list(shell: &str) -> Vec<String> {
-    let mut modules: Vec<String> = Vec::new();
+pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
+    let mut modules: Vec<(String, i64)> = Vec::new();
     let mut found_cachefile: bool = false;
     let modulepaths = get_module_paths(false);
     for path in modulepaths {
@@ -209,17 +209,31 @@ fn module_action(rmod: &mut Rmodule, action: &str) {
                     // because of the above 'exists()' check
 
                     // prevent that: module load blast loads blastz
-                    let splitter: Vec<&str> = module.split(rmod.arg).collect();
+                    let splitter: Vec<&str> = module.0.split(rmod.arg).collect();
                     if splitter.len() > 1 {
-                        // FIXME: replace with: splitter[1].starts_with("/")
-                        if splitter[1].chars().next().unwrap() == '/' && module.starts_with(rmod.arg) {
-                            selected_module = module;
-                            found = true;
-                            let testpath = format!("{}/{}", modulepath, module);
+
+                        if found && module.0.starts_with(rmod.arg) && module.1 == 1 {
+                            selected_module = module.0.as_ref();
+                            let testpath = format!("{}/{}", modulepath, module.0);
                             modulefile = PathBuf::from(&testpath);
 
-                            // break out of the outer loop
                             break 'outer;
+                        }
+
+                        if found && !module.0.starts_with(rmod.arg) {
+                            break 'outer;
+                        }
+
+                        // FIXME: replace with: splitter[1].starts_with("/")
+                        if !found && splitter[1].chars().next().unwrap() == '/' && module.0.starts_with(rmod.arg) {
+                            selected_module = module.0.as_ref();
+                            found = true;
+                            let testpath = format!("{}/{}", modulepath, module.0);
+                            modulefile = PathBuf::from(&testpath);
+
+                            // don't break out of the outer loop, their might be a module
+                            // file marked as D
+                            //break 'outer;
                         }
                     }
                 }

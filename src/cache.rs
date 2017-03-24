@@ -204,7 +204,7 @@ pub fn update(modulepath: String, shell: &str) -> bool {
     return true;
 }
 
-pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
+pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i64)>) {
 
     let file: File = match File::open(filename) {
         Ok(file) => file,
@@ -218,7 +218,7 @@ pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<String>) {
     let decoded: Vec<Module> = decode_from(&mut reader, bincode::SizeLimit::Infinite).unwrap();
 
     for module in decoded {
-        modules.push(module.name);
+        modules.push((module.name, module.flags));
     }
 }
 
