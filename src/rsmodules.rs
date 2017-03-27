@@ -292,15 +292,15 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
 
     if replaced_module {
         if other != "" && selected_module != "" {
-			let mut bold_start: &str = "$(tput bold)";
-			let mut bold_end: &str = "$(tput sgr0)";
+            let mut bold_start: &str = "$(tput bold)";
+            let mut bold_end: &str = "$(tput sgr0)";
 
-			if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
-				bold_start = "\\033[1m";
-				bold_end = "\\033[0m";
-			}
+            if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
+                bold_start = "\\033[1m";
+                bold_end = "\\033[0m";
+            }
 
-            let mut spaces = "    ";
+            let mut spaces = "  ";
             if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
                 spaces = "";
                 bold_start = "";
@@ -310,10 +310,10 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
             let msg: String = format!("{}The previously loaded module {}{}{} has been replaced \
                                        with {}{}{}",
                                       spaces,
-									  bold_start,
+                                      bold_start,
                                       other,
                                       bold_end,
-									  bold_start,
+                                      bold_start,
                                       selected_module,
                                       bold_end);
             if rsmod.shell != "noshell" {
@@ -327,7 +327,6 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
     }
 }
 
-// does this work with partial module names ?
 pub fn is_module_loaded(name: &str) -> bool {
 
     if name == "" {
@@ -344,8 +343,32 @@ pub fn is_module_loaded(name: &str) -> bool {
 
     let loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
     for module in loadedmodules {
+
+        // old version
+        /*
         if module.starts_with(name) {
             return true;
+        }
+        */
+
+
+        // full match
+        if module == name {
+            return true;
+        }
+
+        // partial match (part before the slash)
+        let part_module: Vec<&str> = module.split('/').collect();
+        let part_name: Vec<&str> = name.split('/').collect();
+
+        if part_module.len() == 0 || part_name.len() == 0 {
+            continue;
+        }
+
+        if part_module[0] == part_name[0] {
+            return true;
+        } else {
+            continue;
         }
     }
 
@@ -432,7 +455,11 @@ fn list(rsmod: &mut Rsmodule) {
             echo("\n  Currently loaded modules:\n", rsmod.shell);
         }
     } else {
-        echo("There are currently no modules loaded.", rsmod.shell);
+        let mut spaces = "  ";
+        if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
+            spaces = "";
+        }
+        echo(&format!("\n{}There are no modules loaded.", spaces), rsmod.shell);
     }
     for module in loadedmodules {
 
@@ -507,8 +534,19 @@ mod tests {
         env::set_var("LOADEDMODULES", "blast/12.3:blast/11.1");
         assert_eq!(false, is_module_loaded(""));
         // FIXME this should be false
-        //assert_eq!(false, is_module_loaded("bla"));
+        assert_eq!(false, is_module_loaded("bla"));
         assert_eq!(true, is_module_loaded("blast"));
+
+        env::set_var("LOADEDMODULES",
+                     "gcc/x86_64/4.8.2:armadillo/x86_64/4.300.2:igraph/x86_64/0.6.5:python2/x86_64/2.7.2:\
+                      gcc/x86_64/4.8.2:python/x86_64/3.5.1:");
+        assert_eq!(true, is_module_loaded("python"));
+        assert_eq!(true, is_module_loaded("python/x86_64/3.5.1"));
+        assert_eq!(true, is_module_loaded("python2"));
+        env::set_var("LOADEDMODULES",
+                     "gcc/x86_64/4.8.2:armadillo/x86_64/4.300.2:igraph/x86_64/0.6.5:gcc/x86_64/4.8.2:python/x86_64/3.\
+                      5.1:");
+        assert_eq!(false, is_module_loaded("python2"));
     }
 
 }

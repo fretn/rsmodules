@@ -216,8 +216,7 @@ fn prepend_path(var: String, val: String) {
     };
 
     if notfound {
-        add_to_env_vars(&var, &val);
-        env::set_var(&var, format!("{}", val));
+        setenv(var, val);
     } else {
         let final_val = format!("{}:{}", val, current_val);
         add_to_env_vars(&var, &final_val);
@@ -238,8 +237,7 @@ fn append_path(var: String, val: String) {
     };
 
     if notfound {
-        add_to_env_vars(&var, &val);
-        env::set_var(&var, format!("{}", val));
+        setenv(var, val);
     } else {
         let final_val = format!("{}:{}", current_val, val);
         add_to_env_vars(&var, &final_val);
@@ -305,7 +303,50 @@ fn load(module: String) {
 fn conflict(module: String) {
 
     if super::is_module_loaded(module.as_ref()) {
-        show_warning!("This module cannot be loaded while {} is loaded.", module);
+        let shell = SHELL.lock().unwrap();
+
+        let mut spaces = "  ";
+        let mut bold_start: &str = "$(tput bold)";
+        let mut bold_end: &str = "$(tput sgr0)";
+
+        if *shell == "tcsh" || *shell == "csh" {
+            bold_start = "\\033[1m";
+            bold_end = "\\033[0m";
+        }
+
+        if *shell == "noshell" || *shell == "perl" || *shell == "python" {
+            spaces = "";
+            bold_start = "";
+            bold_end = "";
+        }
+
+        let ref shell = *shell;
+        if *shell != "noshell" {
+            super::echo("", shell);
+        }
+        super::echo(&format!("{}Cannot continue because the module {}{}{} is loaded.",
+                             spaces,
+                             bold_start,
+                             module,
+                             bold_end),
+                    shell);
+
+        if *shell != "noshell" {
+            super::echo(&format!("{}You'll need to unload {}{}{} before you can continue:",
+                                 spaces,
+                                 bold_start,
+                                 module,
+                                 bold_end),
+                        shell);
+            super::echo("", shell);
+            super::echo(&format!("{}{}module unload {}{}",
+                                 bold_start,
+                                 spaces,
+                                 module,
+                                 bold_end),
+                        shell);
+            super::echo("", shell);
+        }
         let mut data = CONFLICT.lock().unwrap();
         *data = true;
     }
@@ -554,6 +595,7 @@ pub fn get_info(shell: &str) -> Vec<String> {
     let mut execs: Vec<String> = Vec::new();
     for line in INFO_PATH.lock().unwrap().iter() {
 
+        // FIXME: permission denied on a folder results in a panic
         if Path::new(line).is_dir() {
             for entry in read_dir(line).unwrap() {
 
