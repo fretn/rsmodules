@@ -663,7 +663,7 @@ proc myPuts args {
     if {$putMode != "inHelp"} {
         if { ($channel == "stdout") || ($channel == "stderr") } {
             set channel "stdout"
-            set text "LmodMessage(\[===\[$text\]===\])"
+            set text "Message(\[===\[$text\]===\])"
         }
     } else {
         set channel  "stdout"
@@ -751,7 +751,7 @@ proc module { command args } {
 
 proc reportError {message} {
     global ModulesCurrentModulefile g_fullName
-    puts stdout "LmodError(\[===\[$ModulesCurrentModulefile: ($g_fullName): $message\]===\])"
+    puts stdout "Error(\[===\[$ModulesCurrentModulefile: ($g_fullName): $message\]===\])"
 }
 
 proc execute-modulefile {modfile } {

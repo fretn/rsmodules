@@ -292,11 +292,37 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
 
     if replaced_module {
         if other != "" && selected_module != "" {
-            let msg: String = format!("Info: The previously loaded module {} has been replaced \
-                                       with {}",
+			let mut bold_start: &str = "$(tput bold)";
+			let mut bold_end: &str = "$(tput sgr0)";
+
+			if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
+				bold_start = "\\033[1m";
+				bold_end = "\\033[0m";
+			}
+
+            let mut spaces = "    ";
+            if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
+                spaces = "";
+                bold_start = "";
+                bold_end = "";
+            }
+
+            let msg: String = format!("{}The previously loaded module {}{}{} has been replaced \
+                                       with {}{}{}",
+                                      spaces,
+									  bold_start,
                                       other,
-                                      selected_module);
+                                      bold_end,
+									  bold_start,
+                                      selected_module,
+                                      bold_end);
+            if rsmod.shell != "noshell" {
+                echo("", rsmod.shell);
+            }
             echo(&msg, rsmod.shell);
+            if rsmod.shell != "noshell" {
+                echo("", rsmod.shell);
+            }
         }
     }
 }
@@ -402,15 +428,24 @@ fn list(rsmod: &mut Rsmodule) {
     loadedmodules.sort();
 
     if loadedmodules.len() > 0 {
-        echo("Currently loaded modules:", rsmod.shell);
+        if rsmod.shell != "noshell" {
+            echo("\n  Currently loaded modules:\n", rsmod.shell);
+        }
     } else {
         echo("There are currently no modules loaded.", rsmod.shell);
     }
     for module in loadedmodules {
 
         if module != "" {
-            echo(module, rsmod.shell);
+            if rsmod.shell == "noshell" {
+                echo(module, rsmod.shell);
+            } else {
+                echo(&format!("  * {}", module), rsmod.shell);
+            }
         }
+    }
+    if rsmod.shell != "noshell" {
+        echo("", rsmod.shell);
     }
 }
 
