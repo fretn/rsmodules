@@ -622,9 +622,15 @@ pub fn get_info(shell: &str) -> Vec<String> {
 
     if execs.len() > 0 {
         output.push(format!("echo ''"));
-        output.push(format!("echo \"{}Try one of these commands to run the program: {}\"",
+        if execs.len() > 1 {
+            output.push(format!("echo \"{}Try one of these commands to run the program: {}\"",
                             bold_start,
                             bold_end));
+        } else {
+            output.push(format!("echo \"{}Try this command to run the program: {}\"",
+                            bold_start,
+                            bold_end));
+        }
     }
 
     execs.sort();
