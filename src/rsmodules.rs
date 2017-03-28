@@ -423,6 +423,8 @@ pub fn is_other_version_of_module_loaded(name: &str) -> bool {
 }
 
 fn echo(line: &str, shell: &str) {
+    //FIXME: if line contains \n and shell is csh or tcsh
+    // escape it
     if shell == "noshell" {
         println!("{}", line);
     } else if shell == "python" {
@@ -451,14 +453,17 @@ fn list(rsmod: &mut Rsmodule) {
 
     if loadedmodules.len() > 0 {
         if rsmod.shell != "noshell" {
-            echo("\n  Currently loaded modules:\n", rsmod.shell);
+            echo("", rsmod.shell);
+            echo("  Currently loaded modules:", rsmod.shell);
+            echo("", rsmod.shell);
         }
     } else {
         let mut spaces = "  ";
         if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
             spaces = "";
         }
-        echo(&format!("\n{}There are no modules loaded.", spaces),
+        echo("", rsmod.shell);
+        echo(&format!("{}There are no modules loaded.", spaces),
              rsmod.shell);
     }
     for module in loadedmodules {

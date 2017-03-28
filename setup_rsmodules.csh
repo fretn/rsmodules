@@ -4,8 +4,16 @@ alias module 'setenv TERMWIDTH `stty size |& tee /dev/null | cut -d" " -f2` ; ev
 setenv MODULEPATH ""
 setenv RSMODULES_INSTALL_DIR ""
 setenv LOADEDMODULES ""
-setenv PYTHONPATH "$RSMODULES_INSTALL_DIR:$PYTHONPATH"
-setenv PERL5LIB "$RSMODULES_INSTALL_DIR:$PERL5LIB"
+if (! $?PYTHONPATH ) then
+        setenv PYTHONPATH "$RSMODULES_INSTALL_DIR"
+else
+        setenv PYTHONPATH "$RSMODULES_INSTALL_DIR:$PYTHONPATH"
+endif
+if (! $?PERL5LIB ) then
+        setenv PERL5LIB "$RSMODULES_INSTALL_DIR"
+else
+        setenv PERL5LIB "$RSMODULES_INSTALL_DIR:$PERL5LIB"
+endif
 
 # this should be a function, so everytime it is called the info is updated
 set mod_av="`$RSMODULES_INSTALL_DIR/rsmodules noshell avail`"
