@@ -351,7 +351,6 @@ pub fn is_module_loaded(name: &str) -> bool {
         }
         */
 
-
         // full match
         if module == name {
             return true;
@@ -459,7 +458,8 @@ fn list(rsmod: &mut Rsmodule) {
         if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
             spaces = "";
         }
-        echo(&format!("\n{}There are no modules loaded.", spaces), rsmod.shell);
+        echo(&format!("\n{}There are no modules loaded.", spaces),
+             rsmod.shell);
     }
     for module in loadedmodules {
 

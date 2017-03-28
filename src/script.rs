@@ -595,11 +595,18 @@ pub fn get_info(shell: &str) -> Vec<String> {
     let mut execs: Vec<String> = Vec::new();
     for line in INFO_PATH.lock().unwrap().iter() {
 
-        // FIXME: permission denied on a folder results in a panic
         if Path::new(line).is_dir() {
-            for entry in read_dir(line).unwrap() {
+            let entries = match read_dir(line) {
+                Ok(entry) => entry,
+                Err(_) => continue,
+            };
 
-                let path = entry.unwrap().path();
+            for entry in entries {
+
+                let path = match entry {
+                    Ok(p) => p.path(),
+                    Err(_) => continue,
+                };
 
                 if path.is_dir() {
                     continue;
@@ -650,7 +657,10 @@ fn strip_dir(fullname: &str) -> String {
 }
 
 fn is_executable_file(path: &PathBuf) -> bool {
-    let meta = metadata(path).unwrap();
+    let meta = match metadata(path) {
+        Ok(metadata) => metadata,
+        Err(_) => return false,
+    };
     let perm = meta.permissions();
 
     let mut octal_number = 0;
