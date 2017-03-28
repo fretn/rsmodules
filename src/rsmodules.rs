@@ -150,7 +150,7 @@ fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, a
     let data: Vec<String>;
 
     if action == "info" {
-        data = script::get_info(rsmod.shell);
+        data = script::get_info(rsmod.shell, selected_module);
     } else {
         data = script::get_output(selected_module, action, rsmod.shell);
     }
@@ -171,157 +171,165 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
     let mut reversed_modules = get_module_list(rsmod.shell);
     reversed_modules.reverse();
 
-    let mut selected_module = rsmod.arg;
-    let mut modulefile: PathBuf = PathBuf::new();
-    let mut found: bool = false;
-
     if rsmod.arg == "" {
         super::usage(true);
         return;
     }
 
-    // check if module file exists
-    // run over modulepaths, check if a folder/file exists with the wanted 'module' var
+    //let mut selected_module = rsmod.arg;
+    let mut modulefile: PathBuf = PathBuf::new();
+    let mut found: bool = false;
 
-    // if not, maybe check if its a partial match
-    // blast -> blast/x86_64/1.0 and blast/x86_64/2.0
-    // then we need to load the Default version
-    // or just the latest one
+    let modules: Vec<&str> = rsmod.arg.split_whitespace().collect();
 
-    'outer: for modulepath in rsmod.search_path {
-        let testpath = format!("{}/{}", modulepath, rsmod.arg);
-        if Path::new(&testpath).exists() {
+    //println_stderr!("lengte: {}", modules.len());
 
-            // we got it, now we need to figure out if its a partial match or not
-            if Path::new(&testpath).is_file() {
-                found = true;
-                modulefile = PathBuf::from(&testpath);
-            } else {
-                for module in &reversed_modules {
+    for mdl in modules {
+        let mut selected_module = mdl;
 
-                    // we got a partial match, now we need to find the default module
-                    // for this folder or subfolders
-                    // loop through all the modules and get the first one
-                    // that matches starts_with
+        // check if module file exists
+        // run over modulepaths, check if a folder/file exists with the wanted 'module' var
 
-                    // partial matches only work for file/folder names
-                    // blast or blast/x86_64 but not blas or blast/x86_
-                    // because of the above 'exists()' check
+        // if not, maybe check if its a partial match
+        // blast -> blast/x86_64/1.0 and blast/x86_64/2.0
+        // then we need to load the Default version
+        // or just the latest one
 
-                    // prevent that: module load blast loads blastz
-                    let splitter: Vec<&str> = module.0.split(rsmod.arg).collect();
-                    if splitter.len() > 1 {
+        'outer: for modulepath in rsmod.search_path {
+            let testpath = format!("{}/{}", modulepath, mdl);
+            if Path::new(&testpath).exists() {
 
-                        if found && module.0.starts_with(rsmod.arg) && module.1 == 1 {
-                            selected_module = module.0.as_ref();
-                            let testpath = format!("{}/{}", modulepath, module.0);
-                            modulefile = PathBuf::from(&testpath);
+                // we got it, now we need to figure out if its a partial match or not
+                if Path::new(&testpath).is_file() {
+                    found = true;
+                    modulefile = PathBuf::from(&testpath);
+                } else {
+                    for module in &reversed_modules {
 
-                            break 'outer;
-                        }
+                        // we got a partial match, now we need to find the default module
+                        // for this folder or subfolders
+                        // loop through all the modules and get the first one
+                        // that matches starts_with
 
-                        if found && !module.0.starts_with(rsmod.arg) {
-                            break 'outer;
-                        }
+                        // partial matches only work for file/folder names
+                        // blast or blast/x86_64 but not blas or blast/x86_
+                        // because of the above 'exists()' check
 
-                        // FIXME: replace with: splitter[1].starts_with("/")
-                        if !found && splitter[1].chars().next().unwrap() == '/' && module.0.starts_with(rsmod.arg) {
-                            selected_module = module.0.as_ref();
-                            found = true;
-                            let testpath = format!("{}/{}", modulepath, module.0);
-                            modulefile = PathBuf::from(&testpath);
+                        // prevent that: module load blast loads blastz
+                        let splitter: Vec<&str> = module.0.split(mdl).collect();
+                        if splitter.len() > 1 {
 
-                            // don't break out of the outer loop, their might be a module
-                            // file marked as D
-                            //break 'outer;
+                            if found && module.0.starts_with(mdl) && module.1 == 1 {
+                                selected_module = module.0.as_ref();
+                                let testpath = format!("{}/{}", modulepath, module.0);
+                                modulefile = PathBuf::from(&testpath);
+
+                                break 'outer;
+                            }
+
+                            if found && !module.0.starts_with(mdl) {
+                                break 'outer;
+                            }
+
+                            // FIXME: replace with: splitter[1].starts_with("/")
+                            if !found && splitter[1].chars().next().unwrap() == '/' && module.0.starts_with(mdl) {
+                                selected_module = module.0.as_ref();
+                                found = true;
+                                let testpath = format!("{}/{}", modulepath, module.0);
+                                modulefile = PathBuf::from(&testpath);
+
+                                // don't break out of the outer loop, their might be a module
+                                // file marked as D
+                                //break 'outer;
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    if !found {
-        println_stderr!("Module {0} not found.", selected_module);
-        ::std::process::exit(super::CRASH_MODULE_NOT_FOUND);
-    }
+        if !found {
+            println_stderr!("Module {0} not found.", selected_module);
+            ::std::process::exit(super::CRASH_MODULE_NOT_FOUND);
+        }
 
-    // check of another version is already loaded
-    // and replace it with the current one
-    let mut replaced_module: bool = false;
-    let mut other: String = String::new();
-    if is_other_version_of_module_loaded(selected_module) && action == "load" {
-        let parts: Vec<&str> = selected_module.split('/').collect();
-        let tmp_selected_module = parts[0];
+        // check of another version is already loaded
+        // and replace it with the current one
+        let mut replaced_module: bool = false;
+        let mut other: String = String::new();
+        if is_other_version_of_module_loaded(selected_module) && action == "load" {
+            let parts: Vec<&str> = selected_module.split('/').collect();
+            let tmp_selected_module = parts[0];
 
-        other = get_other_version_of_loaded_module(tmp_selected_module);
+            other = get_other_version_of_loaded_module(tmp_selected_module);
 
-        if other != "" && other != selected_module {
-            for modulepath in rsmod.search_path {
-                let testpath = format!("{}/{}", modulepath, other);
-                if Path::new(&testpath).exists() {
+            if other != "" && other != selected_module {
+                for modulepath in rsmod.search_path {
+                    let testpath = format!("{}/{}", modulepath, other);
+                    if Path::new(&testpath).exists() {
 
-                    if Path::new(&testpath).is_file() {
-                        let tmpmodulefile: PathBuf = PathBuf::from(&testpath);
-                        // unload the module as we found the path to the file
-                        run_modulefile(&tmpmodulefile, rsmod, other.as_ref(), "unload");
-                        replaced_module = true;
+                        if Path::new(&testpath).is_file() {
+                            let tmpmodulefile: PathBuf = PathBuf::from(&testpath);
+                            // unload the module as we found the path to the file
+                            run_modulefile(&tmpmodulefile, rsmod, other.as_ref(), "unload");
+                            replaced_module = true;
+                        }
                     }
                 }
             }
+
         }
 
-    }
+        // check if we are already loaded (LOADEDMODULES env var)
+        if is_module_loaded(selected_module) && action == "load" {
+            // unload the module
+            run_modulefile(&modulefile, rsmod, selected_module, "unload");
+            // load the module again
+            run_modulefile(&modulefile, rsmod, selected_module, "load");
+            return;
+        }
 
-    // check if we are already loaded (LOADEDMODULES env var)
-    if is_module_loaded(selected_module) && action == "load" {
-        // unload the module
-        run_modulefile(&modulefile, rsmod, selected_module, "unload");
-        // load the module again
-        run_modulefile(&modulefile, rsmod, selected_module, "load");
-        return;
-    }
+        // don't unload if we are not loaded in the first place
+        if !is_module_loaded(selected_module) && action == "unload" {
+            return;
+        }
 
-    // don't unload if we are not loaded in the first place
-    if !is_module_loaded(selected_module) && action == "unload" {
-        return;
-    }
+        // finaly load|unload|info the module
+        run_modulefile(&modulefile, rsmod, selected_module, action);
 
-    // finaly load|unload|info the module
-    run_modulefile(&modulefile, rsmod, selected_module, action);
+        if replaced_module {
+            if other != "" && selected_module != "" {
+                let mut bold_start: &str = "$(tput bold)";
+                let mut bold_end: &str = "$(tput sgr0)";
 
-    if replaced_module {
-        if other != "" && selected_module != "" {
-            let mut bold_start: &str = "$(tput bold)";
-            let mut bold_end: &str = "$(tput sgr0)";
+                if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
+                    bold_start = "\\033[1m";
+                    bold_end = "\\033[0m";
+                }
 
-            if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
-                bold_start = "\\033[1m";
-                bold_end = "\\033[0m";
-            }
+                let mut spaces = "  ";
+                if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
+                    spaces = "";
+                    bold_start = "";
+                    bold_end = "";
+                }
 
-            let mut spaces = "  ";
-            if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
-                spaces = "";
-                bold_start = "";
-                bold_end = "";
-            }
-
-            let msg: String = format!("{}The previously loaded module {}{}{} has been replaced \
-                                       with {}{}{}",
-                                      spaces,
-                                      bold_start,
-                                      other,
-                                      bold_end,
-                                      bold_start,
-                                      selected_module,
-                                      bold_end);
-            if rsmod.shell != "noshell" {
-                echo("", rsmod.shell);
-            }
-            echo(&msg, rsmod.shell);
-            if rsmod.shell != "noshell" {
-                echo("", rsmod.shell);
+                let msg: String = format!("{}The previously loaded module {}{}{} has been replaced \
+                                        with {}{}{}",
+                                        spaces,
+                                        bold_start,
+                                        other,
+                                        bold_end,
+                                        bold_start,
+                                        selected_module,
+                                        bold_end);
+                if rsmod.shell != "noshell" {
+                    echo("", rsmod.shell);
+                }
+                echo(&msg, rsmod.shell);
+                if rsmod.shell != "noshell" {
+                    echo("", rsmod.shell);
+                }
             }
         }
     }

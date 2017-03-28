@@ -98,8 +98,8 @@ static LONG_HELP: &'static str = "
     subcommands
     -----------
 
-    * load [(partial) module name]
-    * unload [(partial) module name]
+    * load [(partial) module name(s)]
+    * unload [(partial) module name(s)]
 
       A partial module name is the part of the modulename
       before a slash, eg: you have module name 'rsmodules/2.0.0'
@@ -116,7 +116,7 @@ static LONG_HELP: &'static str = "
       If a <search string> is given then all modules which match
       the search string will be listed
 
-    * info [(partial) module name]
+    * info [(partial) module name(s)]
       Gives more info about a module. Description, which
       variables it modifies and/or which commands are executed
       upon launch.
@@ -199,6 +199,7 @@ fn set_global_tmpfile(tmp_file_path: String) {
 fn run(args: &Vec<String>) {
     let mut shell: &str = &args[1];
     let command: &str;
+    let tmp: String;
     let mut modulename: &str = "";
     let mut shell_width: usize = 80;
 
@@ -292,8 +293,14 @@ fn run(args: &Vec<String>) {
     if args.len() >= 3 {
         command = &args[2];
         let mut matches: bool = false;
+        let mut modulenames: Vec<&str> = Vec::new();
         if args.len() > 3 {
-            modulename = &args[3];
+            for i in 3..args.len() {
+                modulenames.push(&args[i]);
+            }
+            //modulename = &args[3];
+            tmp = modulenames.join(" ");
+            modulename = &tmp;
         }
 
         let mut command_list: Vec<&str> = Vec::new();

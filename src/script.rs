@@ -510,7 +510,7 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
 }
 
 // this function prints information about the module
-pub fn get_info(shell: &str) -> Vec<String> {
+pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     let mut output: Vec<String> = Vec::new();
     let mut got_output: bool = false;
     let mut bold_start: &str = "$(tput bold)";
@@ -520,6 +520,12 @@ pub fn get_info(shell: &str) -> Vec<String> {
         bold_start = "\\033[1m";
         bold_end = "\\033[0m";
     }
+
+    //output.push(format!("echo \"{:=^1$}\"", module.to_string(), module.len()+5));
+    output.push(format!("echo \"{}\"", "=".repeat(module.len()+4)));
+    output.push(format!("echo \"= {} =\"", module.to_string()));
+    output.push(format!("echo \"{}\"", "=".repeat(module.len()+4)));
+    output.push(format!("echo \"\""));
 
     if INFO_DESCRIPTION.lock().unwrap().iter().len() > 0 {
         got_output = true;
