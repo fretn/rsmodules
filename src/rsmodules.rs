@@ -155,8 +155,10 @@ fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, a
         data = script::get_output(selected_module, action, rsmod.shell);
     }
 
-    for line in data {
-        let line = format!("{}\n", line);
+    for mut line in data {
+        if rsmod.shell != "perl" {
+            line = format!("{}\n", line);
+        }
 
         if rsmod.shell == "noshell" || rsmod.shell == "python" || rsmod.shell == "perl" {
             println!("{}", line);
@@ -316,13 +318,13 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
 
                 let msg: String = format!("{}The previously loaded module {}{}{} has been replaced \
                                         with {}{}{}",
-                                        spaces,
-                                        bold_start,
-                                        other,
-                                        bold_end,
-                                        bold_start,
-                                        selected_module,
-                                        bold_end);
+                                          spaces,
+                                          bold_start,
+                                          other,
+                                          bold_end,
+                                          bold_start,
+                                          selected_module,
+                                          bold_end);
                 if rsmod.shell != "noshell" {
                     echo("", rsmod.shell);
                 }
@@ -358,6 +360,7 @@ pub fn is_module_loaded(name: &str) -> bool {
             return true;
         }
         */
+
 
         // full match
         if module == name {

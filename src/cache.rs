@@ -275,12 +275,24 @@ pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
             decoded.push(item);
         }
 
-        for module in decoded.clone() {
-            if longest_name <= module.name.len() {
-                longest_name = module.name.len();
+        if arg != "" {
+            for module in decoded.clone() {
+                if longest_name <= module.name.len() {
+                    if module.name.starts_with(arg) {
+                        longest_name = module.name.len();
+                    }
+                }
             }
+            longest_name = longest_name + 1;
+
+        } else {
+            for module in decoded.clone() {
+                if longest_name <= module.name.len() {
+                    longest_name = module.name.len();
+                }
+            }
+            longest_name = longest_name + 1;
         }
-        longest_name = longest_name + 1;
     }
 
     decoded.sort();

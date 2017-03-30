@@ -497,9 +497,12 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
         } else if shell == "python" {
             data = format!("os.environ[\"{}\"] = \"{}\";", result.0, result.1);
         } else if shell == "perl" {
-            data = format!("$ENV{{\"{}\"}} = \"{}\";", result.0, result.1);
+            data = format!("$ENV{{{}}}=\"{}\";", result.0, result.1);
         }
-        output.push(data);
+
+        if shell != "noshell" {
+            output.push(data);
+        }
     }
 
     for line in COMMANDS.lock().unwrap().iter() {
@@ -522,9 +525,9 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     }
 
     //output.push(format!("echo \"{:=^1$}\"", module.to_string(), module.len()+5));
-    output.push(format!("echo \"{}\"", "=".repeat(module.len()+4)));
+    output.push(format!("echo \"{}\"", "=".repeat(module.len() + 4)));
     output.push(format!("echo \"= {} =\"", module.to_string()));
-    output.push(format!("echo \"{}\"", "=".repeat(module.len()+4)));
+    output.push(format!("echo \"{}\"", "=".repeat(module.len() + 4)));
     output.push(format!("echo \"\""));
 
     if INFO_DESCRIPTION.lock().unwrap().iter().len() > 0 {
@@ -630,12 +633,12 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
         output.push(format!("echo ''"));
         if execs.len() > 1 {
             output.push(format!("echo \"{}Try one of these commands to run the program: {}\"",
-                            bold_start,
-                            bold_end));
+                                bold_start,
+                                bold_end));
         } else {
             output.push(format!("echo \"{}Try this command to run the program: {}\"",
-                            bold_start,
-                            bold_end));
+                                bold_start,
+                                bold_end));
         }
     }
 

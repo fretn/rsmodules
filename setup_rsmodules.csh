@@ -3,7 +3,7 @@
 alias module 'setenv TERMWIDTH `stty size |& tee /dev/null | cut -d" " -f2` ; eval `$RSMODULES_INSTALL_DIR/rsmodules csh,$TERMWIDTH ' \!'*` '
 setenv MODULEPATH ""
 setenv RSMODULES_INSTALL_DIR ""
-setenv LOADEDMODULES ""
+#setenv LOADEDMODULES ""
 if (! $?PYTHONPATH ) then
         setenv PYTHONPATH "$RSMODULES_INSTALL_DIR"
 else

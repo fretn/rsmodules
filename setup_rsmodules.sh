@@ -7,7 +7,7 @@ module() {
 
 export MODULEPATH=""
 export RSMODULES_INSTALL_DIR=""
-export LOADEDMODULES=""
+#export LOADEDMODULES=""
 if [ -z ${PYTHONPATH+x} ]; then
 	export PYTHONPATH="$RSMODULES_INSTALL_DIR"
 else
