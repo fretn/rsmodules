@@ -337,6 +337,7 @@ fn run(args: &Vec<String>) {
             if cmd.starts_with(command) {
                 let mut rsmod_command: Rsmodule = Rsmodule {
                     cmd: cmd,
+                    typed_command: command,
                     arg: modulename,
                     search_path: &modulepaths,
                     shell: shell,

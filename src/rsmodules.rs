@@ -38,6 +38,7 @@ static ENV_LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
 
 pub struct Rsmodule<'a> {
     pub cmd: &'a str, // load|list|avail|...
+    pub typed_command: &'a str, // load|list|avail|...
     pub arg: &'a str, // blast/12.1 | blast | blast/12
     pub search_path: &'a Vec<String>, // module paths
     pub shell: &'a str, // tcsh|csh|bash|zsh
@@ -119,7 +120,10 @@ pub fn command(rsmod: &mut Rsmodule) {
     } else if rsmod.cmd == "unload" {
         module_action(rsmod, "unload");
     } else if rsmod.cmd == "available" {
-        cache::get_module_list(rsmod.arg, rsmod.shell, rsmod.shell_width);
+        cache::get_module_list(rsmod.arg,
+                               rsmod.typed_command,
+                               rsmod.shell,
+                               rsmod.shell_width);
     } else if rsmod.cmd == "list" {
         list(rsmod);
     } else if rsmod.cmd == "purge" {
@@ -354,14 +358,6 @@ pub fn is_module_loaded(name: &str) -> bool {
     let loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
     for module in loadedmodules {
 
-        // old version
-        /*
-        if module.starts_with(name) {
-            return true;
-        }
-        */
-
-
         // full match
         if module == name {
             return true;
@@ -508,6 +504,7 @@ fn purge(rsmod: &mut Rsmodule) {
         if module != "" {
             let mut rsmod_command: Rsmodule = Rsmodule {
                 cmd: "unload",
+                typed_command: "unload",
                 arg: module,
                 search_path: rsmod.search_path,
                 shell: rsmod.shell,

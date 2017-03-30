@@ -222,7 +222,7 @@ pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i
     }
 }
 
-pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
+pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width: usize) {
     let mut bold_start: &str = "$(tput bold)";
     let mut bold_end: &str = "$(tput sgr0)";
 
@@ -278,7 +278,8 @@ pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
         if arg != "" {
             for module in decoded.clone() {
                 if longest_name <= module.name.len() {
-                    if module.name.starts_with(arg) {
+                    // was starts_with
+                    if module.name.contains(arg) {
                         longest_name = module.name.len();
                     }
                 }
@@ -299,6 +300,7 @@ pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
 
     let mut previous_first_char: char = '§';
     let mut previous_description: String = String::new();
+    let mut cnt = 0;
     for module in decoded {
         let tmp: String;
 
@@ -323,7 +325,7 @@ pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
             // print loaded modules in bold
             if super::is_module_loaded(module.name.as_ref()) {
 
-                tmp = format!("{} {}{:width$}{}{}",
+                tmp = format!("{} {}{:width$}{}｜ {}",
                               default,
                               bold_start,
                               module.name,
@@ -331,7 +333,7 @@ pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
                               description,
                               width = longest_name);
             } else {
-                tmp = format!("{} {:width$}{}",
+                tmp = format!("{} {:width$}｜ {}",
                               default,
                               module.name,
                               description,
@@ -347,10 +349,25 @@ pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
             let module_lc: &str = module_lc.as_ref();
 
             if avmodule_lc.contains(module_lc) {
+                cnt += 1;
                 let first_char: char = module.name.chars().next().unwrap();
                 if first_char != previous_first_char && !simple_list {
                     // add a newline
-                    super::echo("", shell);
+                    if cnt == 1 {
+                        super::echo("", shell);
+                        super::echo(&format!("  {}Module name{} {:width$}｜ {}Description{} (D=default module and \
+                                              all loaded modules are printed in bold)",
+                                             bold_start,
+                                             bold_end,
+                                             " ",
+                                             bold_start,
+                                             bold_end,
+                                             width = (longest_name - 12)),
+                                    shell);
+                        super::echo(&format!("  {:width$}｜", " ", width = longest_name), shell);
+                    } else {
+                        super::echo(&format!("  {:width$}｜", " ", width = longest_name), shell);
+                    }
                 }
                 previous_first_char = module.name.chars().next().unwrap();
                 if simple_list {
@@ -360,10 +377,25 @@ pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
                 }
             }
         } else {
+            cnt += 1;
             let first_char: char = module.name.to_lowercase().chars().next().unwrap();
             if first_char != previous_first_char && !simple_list {
                 // add a newline
-                super::echo("", shell);
+                if cnt == 1 {
+                    super::echo("", shell);
+                    super::echo(&format!("  {}Module name{} {:width$}｜ {}Description{} (D=default module and all \
+                                          loaded modules are printed in bold)",
+                                         bold_start,
+                                         bold_end,
+                                         " ",
+                                         bold_start,
+                                         bold_end,
+                                         width = (longest_name - 12)),
+                                shell);
+                    super::echo(&format!("  {:width$}｜", " ", width = longest_name), shell);
+                } else {
+                    super::echo(&format!("  {:width$}｜", " ", width = longest_name), shell);
+                }
             }
             previous_first_char = module.name.to_lowercase().chars().next().unwrap();
             if simple_list {
@@ -372,5 +404,25 @@ pub fn get_module_list(arg: &str, shell: &str, shell_width: usize) {
                 super::echo(&tmp, shell);
             }
         }
+    }
+
+    if cnt > 50 {
+
+        super::echo("", shell);
+        super::echo("", shell);
+        let module;
+        if arg != "" {
+            let tmp = format!(" {}", arg);
+            module = tmp.clone();
+        } else {
+            module = arg.to_string();
+        }
+        super::echo(&format!("  Hint: use the command '{}module {}{} | more{}'",
+                             bold_start,
+                             typed_command,
+                             module,
+                             bold_end),
+                    shell);
+        super::echo("", shell);
     }
 }
