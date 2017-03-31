@@ -525,9 +525,18 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     }
 
     //output.push(format!("echo \"{:=^1$}\"", module.to_string(), module.len()+5));
-    output.push(format!("echo \"{}\"", "=".repeat(module.len() + 4)));
-    output.push(format!("echo \"= {} =\"", module.to_string()));
-    output.push(format!("echo \"{}\"", "=".repeat(module.len() + 4)));
+    output.push(format!("echo \"{}{}{}\"",
+                        bold_start,
+                        "=".repeat(module.len() + 4),
+                        bold_end));
+    output.push(format!("echo \"{}= {} ={}\"",
+                        bold_start,
+                        module.to_string(),
+                        bold_end));
+    output.push(format!("echo \"{}{}{}\"",
+                        bold_start,
+                        "=".repeat(module.len() + 4),
+                        bold_end));
     output.push(format!("echo \"\""));
 
     if INFO_DESCRIPTION.lock().unwrap().iter().len() > 0 {

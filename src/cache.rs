@@ -305,7 +305,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         let tmp: String;
 
         let mut description = module.description.clone();
-        description.truncate(shell_width - longest_name - 3);
+        description.truncate(shell_width - longest_name - 5);
 
         if module.description == previous_description {
             description = String::new();
