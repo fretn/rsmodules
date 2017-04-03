@@ -137,6 +137,10 @@ fn append_path_dummy(var: String, val: String) {}
 fn setenv_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
 fn set_alias_dummy(name: String, val: String) {}
+#[allow(unused_variables)]
+fn is_loaded_dummy(var: String) -> bool {
+    true
+}
 
 // unload functions
 
@@ -186,6 +190,10 @@ fn load_info(module: String) {
 fn setenv(var: String, val: String) {
     add_to_env_vars(&var, &val);
     env::set_var(&var, format!("{}", val));
+}
+
+fn is_loaded(var: String) -> bool {
+    return super::is_module_loaded(&var, false);
 }
 
 fn unsetenv(var: String) {
@@ -302,7 +310,7 @@ fn load(module: String) {
 
 fn conflict(module: String) {
 
-    if super::is_module_loaded(module.as_ref()) {
+    if super::is_module_loaded(module.as_ref(), false) {
         let shell = SHELL.lock().unwrap();
 
         let mut spaces = "  ";
@@ -396,6 +404,7 @@ pub fn run(path: &PathBuf, action: &str, shell: &str) {
         engine.register_fn("getenv", getenv);
         engine.register_fn("description", description_dummy);
         engine.register_fn("set_alias", unset_alias);
+        engine.register_fn("is_loaded", is_loaded_dummy);
 
     } else if action == "load" {
         engine.register_fn("setenv", setenv);
@@ -410,6 +419,7 @@ pub fn run(path: &PathBuf, action: &str, shell: &str) {
         engine.register_fn("getenv", getenv);
         engine.register_fn("description", description_dummy);
         engine.register_fn("set_alias", set_alias);
+        engine.register_fn("is_loaded", is_loaded);
 
     } else if action == "info" {
         engine.register_fn("setenv", setenv_info);
@@ -424,6 +434,7 @@ pub fn run(path: &PathBuf, action: &str, shell: &str) {
         engine.register_fn("getenv", getenv_dummy);
         engine.register_fn("description", description);
         engine.register_fn("set_alias", set_alias_dummy);
+        engine.register_fn("is_loaded", is_loaded);
 
     } else if action == "description" {
         engine.register_fn("setenv", setenv_dummy);
@@ -438,6 +449,7 @@ pub fn run(path: &PathBuf, action: &str, shell: &str) {
         engine.register_fn("getenv", getenv_dummy);
         engine.register_fn("description", description_cache);
         engine.register_fn("set_alias", set_alias);
+        engine.register_fn("is_loaded", is_loaded);
 
     }
 
@@ -545,6 +557,8 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     for line in INFO_DESCRIPTION.lock().unwrap().iter() {
         if shell == "bash" || shell == "zsh" {
             output.push(format!("echo $\"{}\"", line.to_string()));
+        } else if shell == "csh" || shell == "tcsh" {
+            output.push(format!("echo \"{}\"", line.to_string().replace("\n","\\n")));
         } else {
             output.push(format!("echo \"{}\"", line.to_string()));
         }

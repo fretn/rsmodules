@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use std::io::{BufWriter, BufReader, BufRead, Write};
+use std::io::{BufWriter, BufReader, BufRead};
 use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::cmp::Ordering;
@@ -112,11 +112,19 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
 
 pub fn update(modulepath: String, shell: &str) -> bool {
 
-    // TODO: check if we have read and write permissions on 'modulepath'
+    let mut bold_start: &str = "$(tput bold)";
+    let mut bold_end: &str = "$(tput sgr0)";
+
+    if shell == "tcsh" || shell == "csh" {
+        bold_start = "\\033[1m";
+        bold_end = "\\033[0m";
+    }
 
     // list is: path to file, module name, default
     let mut list: Vec<(String, String, bool)> = Vec::new();
     let module_path = Path::new(&modulepath);
+    let mut index_succes: i32 = 0;
+    let mut index_default: i32 = 0;
 
     for entry in WalkDir::new(module_path).into_iter().filter_map(|e| e.ok()) {
 
@@ -158,6 +166,7 @@ pub fn update(modulepath: String, shell: &str) -> bool {
                     if second != "." && !is_version_file {
                         let default = get_default_version(&modulepath, modulename);
                         list.push((str_path.to_string(), modulename.to_string(), default));
+                        index_succes += 1;
                     }
                 }
             }
@@ -181,6 +190,7 @@ pub fn update(modulepath: String, shell: &str) -> bool {
         let mut flags: i64 = 0;
         if default {
             flags = 1;
+            index_default += 1;
         }
         add_module(modulename, description, flags, &mut modules);
     }
@@ -189,7 +199,14 @@ pub fn update(modulepath: String, shell: &str) -> bool {
     let file: File = match File::create(&file_str) {
         Ok(file) => file,
         Err(_) => {
-            show_warning!("Something went wrong while trying to update: {}", &file_str);
+            if shell != "noshell" {
+                super::echo("", shell);
+                let msg: String = format!("  {}WARNING{}: {}{}{} could NOT be indexed.", bold_start, bold_end, bold_start, modulepath, bold_end);
+                super::echo(&msg, shell);
+            } else {
+                let msg: String = format!("{} failed", modulepath);
+                super::echo(&msg, shell);
+            }
             return false;
         }
     };
@@ -197,9 +214,20 @@ pub fn update(modulepath: String, shell: &str) -> bool {
     let mut writer = BufWriter::new(file);
     encode_into(&modules, &mut writer, bincode::SizeLimit::Infinite).unwrap();
 
-    let msg: String = format!("The index file {} was succesfully updated.", &file_str);
-
-    super::echo(&msg, shell);
+    if shell != "noshell" {
+        super::echo("", shell);
+        let msg: String = format!("  {}{}{} was succesfully indexed.", bold_start, modulepath, bold_end);
+        super::echo(&msg, shell);
+        super::echo("", shell);
+        let msg: String = format!("  * Total number of modules: {}{}{}", bold_start, index_succes, bold_end);
+        super::echo(&msg, shell);
+        let msg: String = format!("  * Number of default (D) modules: {}{}{}", bold_start, index_default, bold_end);
+        super::echo(&msg, shell);
+        super::echo("", shell);
+    } else {
+        let msg: String = format!("{} success", modulepath);
+        super::echo(&msg, shell);
+    }
 
     return true;
 }
@@ -249,9 +277,10 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         let file: File = match File::open(format!("{}/{}", modulepath, MODULESINDEX)) {
             Ok(file) => file,
             Err(_) => {
-                println_stderr!("Creating missing index file: {}/{}",
-                                modulepath,
-                                MODULESINDEX);
+                super::echo(&format!("  {}WARNING{}: {} doesn't contain an index.",
+                                bold_start,
+                                bold_end,
+                                modulepath), shell);
                 if update(modulepath.clone(), shell) {
                     match File::open(format!("{}/{}", modulepath, MODULESINDEX)) {
                         Ok(file) => file,
@@ -323,7 +352,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         } else {
 
             // print loaded modules in bold
-            if super::is_module_loaded(module.name.as_ref()) {
+            if super::is_module_loaded(module.name.as_ref(), true) {
 
                 tmp = format!("{} {}{:width$}{}｜ {}",
                               default,

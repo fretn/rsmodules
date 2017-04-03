@@ -85,6 +85,15 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
     let mut modules: Vec<(String, i64)> = Vec::new();
     let mut found_cachefile: bool = false;
     let modulepaths = get_module_paths(false);
+
+    let mut bold_start: &str = "$(tput bold)";
+    let mut bold_end: &str = "$(tput sgr0)";
+
+    if shell == "tcsh" || shell == "csh" {
+        bold_start = "\\033[1m";
+        bold_end = "\\033[0m";
+    }
+
     for path in modulepaths {
         // test if cachefiles exist in the paths
         // if they don't and we have write permission in that folder
@@ -96,8 +105,8 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
             cache::parse_modules_cache_file(&testpath, &mut modules);
             found_cachefile = true;
         } else {
-            show_warning!("Creating missing .modulesindex file: {}",
-                          testpath.display());
+            echo(&format!("  {}WARNING{}: {} doesn't contain an index.",
+                          bold_start, bold_end, path), shell);
             if cache::update(path, shell) {
                 cache::parse_modules_cache_file(&testpath, &mut modules);
                 found_cachefile = true;
@@ -187,8 +196,6 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
     let mut found: bool = false;
 
     let modules: Vec<&str> = rsmod.arg.split_whitespace().collect();
-
-    //println_stderr!("lengte: {}", modules.len());
 
     for mdl in modules {
         let mut selected_module = mdl;
@@ -287,7 +294,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         }
 
         // check if we are already loaded (LOADEDMODULES env var)
-        if is_module_loaded(selected_module) && action == "load" {
+        if is_module_loaded(selected_module, false) && action == "load" {
             // unload the module
             run_modulefile(&modulefile, rsmod, selected_module, "unload");
             // load the module again
@@ -296,7 +303,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         }
 
         // don't unload if we are not loaded in the first place
-        if !is_module_loaded(selected_module) && action == "unload" {
+        if !is_module_loaded(selected_module, false) && action == "unload" {
             return;
         }
 
@@ -341,7 +348,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
     }
 }
 
-pub fn is_module_loaded(name: &str) -> bool {
+pub fn is_module_loaded(name: &str, only_full_match: bool) -> bool {
 
     if name == "" {
         return false;
@@ -371,7 +378,7 @@ pub fn is_module_loaded(name: &str) -> bool {
             continue;
         }
 
-        if part_module[0] == part_name[0] {
+        if part_module[0] == part_name[0] && !only_full_match {
             return true;
         } else {
             continue;
@@ -545,21 +552,21 @@ mod tests {
     #[test]
     fn _is_module_loaded() {
         env::set_var("LOADEDMODULES", "blast/12.3:blast/11.1");
-        assert_eq!(false, is_module_loaded(""));
+        assert_eq!(false, is_module_loaded("", false));
         // FIXME this should be false
-        assert_eq!(false, is_module_loaded("bla"));
-        assert_eq!(true, is_module_loaded("blast"));
+        assert_eq!(false, is_module_loaded("bla", false));
+        assert_eq!(true, is_module_loaded("blast", false));
 
         env::set_var("LOADEDMODULES",
                      "gcc/x86_64/4.8.2:armadillo/x86_64/4.300.2:igraph/x86_64/0.6.5:python2/x86_64/2.7.2:\
                       gcc/x86_64/4.8.2:python/x86_64/3.5.1:");
-        assert_eq!(true, is_module_loaded("python"));
-        assert_eq!(true, is_module_loaded("python/x86_64/3.5.1"));
-        assert_eq!(true, is_module_loaded("python2"));
+        assert_eq!(true, is_module_loaded("python", false));
+        assert_eq!(true, is_module_loaded("python/x86_64/3.5.1", false));
+        assert_eq!(true, is_module_loaded("python2", false));
         env::set_var("LOADEDMODULES",
                      "gcc/x86_64/4.8.2:armadillo/x86_64/4.300.2:igraph/x86_64/0.6.5:gcc/x86_64/4.8.2:python/x86_64/3.\
                       5.1:");
-        assert_eq!(false, is_module_loaded("python2"));
+        assert_eq!(false, is_module_loaded("python2", false));
     }
 
 }

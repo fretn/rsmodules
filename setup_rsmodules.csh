@@ -7,12 +7,13 @@ setenv RSMODULES_INSTALL_DIR ""
 if (! $?PYTHONPATH ) then
         setenv PYTHONPATH "$RSMODULES_INSTALL_DIR"
 else
-        setenv PYTHONPATH "$RSMODULES_INSTALL_DIR:$PYTHONPATH"
+        setenv PYTHONPATH "$RSMODULES_INSTALL_DIR\:$PYTHONPATH"
 endif
+exit;
 if (! $?PERL5LIB ) then
         setenv PERL5LIB "$RSMODULES_INSTALL_DIR"
 else
-        setenv PERL5LIB "$RSMODULES_INSTALL_DIR:$PERL5LIB"
+        setenv PERL5LIB "$RSMODULES_INSTALL_DIR\:$PERL5LIB"
 endif
 
 # this should be a function, so everytime it is called the info is updated
