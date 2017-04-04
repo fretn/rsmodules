@@ -76,7 +76,7 @@ const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 
 static LONG_HELP: &'static str = "
 
-  RSModules manages your user environment on linux, macOS.
+  RSModules manages your user environment on linux and macOS.
   The RSModules package is a tool to help users modifying their environment
   during a session by using modulefiles.
   A modulefile contains all the settings needed to configure the shell for
@@ -408,25 +408,15 @@ fn main() {
 
     let args: Vec<String> = std::env::args().collect();
 
-    // ./rsmodules install
-
-    // and skip this automatic wizard thing
     if args.len() == 1 {
 
         if !wizard::run(false) {
             usage(false);
-            /*
-            crash!(CRASH_NO_ARGS,
-                   "Try '{0} --help' for more information.",
-                   executable!());
-                   */
         }
         return;
     }
 
     if args.len() == 2 {
-        // check if there are module files, or if there is a .modulesindex (see above)
-        // else print usage
         usage(true);
     }
 

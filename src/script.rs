@@ -599,6 +599,8 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
         output.push(format!("echo '{}'", line.to_string()));
     }
 
+    // TODO: find man pages and let the user know
+
     if INFO_PATH.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
         output.push(format!("echo \"{}Executables can be found in: {}\"",

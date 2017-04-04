@@ -399,8 +399,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                     // add a newline
                     if cnt == 1 {
                         super::echo("", shell);
-                        super::echo(&format!("  {}Module name{} {:width$}｜ {}Description{} (D=default module and \
-                                              all loaded modules are printed in bold)",
+                        super::echo(&format!("  {}Module name{} {:width$}｜ {}Description{}",
                                              bold_start,
                                              bold_end,
                                              " ",
@@ -427,8 +426,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                 // add a newline
                 if cnt == 1 {
                     super::echo("", shell);
-                    super::echo(&format!("  {}Module name{} {:width$}｜ {}Description{} (D=default module and all \
-                                          loaded modules are printed in bold)",
+                    super::echo(&format!("  {}Module name{} {:width$}｜ {}Description{}",
                                          bold_start,
                                          bold_end,
                                          " ",
@@ -461,12 +459,17 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         } else {
             module = arg.to_string();
         }
-        super::echo(&format!("  Hint: use the command '{}module {}{} | more{}'",
+        super::echo(&format!("  Hint: use the command '{}module {}{} | more{}' to run the output through a pager.",
                              bold_start,
                              typed_command,
                              module,
                              bold_end),
                     shell);
+    } else {
+        super::echo("", shell);
     }
+    super::echo("", shell);
+    super::echo(&format!("  {}*{} D means that the module is set as the default module.", bold_start, bold_end), shell);
+    super::echo(&format!("  {}*{} Loaded modules are printed in {}bold{}.", bold_start, bold_end, bold_start, bold_end), shell);
     super::echo("", shell);
 }
