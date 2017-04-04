@@ -201,7 +201,12 @@ pub fn update(modulepath: String, shell: &str) -> bool {
         Err(_) => {
             if shell != "noshell" {
                 super::echo("", shell);
-                let msg: String = format!("  {}WARNING{}: {}{}{} could NOT be indexed.", bold_start, bold_end, bold_start, modulepath, bold_end);
+                let msg: String = format!("  {}WARNING{}: {}{}{} could NOT be indexed.",
+                                          bold_start,
+                                          bold_end,
+                                          bold_start,
+                                          modulepath,
+                                          bold_end);
                 super::echo(&msg, shell);
             } else {
                 let msg: String = format!("{} failed", modulepath);
@@ -216,12 +221,21 @@ pub fn update(modulepath: String, shell: &str) -> bool {
 
     if shell != "noshell" {
         super::echo("", shell);
-        let msg: String = format!("  {}{}{} was succesfully indexed.", bold_start, modulepath, bold_end);
+        let msg: String = format!("  {}{}{} was succesfully indexed.",
+                                  bold_start,
+                                  modulepath,
+                                  bold_end);
         super::echo(&msg, shell);
         super::echo("", shell);
-        let msg: String = format!("  * Total number of modules: {}{}{}", bold_start, index_succes, bold_end);
+        let msg: String = format!("  * Total number of modules: {}{}{}",
+                                  bold_start,
+                                  index_succes,
+                                  bold_end);
         super::echo(&msg, shell);
-        let msg: String = format!("  * Number of default (D) modules: {}{}{}", bold_start, index_default, bold_end);
+        let msg: String = format!("  * Number of default (D) modules: {}{}{}",
+                                  bold_start,
+                                  index_default,
+                                  bold_end);
         super::echo(&msg, shell);
         super::echo("", shell);
     } else {
@@ -278,9 +292,10 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
             Ok(file) => file,
             Err(_) => {
                 super::echo(&format!("  {}WARNING{}: {} doesn't contain an index.",
-                                bold_start,
-                                bold_end,
-                                modulepath), shell);
+                                     bold_start,
+                                     bold_end,
+                                     modulepath),
+                            shell);
                 if update(modulepath.clone(), shell) {
                     match File::open(format!("{}/{}", modulepath, MODULESINDEX)) {
                         Ok(file) => file,
@@ -452,6 +467,6 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                              module,
                              bold_end),
                     shell);
-        super::echo("", shell);
     }
+    super::echo("", shell);
 }

@@ -398,7 +398,7 @@ proc module-whatis { args } {
     }
 
     regsub -all {[\n]} $msg  " " msg2
-    puts stdout "description(\"$msg2\")"
+    puts stdout "description(\"$msg2\");"
 }
 
 proc setenv { var val args } {
@@ -509,7 +509,7 @@ proc remove-path { var val args} {
 }
 
 proc output-path-foo { cmd var val separator priority } {
-    puts stdout "$cmd\(\"$var\",\"$val\"\)"
+    puts stdout "$cmd\(\"$var\",\"$val\"\);"
 }
 
 
@@ -540,7 +540,7 @@ proc ori_cmdargs { cmd args } {
         lappend cmdArgsL "\"$val\""
     }
     set cmdArgs [join $cmdArgsL ","]
-    puts stdout "$cmd\($cmdArgs\)"
+    puts stdout "$cmd\($cmdArgs\);"
 }
 
 proc cmdargs { cmd args } {
@@ -551,7 +551,7 @@ proc cmdargs { cmd args } {
         #}
     }
     set cmdArgs [join $cmdArgsL ","]
-    puts stdout "$cmd\($cmdArgs\)"
+    puts stdout "$cmd\($cmdArgs\);"
 }
 proc family { var } {
     cmdargs "family" $var
@@ -575,7 +575,7 @@ proc system { args } {
         lappend cmdArgsL "$arg"
     }
     set cmdArgs [join $cmdArgsL " "]
-    puts stdout "system\(\"$cmdArgs\"\)"
+    puts stdout "system\(\"$cmdArgs\"\);"
 }
 
 proc tryloadcmd { args } {

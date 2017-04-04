@@ -106,7 +106,10 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
             found_cachefile = true;
         } else {
             echo(&format!("  {}WARNING{}: {} doesn't contain an index.",
-                          bold_start, bold_end, path), shell);
+                          bold_start,
+                          bold_end,
+                          path),
+                 shell);
             if cache::update(path, shell) {
                 cache::parse_modules_cache_file(&testpath, &mut modules);
                 found_cachefile = true;
@@ -183,7 +186,19 @@ fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, a
 
 fn module_action(rsmod: &mut Rsmodule, action: &str) {
 
-    let mut reversed_modules = get_module_list(rsmod.shell);
+    let mut reversed_modules;
+
+    // when unloading we only want a list of the loaded modules
+    // for matching modulenames :
+    // we have: blast/1.2 and blast/1.3 (D) while blast/1.2 is loaded
+    // and blast/1.3 is not loaded
+    // module unload blast
+    // should unload blast/1.2 and not blast/1.3
+    if action == "unload" {
+        reversed_modules = get_loaded_list();
+    } else {
+        reversed_modules = get_module_list(rsmod.shell);
+    }
     reversed_modules.reverse();
 
     if rsmod.arg == "" {
@@ -193,12 +208,13 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
 
     //let mut selected_module = rsmod.arg;
     let mut modulefile: PathBuf = PathBuf::new();
-    let mut found: bool = false;
+    let mut found: bool;
 
     let modules: Vec<&str> = rsmod.arg.split_whitespace().collect();
 
     for mdl in modules {
         let mut selected_module = mdl;
+        found = false;
 
         // check if module file exists
         // run over modulepaths, check if a folder/file exists with the wanted 'module' var
@@ -261,7 +277,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
             }
         }
 
-        if !found {
+        if !found && action != "unload" {
             println_stderr!("Module {0} not found.", selected_module);
             ::std::process::exit(super::CRASH_MODULE_NOT_FOUND);
         }
@@ -299,15 +315,17 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
             run_modulefile(&modulefile, rsmod, selected_module, "unload");
             // load the module again
             run_modulefile(&modulefile, rsmod, selected_module, "load");
-            return;
+            continue;
         }
 
         // don't unload if we are not loaded in the first place
         if !is_module_loaded(selected_module, false) && action == "unload" {
-            return;
+            continue;
         }
 
         // finaly load|unload|info the module
+
+        output(format!("# {} {}\n", action, selected_module));
         run_modulefile(&modulefile, rsmod, selected_module, action);
 
         if replaced_module {
@@ -449,6 +467,27 @@ fn echo(line: &str, shell: &str) {
         let data = format!("echo \"{}\"\n", line);
         output(data);
     }
+}
+
+fn get_loaded_list() -> Vec<(String, i64)> {
+    let loadedmodules: String;
+    let mut result: Vec<(String, i64)> = Vec::new();
+
+    match env::var(ENV_LOADEDMODULES) {
+        Ok(list) => loadedmodules = list,
+        Err(_) => {
+            return Vec::new();
+        }
+    };
+
+    for module in loadedmodules.split(':') {
+        if module != "" {
+            result.push((module.to_string(), 1));
+        }
+    }
+    result.sort();
+
+    return result;
 }
 
 fn list(rsmod: &mut Rsmodule) {

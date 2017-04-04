@@ -29,6 +29,7 @@ use std::path::{Path, PathBuf, is_separator};
 use std::io::Write;
 use std::fs::{metadata, read_dir};
 use std::os::unix::fs::PermissionsExt;
+use super::Rsmodule;
 
 // WARNING: the scripts don't support tabbed indents in if else structures
 
@@ -61,9 +62,20 @@ fn init_vars_and_commands() {
     *tmp = false;
 }
 
+// this function is can lock the program
+// when a dependency is loaded, so we
+// use 'try_lock' instead, its not really
+// important that we set the shell once we
+// are loading a dependency, the shell will
+// never change once it is set
 fn set_shell(shell: &str) {
-    let mut tmp = SHELL.lock().unwrap();
-    *tmp = shell.to_string();
+    match SHELL.try_lock() {
+        Ok(res) => {
+            let mut tmp = res;
+            *tmp = shell.to_string();
+        }
+        Err(_) => (),
+    };
 }
 
 fn add_to_env_vars(variable: &str, value: &str) {
@@ -298,14 +310,23 @@ fn system(cmd: String) {
 
 fn load(module: String) {
     let shell = SHELL.lock().unwrap();
+    let ref shell: String = *shell;
 
-    if *shell == "python" {
-        add_to_commands(format!("module(\"load\",\"{}\")", module));
-    } else if *shell == "perl" {
-        add_to_commands(format!("module(\"load\",\"{}\");", module));
-    } else {
-        add_to_commands(format!("module load {}", module));
-    }
+    // FIXME:
+    // call the command directly, as this breaks when the users
+    // runs module load a b
+    // and a has 'load();' statements
+    // b will overwrite the PATH variable
+    let modulepaths = super::get_module_paths(false);
+    let mut rsmod_command: Rsmodule = Rsmodule {
+        cmd: "load",
+        typed_command: "load",
+        arg: &module,
+        search_path: &modulepaths,
+        shell: &shell,
+        shell_width: 80,
+    };
+    super::command(&mut rsmod_command);
 }
 
 fn conflict(module: String) {
@@ -362,14 +383,17 @@ fn conflict(module: String) {
 
 fn unload(module: String) {
     let shell = SHELL.lock().unwrap();
-
-    if *shell == "python" {
-        add_to_commands(format!("module(\"unload\",\"{}\")", module));
-    } else if *shell == "perl" {
-        add_to_commands(format!("module(\"unload\",\"{}\");", module));
-    } else {
-        add_to_commands(format!("module unload {}", module));
-    }
+    let ref shell: String = *shell;
+    let modulepaths = super::get_module_paths(false);
+    let mut rsmod_command: Rsmodule = Rsmodule {
+        cmd: "unload",
+        typed_command: "unload",
+        arg: &module,
+        search_path: &modulepaths,
+        shell: &shell,
+        shell_width: 80,
+    };
+    super::command(&mut rsmod_command);
 }
 
 fn description(desc: String) {
@@ -558,7 +582,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
         if shell == "bash" || shell == "zsh" {
             output.push(format!("echo $\"{}\"", line.to_string()));
         } else if shell == "csh" || shell == "tcsh" {
-            output.push(format!("echo \"{}\"", line.to_string().replace("\n","\\n")));
+            output.push(format!("echo \"{}\"", line.to_string().replace("\n", "\\n")));
         } else {
             output.push(format!("echo \"{}\"", line.to_string()));
         }

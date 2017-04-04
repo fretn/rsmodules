@@ -305,11 +305,15 @@ fn run(args: &Vec<String>) {
 
         let mut command_list: Vec<&str> = Vec::new();
         command_list.push("load");
+        command_list.push("add");
         command_list.push("unload");
+        command_list.push("rm");
         command_list.push("available");
         command_list.push("list");
         command_list.push("purge");
         command_list.push("info");
+        command_list.push("display");
+        command_list.push("show");
         command_list.push("makecache");
         command_list.push("help");
         command_list.push("--help");
@@ -327,7 +331,7 @@ fn run(args: &Vec<String>) {
         //  13.3
         //
 
-        for cmd in command_list {
+        for mut cmd in command_list {
             if command == "help" || command == "--help" || command == "-h" {
                 usage(true);
                 matches = true;
@@ -335,6 +339,15 @@ fn run(args: &Vec<String>) {
             }
 
             if cmd.starts_with(command) {
+                if cmd == "add" {
+                    cmd = "load";
+                }
+                if cmd == "rm" {
+                    cmd = "unload";
+                }
+                if cmd == "display" || cmd == "show" {
+                    cmd = "info";
+                }
                 let mut rsmod_command: Rsmodule = Rsmodule {
                     cmd: cmd,
                     typed_command: command,
