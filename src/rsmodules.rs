@@ -25,6 +25,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::io::Write;
 use std::env;
+use std::str::FromStr;
 use super::output;
 
 #[path = "script.rs"]
@@ -125,6 +126,44 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
     return modules;
 }
 
+pub fn get_shell_info() -> (String, usize) {
+    // the shell argument can either be 'bash', 'tcsh'
+    // or the shellname comma shellwidth
+    // bash,80 or csh,210 or bash,210 etc
+    // if no width is specified, 80 is used as default widtho
+    let args: Vec<String> = env::args().collect();
+    let err_return = (String::from("noshell"), 80);
+
+    if args.len() == 1 {
+        return err_return;
+    }
+
+    if args.len() >= 2 && (&args[1] == "-h" || &args[1] == "--help") {
+        crash(super::CRASH_GET_SHELL, "Cannot get shell.");
+        return err_return;
+    } else if args.len() >= 3 && (&args[1] == "-h" || &args[1] == "--help") {
+        crash(super::CRASH_GET_SHELL, "Cannot get shell.");
+        return err_return;
+    }
+
+    let mut shell: &str = &args[1];
+    let mut shell_width: usize = 80;
+
+    let shell_split: Vec<&str> = shell.split(',').collect();
+
+    if shell_split.len() == 2 {
+        if shell_split[1] != "" {
+            shell_width = match FromStr::from_str(shell_split[1]) {
+                Ok(w) => w,
+                Err(_) => 80,
+            };
+        }
+        shell = shell_split[0];
+    }
+
+    (shell.to_string(), shell_width)
+}
+
 pub fn command(rsmod: &mut Rsmodule) {
 
     if rsmod.cmd == "load" {
@@ -154,14 +193,14 @@ pub fn command(rsmod: &mut Rsmodule) {
 
 pub fn get_module_description(path: &PathBuf, action: &str) -> Vec<String> {
 
-    script::run(path, action, "");
+    script::run(path, action);
 
     script::get_description()
 }
 
 fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, action: &str) {
 
-    script::run(path, action, rsmod.shell);
+    script::run(path, action);
 
     let data: Vec<String>;
 

@@ -37,7 +37,6 @@ lazy_static! {
     static ref ENV_VARS: Mutex<Vec<(String, String)>> = Mutex::new(vec![]);
     static ref COMMANDS: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref CONFLICT: Mutex<bool> = Mutex::new(false);
-    static ref SHELL: Mutex<String> = Mutex::new({String::from("bash")});
     static ref INFO_DESCRIPTION: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_GENERAL: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
@@ -60,22 +59,6 @@ fn init_vars_and_commands() {
 
     let mut tmp = CONFLICT.lock().unwrap();
     *tmp = false;
-}
-
-// this function is can lock the program
-// when a dependency is loaded, so we
-// use 'try_lock' instead, its not really
-// important that we set the shell once we
-// are loading a dependency, the shell will
-// never change once it is set
-fn set_shell(shell: &str) {
-    match SHELL.try_lock() {
-        Ok(res) => {
-            let mut tmp = res;
-            *tmp = shell.to_string();
-        }
-        Err(_) => (),
-    };
 }
 
 fn add_to_env_vars(variable: &str, value: &str) {
@@ -209,12 +192,12 @@ fn is_loaded(var: String) -> bool {
 }
 
 fn unsetenv(var: String) {
-    let shell = SHELL.lock().unwrap();
-    if *shell == "bash" || *shell == "zsh" {
+    let (shell, _) = super::get_shell_info();
+    if shell == "bash" || shell == "zsh" {
         add_to_commands(format!("unset \"{}\"", var));
-    } else if *shell == "perl" {
+    } else if shell == "perl" {
         add_to_commands(format!("undef \"{}\"", var));
-    } else if *shell == "python" {
+    } else if shell == "python" {
         add_to_commands(format!("os.environ[\"{}\"] = \"\";", var));
         add_to_commands(format!("del os.environ[\"{}\"];", var));
     } else {
@@ -286,37 +269,31 @@ fn remove_path(var: String, val: String) {
 }
 
 fn unset_alias(name: String, val: String) {
-    let shell = SHELL.lock().unwrap();
-    if *shell == "bash" || *shell == "zsh" {
+    let (shell, _) = super::get_shell_info();
+    if shell == "bash" || shell == "zsh" {
         add_to_commands(format!("unalias \"{}\"", name));
-    } else if *shell == "tcsh" || *shell == "csh" {
+    } else if shell == "tcsh" || shell == "csh" {
         add_to_commands(format!("unalias \"{}={}\"", name, val));
     }
 }
 
 fn set_alias(name: String, val: String) {
-    let shell = SHELL.lock().unwrap();
-    if *shell != "python" && *shell != "perl" {
+    let (shell, _) = super::get_shell_info();
+    if shell != "python" && shell != "perl" {
         add_to_commands(format!("alias {}=\"{}\"", name, val));
     }
 }
 
 fn system(cmd: String) {
-    let shell = SHELL.lock().unwrap();
-    if *shell != "python" && *shell != "perl" {
+    let (shell, _) = super::get_shell_info();
+    if shell != "python" && shell != "perl" {
         add_to_commands(cmd);
     }
 }
 
 fn load(module: String) {
-    let shell = SHELL.lock().unwrap();
-    let ref shell: String = *shell;
+    let (shell, _) = super::get_shell_info();
 
-    // FIXME:
-    // call the command directly, as this breaks when the users
-    // runs module load a b
-    // and a has 'load();' statements
-    // b will overwrite the PATH variable
     let modulepaths = super::get_module_paths(false);
     let mut rsmod_command: Rsmodule = Rsmodule {
         cmd: "load",
@@ -332,25 +309,25 @@ fn load(module: String) {
 fn conflict(module: String) {
 
     if super::is_module_loaded(module.as_ref(), false) {
-        let shell = SHELL.lock().unwrap();
+        let (shell, _) = super::get_shell_info();
 
         let mut spaces = "  ";
         let mut bold_start: &str = "$(tput bold)";
         let mut bold_end: &str = "$(tput sgr0)";
 
-        if *shell == "tcsh" || *shell == "csh" {
+        if shell == "tcsh" || shell == "csh" {
             bold_start = "\\033[1m";
             bold_end = "\\033[0m";
         }
 
-        if *shell == "noshell" || *shell == "perl" || *shell == "python" {
+        if shell == "noshell" || shell == "perl" || shell == "python" {
             spaces = "";
             bold_start = "";
             bold_end = "";
         }
 
-        let ref shell = *shell;
-        if *shell != "noshell" {
+        let ref shell = shell;
+        if shell != "noshell" {
             super::echo("", shell);
         }
         super::echo(&format!("{}Cannot continue because the module {}{}{} is loaded.",
@@ -360,7 +337,7 @@ fn conflict(module: String) {
                              bold_end),
                     shell);
 
-        if *shell != "noshell" {
+        if shell != "noshell" {
             super::echo(&format!("{}You'll need to unload {}{}{} before you can continue:",
                                  spaces,
                                  bold_start,
@@ -382,8 +359,8 @@ fn conflict(module: String) {
 }
 
 fn unload(module: String) {
-    let shell = SHELL.lock().unwrap();
-    let ref shell: String = *shell;
+    let (shell, _) = super::get_shell_info();
+    let ref shell: String = shell;
     let modulepaths = super::get_module_paths(false);
     let mut rsmod_command: Rsmodule = Rsmodule {
         cmd: "unload",
@@ -404,12 +381,10 @@ fn description_cache(desc: String) {
     add_to_info_general(desc);
 }
 
-pub fn run(path: &PathBuf, action: &str, shell: &str) {
+pub fn run(path: &PathBuf, action: &str) {
     let mut engine = Engine::new();
 
     init_vars_and_commands();
-
-    set_shell(shell);
 
     if action == "unload" {
         // for unloading, we swap some functions
@@ -476,7 +451,6 @@ pub fn run(path: &PathBuf, action: &str, shell: &str) {
         engine.register_fn("is_loaded", is_loaded);
 
     }
-
 
     match engine.eval_file::<String>(path.to_string_lossy().into_owned().as_ref()) {
         Ok(result) => println!("{}", result),

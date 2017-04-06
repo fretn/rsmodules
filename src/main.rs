@@ -50,7 +50,6 @@ use std::io::Write;
 use std::fs::{File, remove_file};
 use std::path::PathBuf;
 use std::env;
-use std::str::FromStr;
 use std::sync::Mutex;
 
 lazy_static! {
@@ -70,6 +69,7 @@ static CRASH_COULDNT_OPEN_CACHE_FILE: i32 = 5;
 static CRASH_MODULEPATH_IS_FILE: i32 = 7;
 static CRASH_CANNOT_ADD_TO_ENV: i32 = 8;
 static CRASH_MISSING_INIT_FILES: i32 = 9;
+static CRASH_GET_SHELL: i32 = 10;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
@@ -197,32 +197,15 @@ fn set_global_tmpfile(tmp_file_path: String) {
 }
 
 fn run(args: &Vec<String>) {
-    let mut shell: &str = &args[1];
     let command: &str;
     let tmp: String;
     let mut modulename: &str = "";
-    let mut shell_width: usize = 80;
 
-    // the shell argument can either be 'bash', 'tcsh'
-    // or the shellname comma shellwidth
-    // bash,80 or csh,210 or bash,210 etc
-    // if no width is specified, 80 is used as default width
-
-    let shell_split: Vec<&str> = shell.split(',').collect();
-
-    if shell_split.len() == 2 {
-        if shell_split[1] != "" {
-            shell_width = match FromStr::from_str(shell_split[1]) {
-                Ok(w) => w,
-                Err(_) => 80,
-            };
-        }
-        shell = shell_split[0];
-    }
+    let (shell, shell_width) = rsmod::get_shell_info();
 
     ////
 
-    if !is_shell_supported(shell) {
+    if !is_shell_supported(&shell) {
         usage(false);
         rsmod::crash(CRASH_UNSUPPORTED_SHELL,
                      &format!("{} is not a supported shell", shell));
@@ -353,7 +336,7 @@ fn run(args: &Vec<String>) {
                     typed_command: command,
                     arg: modulename,
                     search_path: &modulepaths,
-                    shell: shell,
+                    shell: &shell,
                     shell_width: shell_width,
                 };
                 rsmod::command(&mut rsmod_command);
