@@ -111,6 +111,9 @@ static LONG_HELP: &'static str = "
     * purge
       Unloads all loaded modules
 
+    * refresh
+      Reloads all loaded modules
+
     * available <search string>
       Lists all the available module.
       If a <search string> is given then all modules which match
@@ -120,6 +123,10 @@ static LONG_HELP: &'static str = "
       Gives more info about a module. Description, which
       variables it modifies and/or which commands are executed
       upon launch.
+
+    * undo
+      Undo the previous module command, only works for load, unload
+      and purge
 
     * makecache
       Updates the .modulesindex file in all the paths that
@@ -169,11 +176,11 @@ fn usage(in_eval: bool) {
     println_stderr!("");
 
     if in_eval {
-        error_msg = "  Usage: module <load|unload|list|purge|available|info|makecache> [module \
+        error_msg = "  Usage: module <load|unload|list|purge|refresh|available|undo|info|makecache> [module \
                            name]";
     } else {
         error_msg = "  Usage: rsmodules <shell> \
-                     <load|unload|list|purge|available|info|makecache> [module name]";
+                     <load|unload|list|purge|refresh|available|undo|info|makecache> [module name]";
     }
 
     println_stderr!("{}", &error_msg);
@@ -275,7 +282,7 @@ fn run(args: &Vec<String>) {
 
     if args.len() >= 3 {
         command = &args[2];
-        let mut matches: bool = false;
+        let matches: bool;
         let mut modulenames: Vec<&str> = Vec::new();
         if args.len() > 3 {
             for i in 3..args.len() {
@@ -294,11 +301,13 @@ fn run(args: &Vec<String>) {
         command_list.push("available");
         command_list.push("list");
         command_list.push("purge");
+        command_list.push("refresh");
         command_list.push("info");
         command_list.push("display");
         command_list.push("show");
         command_list.push("makecache");
         command_list.push("help");
+        command_list.push("undo");
         command_list.push("--help");
         command_list.push("-h");
         // TODO
@@ -314,34 +323,71 @@ fn run(args: &Vec<String>) {
         //  13.3
         //
 
-        for mut cmd in command_list {
-            if command == "help" || command == "--help" || command == "-h" {
-                usage(true);
-                matches = true;
-                break;
+        if command == "help" || command == "--help" || command == "-h" {
+            usage(true);
+            return;
+        }
+
+        let mut num_hits: i32 = 0;
+        let mut command_hit: &str = "";
+
+        for cmd in command_list {
+            if cmd.starts_with(command) {
+                num_hits += 1;
+                command_hit = cmd;
+            }
+        }
+
+        if num_hits != 1 {
+            usage(true);
+            return;
+        } else {
+            matches = true;
+
+            if command_hit == "add" {
+                command_hit = "load";
+            }
+            if command_hit == "rm" {
+                command_hit = "unload";
+            }
+            if command_hit == "display" || command_hit == "show" {
+                command_hit = "info";
             }
 
-            if cmd.starts_with(command) {
-                if cmd == "add" {
-                    cmd = "load";
-                }
-                if cmd == "rm" {
-                    cmd = "unload";
-                }
-                if cmd == "display" || cmd == "show" {
-                    cmd = "info";
-                }
-                let mut rsmod_command: Rsmodule = Rsmodule {
-                    cmd: cmd,
-                    typed_command: command,
-                    arg: modulename,
-                    search_path: &modulepaths,
-                    shell: &shell,
-                    shell_width: shell_width,
-                };
-                rsmod::command(&mut rsmod_command);
-                matches = true;
+            if command_hit == "load" || command_hit == "unload" {
+                // undo doesn't work for dependency loaded modules
+                let data = setenv("RSMODULES_UNDO".to_string(),
+                                  format!("{} {}", command_hit, modulename.to_string()),
+                                  &shell);
+                crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                              tmpfile.write_all(data.as_bytes()));
             }
+
+            if command_hit == "purge" {
+                let loaded_list = rsmod::get_loaded_list();
+                let mut args: Vec<String> = Vec::new();
+                for (arg, _) in loaded_list.into_iter() {
+                    args.push(arg);
+                }
+                let loadedmodules = args.join(" ");
+                let data = setenv("RSMODULES_UNDO".to_string(),
+                                  format!("unload {}", loadedmodules),
+                                  &shell);
+                crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                              tmpfile.write_all(data.as_bytes()));
+
+            }
+
+            let mut rsmod_command: Rsmodule = Rsmodule {
+                cmd: &command_hit,
+                typed_command: command,
+                arg: modulename,
+                search_path: &modulepaths,
+                shell: &shell,
+                shell_width: shell_width,
+            };
+            rsmod::command(&mut rsmod_command);
+
         }
 
         if !matches {
@@ -352,10 +398,12 @@ fn run(args: &Vec<String>) {
     // when noshell is choosen, we just output to stdout
     // this is used for scripts that want to parse the module av output
     // for example for tab completion
+
     if shell != "noshell" && shell != "python" && shell != "perl" {
         // we want a self destructing tmpfile
         // so it must delete itself at the end of the run
         // if it crashes we still need to delete the file
+
 
         let cmd = format!("rm -f {}\n", tmp_file_path.display());
 
@@ -373,6 +421,21 @@ fn run(args: &Vec<String>) {
     } else {
         remove_file(tmp_file_path.to_str().unwrap().to_string()).unwrap();
     }
+}
+
+pub fn setenv(var: String, val: String, shell: &str) -> String {
+    let mut data: String = String::new();
+    if shell == "bash" || shell == "zsh" {
+        data = format!("export {}=\"{}\"\n", var, val);
+    } else if shell == "tcsh" || shell == "csh" {
+        data = format!("setenv {} \"{}\"\n", var, val);
+    } else if shell == "python" {
+        data = format!("os.environ[\"{}\"] = \"{}\";\n", var, val);
+    } else if shell == "perl" {
+        data = format!("$ENV{{{}}}=\"{}\";\n", var, val);
+    }
+
+    return data;
 }
 
 pub fn output(line: String) {

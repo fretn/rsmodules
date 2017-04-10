@@ -369,7 +369,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
             // print loaded modules in bold
             if super::is_module_loaded(module.name.as_ref(), true) {
 
-                tmp = format!("{} {}{:width$}{}｜ {}",
+                tmp = format!("{} {}{:width$}{}| {}",
                               default,
                               bold_start,
                               module.name,
@@ -377,7 +377,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                               description,
                               width = longest_name);
             } else {
-                tmp = format!("{} {:width$}｜ {}",
+                tmp = format!("{} {:width$}| {}",
                               default,
                               module.name,
                               description,
@@ -399,7 +399,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                     // add a newline
                     if cnt == 1 {
                         super::echo("", shell);
-                        super::echo(&format!("  {}Module name{} {:width$}｜ {}Description{}",
+                        super::echo(&format!("  {}Module name{} {:width$}| {}Description{}",
                                              bold_start,
                                              bold_end,
                                              " ",
@@ -407,9 +407,9 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                                              bold_end,
                                              width = (longest_name - 12)),
                                     shell);
-                        super::echo(&format!("  {:width$}｜", " ", width = longest_name), shell);
+                        super::echo(&format!("  {:width$}|", " ", width = longest_name), shell);
                     } else {
-                        super::echo(&format!("  {:width$}｜", " ", width = longest_name), shell);
+                        super::echo(&format!("  {:width$}|", " ", width = longest_name), shell);
                     }
                 }
                 previous_first_char = module.name.chars().next().unwrap();
@@ -426,7 +426,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                 // add a newline
                 if cnt == 1 {
                     super::echo("", shell);
-                    super::echo(&format!("  {}Module name{} {:width$}｜ {}Description{}",
+                    super::echo(&format!("  {}Module name{} {:width$}| {}Description{}",
                                          bold_start,
                                          bold_end,
                                          " ",
@@ -434,9 +434,9 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                                          bold_end,
                                          width = (longest_name - 12)),
                                 shell);
-                    super::echo(&format!("  {:width$}｜", " ", width = longest_name), shell);
+                    super::echo(&format!("  {:width$}|", " ", width = longest_name), shell);
                 } else {
-                    super::echo(&format!("  {:width$}｜", " ", width = longest_name), shell);
+                    super::echo(&format!("  {:width$}|", " ", width = longest_name), shell);
                 }
             }
             previous_first_char = module.name.to_lowercase().chars().next().unwrap();

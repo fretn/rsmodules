@@ -36,7 +36,9 @@ mod cache;
 
 static DEFAULT_MODULE_PATH: &'static str = "/usr/local";
 static ENV_LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
+static ENV_UNDO: &'static str = "RSMODULES_UNDO"; // name of an env var
 
+#[derive(Debug)]
 pub struct Rsmodule<'a> {
     pub cmd: &'a str, // load|list|avail|...
     pub typed_command: &'a str, // load|list|avail|...
@@ -179,6 +181,8 @@ pub fn command(rsmod: &mut Rsmodule) {
         list(rsmod);
     } else if rsmod.cmd == "purge" {
         purge(rsmod);
+    } else if rsmod.cmd == "refresh" {
+        refresh(rsmod);
     } else if rsmod.cmd == "info" {
         module_action(rsmod, "info");
     } else if rsmod.cmd == "makecache" {
@@ -188,6 +192,8 @@ pub fn command(rsmod: &mut Rsmodule) {
                 cache::update(modulepath, rsmod.shell);
             }
         }
+    } else if rsmod.cmd == "undo" {
+        undo(rsmod);
     }
 }
 
@@ -227,6 +233,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
 
     let mut reversed_modules;
 
+
     // when unloading we only want a list of the loaded modules
     // for matching modulenames :
     // we have: blast/1.2 and blast/1.3 (D) while blast/1.2 is loaded
@@ -244,6 +251,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         super::usage(true);
         return;
     }
+
 
     //let mut selected_module = rsmod.arg;
     let mut modulefile: PathBuf = PathBuf::new();
@@ -317,7 +325,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         }
 
         if !found && action != "unload" {
-            println_stderr!("Module {0} not found.", selected_module);
+            println_stderr!("Module {} not found.", selected_module);
             ::std::process::exit(super::CRASH_MODULE_NOT_FOUND);
         }
 
@@ -508,7 +516,7 @@ fn echo(line: &str, shell: &str) {
     }
 }
 
-fn get_loaded_list() -> Vec<(String, i64)> {
+pub fn get_loaded_list() -> Vec<(String, i64)> {
     let loadedmodules: String;
     let mut result: Vec<(String, i64)> = Vec::new();
 
@@ -573,6 +581,34 @@ fn list(rsmod: &mut Rsmodule) {
     }
 }
 
+fn refresh(rsmod: &mut Rsmodule) {
+    let loadedmodules: String;
+
+    match env::var(ENV_LOADEDMODULES) {
+        Ok(list) => loadedmodules = list,
+        Err(_) => {
+            return;
+        }
+    };
+
+    let loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
+    for module in loadedmodules {
+
+        if module != "" {
+            let mut rsmod_command: Rsmodule = Rsmodule {
+                cmd: "load",
+                typed_command: "load",
+                arg: module,
+                search_path: rsmod.search_path,
+                shell: rsmod.shell,
+                shell_width: rsmod.shell_width,
+            };
+            command(&mut rsmod_command);
+        }
+    }
+
+}
+
 fn purge(rsmod: &mut Rsmodule) {
     let loadedmodules: String;
 
@@ -600,6 +636,50 @@ fn purge(rsmod: &mut Rsmodule) {
     }
 
 }
+
+fn undo(rsmod: &mut Rsmodule) {
+
+    let args = match env::var(ENV_UNDO) {
+        Ok(list) => list,
+        Err(_) => {
+            return;
+        }
+    };
+    let mut args: Vec<&str> = args.split(' ').collect();
+
+
+    let mut cmd: &str;
+
+    if args.len() == 0 {
+        return;
+    }
+
+    if args.len() > 1 {
+        // means we did a purge
+        cmd = args.get(0).unwrap();
+        if cmd == "load" {
+            cmd = "unload";
+        } else if cmd == "unload" {
+            cmd = "load";
+        }
+        args.retain(|&i| (i != "load" && i != "unload"));
+        let mut rsmod_command: Rsmodule = Rsmodule {
+            cmd: cmd,
+            typed_command: cmd,
+            arg: &args.join(" "),
+            search_path: rsmod.search_path,
+            shell: rsmod.shell,
+            shell_width: rsmod.shell_width,
+        };
+        command(&mut rsmod_command);
+        output(super::setenv("RSMODULES_UNDO".to_string(),
+                             format!("{} {}", cmd, args.join(" ")),
+                             rsmod.shell));
+
+    }
+
+}
+
 #[cfg(test)]
 mod tests {
     use super::is_other_version_of_module_loaded;

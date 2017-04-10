@@ -9,7 +9,7 @@ mkdir $DIR
 cp rsmodules setup_rsmodules.sh setup_rsmodules.csh rsmodules.py rsmodules.pm $DIR
 cp -R examples/ $DIR
 cp -R tools/ $DIR
-tar -zcvf "$DIR.tar.gz" $DIR
+tar --owner=root --group=root -zcvf "$DIR.tar.gz" $DIR
 rm -rf "$DIR"
 if [ ! -d "releases" ]; then
 	mkdir releases

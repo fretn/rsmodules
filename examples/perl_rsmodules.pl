@@ -2,11 +2,11 @@
 
 use rsmodules;
 
-module("load","blast");
+module("load blast");
 
 print($ENV{"LOADEDMODULES"} . "\n");
 
-module("list","");
+module("list");
 
 # this var is set with setenv("SOMEVAR","value") in the modulescript
 print($ENV{"SOMEVAR"});
