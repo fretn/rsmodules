@@ -400,7 +400,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("load", load_dummy);
         engine.register_fn("conflict", conflict_dummy);
         engine.register_fn("unload", unload_dummy);
-        engine.register_fn("getenv", getenv);
+        engine.register_fn("getenv", getenv); // need getenv_dummy instead ??
         engine.register_fn("description", description_dummy);
         engine.register_fn("set_alias", unset_alias);
         engine.register_fn("is_loaded", is_loaded_dummy);

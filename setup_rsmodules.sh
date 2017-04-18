@@ -58,7 +58,7 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 
 		cmds="available \
 			list load purge info \
-			unload"
+			unload makecache add rm undo refresh"
 
 		opts="-h --help"
 
