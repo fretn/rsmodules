@@ -105,6 +105,13 @@ static LONG_HELP: &'static str = "
       before a slash, eg: you have module name 'rsmodules/2.0.0'
       the partial name is 'rsmodules'
 
+    * switch [(partial) module name from] [(partial) module name to]
+      Switches between two version of modules. 
+      
+      This does the same as module load blast/1.2.3 when
+      blast/1.2.5 is loaded. 
+      This feature was added for compatibility reasons.
+
     * list
       Lists all the loaded modules
 
@@ -125,8 +132,8 @@ static LONG_HELP: &'static str = "
       upon launch.
 
     * undo
-      Undo the previous module command, only works for load, unload
-      and purge
+      Undo the previous module command, only works for load, unload,
+      switch and purge
 
     * makecache
       Updates the .modulesindex file in all the paths that
@@ -176,11 +183,11 @@ fn usage(in_eval: bool) {
     println_stderr!("");
 
     if in_eval {
-        error_msg = "  Usage: module <load|unload|list|purge|refresh|available|undo|info|makecache> [module \
+        error_msg = "  Usage: module <load|unload|list|switch|purge|refresh|available|undo|info|makecache> [module \
                            name]";
     } else {
         error_msg = "  Usage: rsmodules <shell> \
-                     <load|unload|list|purge|refresh|available|undo|info|makecache> [module name]";
+                     <load|unload|list|switch|purge|refresh|available|undo|info|makecache> [module name]";
     }
 
     println_stderr!("{}", &error_msg);
@@ -305,6 +312,7 @@ fn run(args: &Vec<String>) {
         command_list.push("info");
         command_list.push("display");
         command_list.push("show");
+        command_list.push("switch");
         command_list.push("makecache");
         command_list.push("help");
         command_list.push("undo");
@@ -358,6 +366,22 @@ fn run(args: &Vec<String>) {
                 // undo doesn't work for dependency loaded modules
                 let data = setenv("RSMODULES_UNDO".to_string(),
                                   format!("{} {}", command_hit, modulename.to_string()),
+                                  &shell);
+                crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                              tmpfile.write_all(data.as_bytes()));
+            }
+
+            if command_hit == "switch" {
+                if args.len() != 5 {
+                    usage(true);
+                    return;
+                }
+            }
+
+            if command_hit == "switch" {
+                modulenames.reverse();
+                let data = setenv("RSMODULES_UNDO".to_string(),
+                                  format!("{} {}", command_hit, modulenames.join(" ")),
                                   &shell);
                 crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
                               tmpfile.write_all(data.as_bytes()));

@@ -56,10 +56,11 @@ D perl/5.14.1 | Perl 5.14.1 is a highly capable, feature-rich programming langua
  * ```module available [search string]``` Shows all the modules or the modules that match the search string.
  * ```module info [(partial)modulename] [(partial)modulename] [...]``` Shows info about the requested module(s).
  * ```module load [(partial)modulename] [(partial)modulename] [...]``` Loads the requested modules.
+ * ```module switch [(partial)modulename from] [(partial)modulename to] ``` Switch between the requested modules.
  * ```module unload [(partial)modulename] [(partial)modulename] [...]``` Unloads the requested modules.
  * ```module purge``` Unloads all loaded modules.
  * ```module refresh``` Reloads all loaded modules.
- * ```module undo``` Undo previous load/unload/purge actions
+ * ```module undo``` Undo previous load/unload/switch/purge actions
  * ```module list``` Shows a list of all the loaded modules.
  * The output is not redirected to stderr, but to stdout. So you are able to use grep / rg on the output and it doesn't trigger errors in pipelines.
  * RSModules is fast because it's written in a compiled language and it is using cache files for listing the modules.

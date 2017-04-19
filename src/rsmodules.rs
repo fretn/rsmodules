@@ -172,6 +172,21 @@ pub fn command(rsmod: &mut Rsmodule) {
         module_action(rsmod, "load");
     } else if rsmod.cmd == "unload" {
         module_action(rsmod, "unload");
+    } else if rsmod.cmd == "switch" {
+        let args: Vec<&str> = rsmod.arg.split(" ").collect();
+
+        if args.len() < 2 { 
+            return;
+        }
+        let unload = args[0];
+        let load = args[1];
+        if !is_module_loaded(unload, false) {
+            return;
+        }
+        rsmod.arg = unload;
+        module_action(rsmod, "unload");
+        rsmod.arg = load;
+        module_action(rsmod, "load");
     } else if rsmod.cmd == "available" {
         cache::get_module_list(rsmod.arg,
                                rsmod.typed_command,
@@ -662,7 +677,7 @@ fn undo(rsmod: &mut Rsmodule) {
         } else if cmd == "unload" {
             cmd = "load";
         }
-        args.retain(|&i| (i != "load" && i != "unload"));
+        args.retain(|&i| (i != "load" && i != "unload" && i != "switch"));
         let mut rsmod_command: Rsmodule = Rsmodule {
             cmd: cmd,
             typed_command: cmd,
@@ -672,6 +687,10 @@ fn undo(rsmod: &mut Rsmodule) {
             shell_width: rsmod.shell_width,
         };
         command(&mut rsmod_command);
+        if cmd == "switch" {
+            args.reverse();
+        }
+
         output(super::setenv("RSMODULES_UNDO".to_string(),
                              format!("{} {}", cmd, args.join(" ")),
                              rsmod.shell));
