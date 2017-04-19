@@ -8,6 +8,8 @@ if [ "`hostname`" == "modimo" ]; then
 		eval `$RSMODULES_INSTALL_DIR/target/debug/rsmodules bash,$TERMWIDTH $*`;
 	}
 
+	export -f module
+
 	export MODULEPATH="/usr/local/modules:/home/frlae/rust/rmodules/modulespath:/home/frlae/rust/rmodules/modulespath2"
 	export RSMODULES_INSTALL_DIR="/home/frlae/rust/rmodules/"
 	#export LOADEDMODULES=""

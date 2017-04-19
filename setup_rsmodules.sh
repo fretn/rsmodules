@@ -5,6 +5,8 @@ module() {
 	eval `$RSMODULES_INSTALL_DIR/rsmodules bash,$TERMWIDTH $*`;
 }
 
+export -f module
+
 export MODULEPATH=""
 export RSMODULES_INSTALL_DIR=""
 #export LOADEDMODULES=""

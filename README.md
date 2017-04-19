@@ -15,9 +15,9 @@ to setup and administer.
 1. [Example](#example)
 2. [Features](#features)
 3. [Installation](#Installation)
- * [Manual Installation](#manual-installation)
- * [Automatic Installation](#automatic-installation)
- * [Compiling from source](#compiling-from-source)
+  - [Manual Installation](#manual-installation)
+  - [Automatic Installation](#automatic-installation)
+  - [Compiling from source](#compiling-from-source)
 4. [Modulefiles](#modulefiles)
  * [Example modulefile](#example-modulefile)
 5. [Using from perl](#using-from-perl)
@@ -85,22 +85,25 @@ RSModules has a few configuration options which are located in the setup scripts
  
 The scripts ```setup_rsmodules.sh``` and ```setup_rsmodules.sh``` need to be sourced when the user logs in. You either symlink these in /etc/profile.d/ or source them in the users init scripts (.bashrc, .cshrc, .zshrc, ...)
 
-When you have added modulefiles, don't forget to update the module cache by running the command: ```module makecache```
+After you have added modulefiles, don't forget to update the module cache by running the command: ```module makecache```
 
 In case you want to use RSModules inside your python or perl scripts, add the ```$RSMODULES_INSTALL_DIR``` to the ```$PYTHONPAH``` and/or ```$PERL5LIB``` environment
 variable(s). But this shouldn't be needed as the ```setup_rsmodules.(c)sh``` scripts do this for you.
 
 ### Automatic installation
 RSModules has a simple installation wizard.
-Run the rsmodules command and the environment variables ```$RSMODULES_INSTALL_DIR``` and ```$MODULEPATH``` are not set, the installation wizard will guide you around.
+
+ * First of all make sure that the environment variables ```$RSMODULES_INSTALL_DIR``` and ```$MODULEPATH``` are not set.
+ * Then run the ```rsmodules``` command and the installation wizard will guide you around.
+
 Depending on your permissions rsmodules will be either installed in your home directory or system wide.
 
-The wizard sets ```$RSMODULES_INSTALL_DIR``` and ```$MODULEPATH``` in the ```setup_rsmodules.(c)sh``` files. When you are root these files will be symlinked in ```/etc/profile.d/```. For non root users these files will be sourced from your .bashrc, .cshrc.
+The wizard sets ```$RSMODULES_INSTALL_DIR``` and ```$MODULEPATH``` in the ```setup_rsmodules.(c)sh``` files. For the root user these files will be symlinked in ```/etc/profile.d/```. For non root users these files will be sourced from your .bashrc, .cshrc.
 On the next login the ```module``` command will be available
 
 A dummy module will be created to help you around.
 
-When you have added modulefiles, don't forget to update the module cache by running the command: ```module makecache```
+After you have added modulefiles, don't forget to update the module cache by running the command: ```module makecache```
 
 ### Compiling from source
 First you'll have to install Rust on your system:
@@ -181,7 +184,7 @@ if is_loaded("blast/2.2.17") {
 ```
 ###### note: As the time of writing rhai scripts don't support tabs, only spaces.
 
-When you have created new modulefiles, don't forget to update the module cache by running the command: 
+After you have created new modulefiles, don't forget to update the module cache by running the command:
 ```
 [user@awesome ~]$ module makecache
 ```
@@ -227,11 +230,11 @@ print(os.environ['SOMEVAR'])
 
 ## PAQ
 
-#####What does PAQ mean ?
+##### What does PAQ mean ?
 
 Possibly asked questions :)
 
-#####Why RSModules while tclmodules/cmodules and Lmod are around?
+##### Why RSModules while tclmodules/cmodules and Lmod are around?
 
 A couple of years ago I ran into some issues with tcl/c modules. Because I was annoyed by the fact that
 everything was printed to stderr, I started writing my own implementation of modules in C. When 90% of the
@@ -244,19 +247,19 @@ asking for. (a way to see which executables a module provides, a short descripti
 
 And that's how RSmodules was born.
 
-#####Does this mean that tcl/c modules or Lmod are bad projects ? 
+##### Does this mean that tcl/c modules or Lmod are bad projects ?
 
 Absolutely not ! Feel free to use whatever that suits your needs.
 
-#####Why then didn't you contribute to these projects instead ?
+##### Why then didn't you contribute to these projects instead ?
 
 I needed a side project to learn Rust and the project got a bit out of hand :)
  
-#####What does the RS in RSModules mean ?
+##### What does the RS in RSModules mean ?
 
 RS stands for rust
  
-#####How fast is RSModules ?
+##### How fast is RSModules ?
 
  
 ```
@@ -272,9 +275,9 @@ user	0m0.062s
 sys   	0m0.168s
 [user@awesome ~]$
 ```
-######The module files in the above example are located on a network share
+###### The module files in the above example are located on a network share
 
-#####Can I convert my tcl modulefiles to rhai modulefiles ?
+##### Can I convert my tcl modulefiles to rhai modulefiles ?
 
 Robert McLay, the Lmod developer, was so kind to write a script to translate tcl modulefiles to
 lua modulefiles. 
@@ -283,15 +286,15 @@ So to answer the question, yes its possible.
 But its not possible to provide tcl module files in your ```$MODULEPATH``` and
 let RSModules translate them on the fly.
 
-#####Will you add tabcompletion for zsh ?
+##### Will you add tabcompletion for zsh ?
 
 Maybe
  
-#####What happens when I load a module that is already loaded ?
+##### What happens when I load a module that is already loaded ?
 
 The module is first unloaded and then reloaded again. 
 
-#####What happens when I load a different version of an already loaded module ?
+##### What happens when I load a different version of an already loaded module ?
 
 The module is replaced with the newly loaded module:
 
