@@ -106,10 +106,10 @@ static LONG_HELP: &'static str = "
       the partial name is 'rsmodules'
 
     * switch [(partial) module name from] [(partial) module name to]
-      Switches between two version of modules. 
-      
+      Switches between two version of modules.
+
       This does the same as module load blast/1.2.3 when
-      blast/1.2.5 is loaded. 
+      blast/1.2.5 is loaded.
       This feature was added for compatibility reasons.
 
     * list

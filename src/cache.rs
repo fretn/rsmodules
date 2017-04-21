@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use std::io::{BufWriter, BufReader, BufRead};
+use std::io::{BufWriter, BufReader, BufRead, Write};
 use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::cmp::Ordering;
@@ -321,9 +321,15 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
 
         if arg != "" {
             for module in decoded.clone() {
+
+                let avmodule_lc: String = module.name.to_lowercase();
+                let module_lc: String = arg.to_lowercase();
+                let avmodule_lc: &str = avmodule_lc.as_ref();
+                let module_lc: &str = module_lc.as_ref();
+
                 if longest_name <= module.name.len() {
                     // was starts_with
-                    if module.name.contains(arg) {
+                    if avmodule_lc.contains(module_lc) {
                         longest_name = module.name.len();
                     }
                 }
@@ -369,7 +375,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
             // print loaded modules in bold
             if super::is_module_loaded(module.name.as_ref(), true) {
 
-                tmp = format!("{} {}{:width$}{}| {}",
+                tmp = format!("{} {}{:width$}{} | {}",
                               default,
                               bold_start,
                               module.name,
@@ -377,7 +383,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                               description,
                               width = longest_name);
             } else {
-                tmp = format!("{} {:width$}| {}",
+                tmp = format!("{} {:width$} | {}",
                               default,
                               module.name,
                               description,
@@ -398,18 +404,22 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                 if first_char != previous_first_char && !simple_list {
                     // add a newline
                     if cnt == 1 {
+                        let mut width = longest_name;
+                        if longest_name > 12 {
+                            width = longest_name - 12;
+                        }
                         super::echo("", shell);
-                        super::echo(&format!("  {}Module name{} {:width$}| {}Description{}",
+                        super::echo(&format!("  {}Module name{} {:width$} | {}Description{}",
                                              bold_start,
                                              bold_end,
                                              " ",
                                              bold_start,
                                              bold_end,
-                                             width = (longest_name - 12)),
+                                             width = width),
                                     shell);
-                        super::echo(&format!("  {:width$}|", " ", width = longest_name), shell);
+                        super::echo(&format!("  {:width$} |", " ", width = longest_name), shell);
                     } else {
-                        super::echo(&format!("  {:width$}|", " ", width = longest_name), shell);
+                        super::echo(&format!("  {:width$} |", " ", width = longest_name), shell);
                     }
                 }
                 previous_first_char = module.name.chars().next().unwrap();
@@ -425,18 +435,22 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
             if first_char != previous_first_char && !simple_list {
                 // add a newline
                 if cnt == 1 {
+                    let mut width = longest_name;
+                    if longest_name > 12 {
+                        width = longest_name - 12;
+                    }
                     super::echo("", shell);
-                    super::echo(&format!("  {}Module name{} {:width$}| {}Description{}",
+                    super::echo(&format!("  {}Module name{} {:width$} | {}Description{}",
                                          bold_start,
                                          bold_end,
                                          " ",
                                          bold_start,
                                          bold_end,
-                                         width = (longest_name - 12)),
+                                         width = width),
                                 shell);
-                    super::echo(&format!("  {:width$}|", " ", width = longest_name), shell);
+                    super::echo(&format!("  {:width$} |", " ", width = longest_name), shell);
                 } else {
-                    super::echo(&format!("  {:width$}|", " ", width = longest_name), shell);
+                    super::echo(&format!("  {:width$} |", " ", width = longest_name), shell);
                 }
             }
             previous_first_char = module.name.to_lowercase().chars().next().unwrap();

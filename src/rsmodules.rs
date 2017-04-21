@@ -175,7 +175,7 @@ pub fn command(rsmod: &mut Rsmodule) {
     } else if rsmod.cmd == "switch" {
         let args: Vec<&str> = rsmod.arg.split(" ").collect();
 
-        if args.len() < 2 { 
+        if args.len() < 2 {
             return;
         }
         let unload = args[0];
