@@ -87,8 +87,8 @@ static LONG_HELP: &'static str = "
 
   Modulefiles can be shared by many users or can be used by individuals
   by setting up paths in the MODULEPATH environment variable. Once
-  a modulepath is added the cache needs to be updated by invoking
-  module makecache
+  a modulepath is added, the cache needs to be updated by invoking
+  the command: module makecache.
 
   Modulefiles can be loaded and unloaded by the user whenever the
   module command is available.
@@ -103,7 +103,7 @@ static LONG_HELP: &'static str = "
 
       A partial module name is the part of the modulename
       before a slash, eg: you have module name 'rsmodules/2.0.0'
-      the partial name is 'rsmodules'
+      the partial name is 'rsmodules'.
 
     * switch [(partial) module name from] [(partial) module name to]
       Switches between two version of modules.
@@ -113,18 +113,18 @@ static LONG_HELP: &'static str = "
       This feature was added for compatibility reasons.
 
     * list
-      Lists all the loaded modules
+      Lists all the loaded modules.
 
     * purge
-      Unloads all loaded modules
+      Unloads all loaded modules.
 
     * refresh
-      Reloads all loaded modules
+      Reloads all loaded modules.
 
     * available <search string>
-      Lists all the available module.
+      Lists all the available modules.
       If a <search string> is given then all modules which match
-      the search string will be listed
+      the search string will be listed.
 
     * info [(partial) module name(s)]
       Gives more info about a module. Description, which
@@ -133,12 +133,12 @@ static LONG_HELP: &'static str = "
 
     * undo
       Undo the previous module command, only works for load, unload,
-      switch and purge
+      switch and purge.
 
     * makecache
       Updates the .modulesindex file in all the paths that
       are found in the $MODULEPATH variable. This ofcourse
-      only works if you have the correct permissions ;)
+      only works if you have the correct permissions. ;)
 ";
 
 fn is_shell_supported(shell: &str) -> bool {
