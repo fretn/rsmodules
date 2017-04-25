@@ -34,6 +34,9 @@ mod script;
 #[path = "cache.rs"]
 mod cache;
 
+#[path = "autoload.rs"]
+mod autoload;
+
 static DEFAULT_MODULE_PATH: &'static str = "/usr/local";
 static ENV_LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
 static ENV_UNDO: &'static str = "RSMODULES_UNDO"; // name of an env var
@@ -173,7 +176,7 @@ pub fn command(rsmod: &mut Rsmodule) {
     } else if rsmod.cmd == "unload" {
         module_action(rsmod, "unload");
     } else if rsmod.cmd == "switch" {
-        let args: Vec<&str> = rsmod.arg.split(" ").collect();
+        let args: Vec<&str> = rsmod.arg.split_whitespace().collect();
 
         if args.len() < 2 {
             return;
@@ -209,6 +212,8 @@ pub fn command(rsmod: &mut Rsmodule) {
         }
     } else if rsmod.cmd == "undo" {
         undo(rsmod);
+    } else if rsmod.cmd == "autoload" {
+        autoload(rsmod);
     }
 }
 
@@ -517,7 +522,7 @@ pub fn is_other_version_of_module_loaded(name: &str) -> bool {
     return false;
 }
 
-fn echo(line: &str, shell: &str) {
+pub fn echo(line: &str, shell: &str) {
     //FIXME: if line contains \n and shell is csh or tcsh
     // escape it
     if shell == "noshell" {
@@ -661,7 +666,7 @@ fn undo(rsmod: &mut Rsmodule) {
             return;
         }
     };
-    let mut args: Vec<&str> = args.split(' ').collect();
+    let mut args: Vec<&str> = args.split_whitespace().collect();
 
 
     let mut cmd: &str;
@@ -698,6 +703,47 @@ fn undo(rsmod: &mut Rsmodule) {
 
     }
 
+}
+
+fn autoload(rsmod: &mut Rsmodule) {
+    let mut args: Vec<&str> = rsmod.arg.split_whitespace().collect();
+
+    if args.len() == 0 {
+        //super::usage(true);
+        println_stderr!("");
+        println_stderr!("  Usage: module autoload [subcommand] [modulename(s)]");
+        println_stderr!("");
+        println_stderr!("  The following subcommands are available:");
+        println_stderr!("");
+        println_stderr!("    * append [modulename(s)]");
+        println_stderr!("      Adds one or more module to the end of the list of autoloaded modules.");
+        println_stderr!("");
+        println_stderr!("    * prepend [modulename(s)]");
+        println_stderr!("      Adds one or more module to the beginning of the list of autoloaded modules.");
+        println_stderr!("");
+        println_stderr!("    * remove [modulename(s)]");
+        println_stderr!("      Removes one or more module from the \
+            list of autoloaded moules.");
+        println_stderr!("");
+        println_stderr!("    * list");
+        println_stderr!("      Shows a list of all autoloaded modules.");
+        println_stderr!("");
+        println_stderr!("    * purge");
+        println_stderr!("      Removes all the autoloaded modules.");
+        println_stderr!("");
+        return;
+    }
+
+    let subcommand = args.remove(0);
+
+    /*
+println_stderr!("{:?}", args);
+    if args.len() > 1 {
+        args.drain(0..1);
+    }
+    */
+
+    autoload::run(subcommand, &mut args, rsmod.shell);
 }
 
 #[cfg(test)]

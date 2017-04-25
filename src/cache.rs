@@ -482,16 +482,18 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
     } else {
         super::echo("", shell);
     }
-    super::echo("", shell);
-    super::echo(&format!("  {}*{} D means that the module is set as the default module.",
-                         bold_start,
-                         bold_end),
-                shell);
-    super::echo(&format!("  {}*{} Loaded modules are printed in {}bold{}.",
-                         bold_start,
-                         bold_end,
-                         bold_start,
-                         bold_end),
-                shell);
-    super::echo("", shell);
+    if shell != "noshell" {
+        super::echo("", shell);
+        super::echo(&format!("  {}*{} D means that the module is set as the default module.",
+                            bold_start,
+                            bold_end),
+                    shell);
+        super::echo(&format!("  {}*{} Loaded modules are printed in {}bold{}.",
+                            bold_start,
+                            bold_end,
+                            bold_start,
+                            bold_end),
+                    shell);
+        super::echo("", shell);
+    }
 }

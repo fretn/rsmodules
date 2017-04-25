@@ -5,8 +5,6 @@ module() {
 	eval `$RSMODULES_INSTALL_DIR/rsmodules bash,$TERMWIDTH $*`;
 }
 
-export -f module
-
 export MODULEPATH=""
 export RSMODULES_INSTALL_DIR=""
 #export LOADEDMODULES=""
@@ -43,13 +41,16 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 		fi
 		for ((i = COMP_CWORD - 1; i > 0; i--))
 		do case ${COMP_WORDS[$i]} in
-		add|load)
-			COMPREPLY=( $(compgen -W "$(_module_not_yet_loaded)" -- "$cur") )
-			break;;
-		rm|remove|unload|switch|swap)
-			COMPREPLY=( $(IFS=: compgen -W "${LOADEDMODULES}" -- "$cur") )
-			break;;
-		esac
+			add|load)
+				COMPREPLY=( $(compgen -W "$(_module_not_yet_loaded)" -- "$cur") )
+				break;;
+			rm|remove|unload|switch|swap)
+				COMPREPLY=( $(IFS=: compgen -W "${LOADEDMODULES}" -- "$cur") )
+				break;;
+			autoload)
+				COMPREPLY=( $(IFS=: compgen -W "$(_module_avail)" -- "$cur") )
+				break;;
+			esac
 		done
 	}
 
@@ -60,7 +61,8 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 
 		cmds="available \
 			list load purge info \
-			unload makecache add rm undo refresh"
+			unload makecache add rm \
+			autoload undo refresh"
 
 		opts="-h --help"
 
@@ -68,22 +70,25 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 		info|load)    COMPREPLY=( $(compgen -W "$(_module_not_yet_loaded)" -- "$cur") );;
 		unload)
 				COMPREPLY=( $(IFS=: compgen -W "${LOADEDMODULES}" -- "$cur") );;
-		*) if test $COMP_CWORD -gt 2
-		then
-			_module_long_arg_list "$cur"
-		else
-			case "$cur" in
-			# The mappings below are optional abbreviations for convenience
-			ls)    COMPREPLY="list";;    # map ls -> list
-			r*)    COMPREPLY="rm";;    # also covers 'remove'
-			sw*)    COMPREPLY="switch";;
+		autoload)
+				COMPREPLY=( $(IFS=: compgen -W "append:prepend:list:purge:remove" -- "$cur") );;
+		*)  if test $COMP_CWORD -gt 2
+			then
+				_module_long_arg_list "$cur"
+			else
+				case "$cur" in
+				# The mappings below are optional abbreviations for convenience
+				ls)    COMPREPLY="list";;    # map ls -> list
+				r*)    COMPREPLY="rm";;    # also covers 'remove'
+				sw*)    COMPREPLY="switch";;
 
-			-*)    COMPREPLY=( $(compgen -W "$opts" -- "$cur") );;
-			*)    COMPREPLY=( $(compgen -W "$cmds" -- "$cur") );;
-			esac
-		fi;;
+				-*)    COMPREPLY=( $(compgen -W "$opts" -- "$cur") );;
+				*)    COMPREPLY=( $(compgen -W "$cmds" -- "$cur") );;
+				esac
+			fi;;
 		esac
 	}
 	complete -o default -F _module module
+	export -f module
 fi
 

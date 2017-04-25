@@ -139,6 +139,9 @@ static LONG_HELP: &'static str = "
       Updates the .modulesindex file in all the paths that
       are found in the $MODULEPATH variable. This ofcourse
       only works if you have the correct permissions. ;)
+
+    * autoload append|prepend|remove|list|purge [module name(s)]
+      Manages the autoloading of modules when opening a new terminal.
 ";
 
 fn is_shell_supported(shell: &str) -> bool {
@@ -183,11 +186,11 @@ fn usage(in_eval: bool) {
     println_stderr!("");
 
     if in_eval {
-        error_msg = "  Usage: module <load|unload|list|switch|purge|refresh|available|undo|info|makecache> [module \
-                           name]";
+        error_msg = "  Usage: module <load|unload|list|switch|purge|refresh|available|undo|info|makecache|autoload> \
+                     [module name]";
     } else {
         error_msg = "  Usage: rsmodules <shell> \
-                     <load|unload|list|switch|purge|refresh|available|undo|info|makecache> [module name]";
+                     <load|unload|list|switch|purge|refresh|available|undo|info|makecache|autoload> [module name]";
     }
 
     println_stderr!("{}", &error_msg);
@@ -316,6 +319,7 @@ fn run(args: &Vec<String>) {
         command_list.push("makecache");
         command_list.push("help");
         command_list.push("undo");
+        command_list.push("autoload");
         command_list.push("--help");
         command_list.push("-h");
         // TODO
@@ -490,6 +494,7 @@ fn main() {
         usage(true);
     }
 
+    // FIXME: args.get(1) == Some(&"-h")
     if args.len() >= 2 && (&args[1] == "-h" || &args[1] == "--help") {
         usage(false);
         return;

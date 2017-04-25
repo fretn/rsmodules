@@ -24,4 +24,4 @@ complete module \
 'n#info#$mod_av#' \
 'n#unload#$mod_av#' \
 'p#1#(info load unload available \
-    purge list)#'
+    purge list autoload)#'

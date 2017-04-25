@@ -62,6 +62,7 @@ D perl/5.14.1 | Perl 5.14.1 is a highly capable, feature-rich programming langua
  * ```module refresh``` Reloads all loaded modules.
  * ```module undo``` Undo previous load/unload/switch/purge actions
  * ```module list``` Shows a list of all the loaded modules.
+ * ```module autoload append|prepend|remove|list|purge [modulename(s)]``` Manages the auto loading of modules by adding them to your startup scripts.
  * The output is not redirected to stderr, but to stdout. So you are able to use grep / rg on the output and it doesn't trigger errors in pipelines.
  * RSModules is fast because it's written in a compiled language and it is using cache files for listing the modules.
  * By using module info, users can easily discover what a module provides and how they use the software that is bundled with the module.
@@ -319,7 +320,9 @@ The module is replaced with the newly loaded module:
 
 [user@awesome ~]$
 ```
- 
+##### I want to autoload some modules everytime I login. What do I need to do ?
+
+The command ```module autoload``` is what you are looking for.
  
  
  

@@ -267,7 +267,7 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
 
 }
 
-fn append_line(line: &str, filename: &str, verbose: bool) -> bool {
+pub fn append_line(line: &str, filename: &str, verbose: bool) -> bool {
 
     let mut file: File = match OpenOptions::new().write(true).append(true).create(true).open(filename) {
         Ok(fileresult) => fileresult,
@@ -289,7 +289,7 @@ fn append_line(line: &str, filename: &str, verbose: bool) -> bool {
     return true;
 }
 
-fn detect_line(line: &str, file: &str) -> bool {
+pub fn detect_line(line: &str, file: &str) -> bool {
     if Path::new(file).is_file() {
         let file: File = match File::open(file) {
             Ok(file) => file,
