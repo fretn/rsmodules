@@ -17,6 +17,11 @@ lazy_static! {
 fn echo_output_buffer(shell: &str) {
     let output_buffer = OUTPUT_BUFFER.lock().unwrap();
 
+    if output_buffer.len() == 0 {
+        super::echo("  None", shell);
+        return;
+    }
+
     for line in output_buffer.iter() {
         super::echo(&format!("  * {}", line), shell);
     }
@@ -149,18 +154,25 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
         super::echo("", shell);
         parse_file(subcommand, args, initfile);
         echo_output_buffer(shell);
+        super::echo("", shell);
     }
 
-    if subcommand == "list" {
-        empty_output_buffer();
-        super::echo("", shell);
-        super::echo("  Autoloaded modules managed by rsmodules:", shell);
-        super::echo("", shell);
-    }
+    empty_output_buffer();
     parse_file(subcommand, args, &shellexpand::tilde(AUTOLOAD_FILE));
+
     if subcommand == "list" {
-        echo_output_buffer(shell);
-        super::echo("", shell);
+        let output_buffer;
+        {
+            let _output_buffer = OUTPUT_BUFFER.lock().unwrap();
+            output_buffer = _output_buffer.clone();
+        }
+
+        if output_buffer.len() > 0 {
+            super::echo("  Autoloaded modules managed by rsmodules:", shell);
+            super::echo("", shell);
+            echo_output_buffer(shell);
+            super::echo("", shell);
+        }
     }
 
 }

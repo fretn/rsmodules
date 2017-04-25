@@ -232,11 +232,11 @@ print(os.environ['SOMEVAR'])
 
 ## PAQ
 
-##### What does PAQ mean ?
+#### What does PAQ mean ?
 
 Possibly asked questions :)
 
-##### Why RSModules while tclmodules/cmodules and Lmod are around?
+#### Why RSModules while tclmodules/cmodules and Lmod are around?
 
 A couple of years ago I ran into some issues with tcl/c modules. Because I was annoyed by the fact that
 everything was printed to stderr, I started writing my own implementation of modules in C. When 90% of the
@@ -249,19 +249,19 @@ asking for. (a way to see which executables a module provides, a short descripti
 
 And that's how RSmodules was born.
 
-##### Does this mean that tcl/c modules or Lmod are bad projects ?
+#### Does this mean that tcl/c modules or Lmod are bad projects ?
 
 Absolutely not ! Feel free to use whatever that suits your needs.
 
-##### Why then didn't you contribute to these projects instead ?
+#### Why then didn't you contribute to these projects instead ?
 
 I needed a side project to learn Rust and the project got a bit out of hand :)
  
-##### What does the RS in RSModules mean ?
+#### What does the RS in RSModules mean ?
 
-RS stands for rust
+RS stands for [rust](https://www.rust-lang.org)
  
-##### How fast is RSModules ?
+#### How fast is RSModules ?
 
  
 ```
@@ -279,7 +279,7 @@ sys   	0m0.168s
 ```
 ###### The module files in the above example are located on a network share
 
-##### Can I convert my tcl modulefiles to rhai modulefiles ?
+#### Can I convert my tcl modulefiles to rhai modulefiles ?
 
 Robert McLay, the Lmod developer, was so kind to write a script to translate tcl modulefiles to
 lua modulefiles. 
@@ -288,15 +288,15 @@ So to answer the question, yes its possible.
 But its not possible to provide tcl module files in your ```$MODULEPATH``` and
 let RSModules translate them on the fly.
 
-##### Will you add tabcompletion for zsh ?
+#### Will you add tabcompletion for zsh ?
 
-Maybe
+Maybe, if I ever figure out how it works, feel free to contribute.
  
-##### What happens when I load a module that is already loaded ?
+#### What happens when I load a module that is already loaded ?
 
 The module is first unloaded and then reloaded again. 
 
-##### What happens when I load a different version of an already loaded module ?
+#### What happens when I load a different version of an already loaded module ?
 
 The module is replaced with the newly loaded module:
 
@@ -320,7 +320,9 @@ The module is replaced with the newly loaded module:
 
 [user@awesome ~]$
 ```
-##### I want to autoload some modules everytime I login. What do I need to do ?
+
+This is basicly the same as the ```module switch [from modulename] [to modulename]``` command.
+#### I want to autoload some modules everytime I login. What do I need to do ?
 
 The command ```module autoload``` is what you are looking for.
  
