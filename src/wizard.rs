@@ -45,8 +45,7 @@ fn read_input(msg: &str) -> String {
 
 fn is_yes(answer: String) -> bool {
 
-    if answer == "Y\n" || answer == "y\n" || answer == "\n" || answer == "yes\n" || answer == "Yes\n" ||
-       answer == "YES\n" {
+    if answer == "Y\n" || answer == "y\n" || answer == "\n" || answer == "yes\n" || answer == "Yes\n" || answer == "YES\n" {
         return true;
     }
 

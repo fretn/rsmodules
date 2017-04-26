@@ -11,6 +11,9 @@ use regex::Regex;
 
 static AUTOLOAD_FILE: &'static str = "~/.rsmodules_autoload";
 lazy_static! {
+    // Avoid compiling the same regex in a loop
+    static ref RE: Regex = Regex::new(r#"^\s*(?P<module>module)\s+(?P<subcommand>[a-zA-Z0-9]*)\s+(?P<modules>.*)"#).unwrap();
+    static ref RE_SOURCE: Regex = Regex::new(r#"^\s*(?P<source>\.|source)\s+(?P<path>.*)"#).unwrap();
     static ref OUTPUT_BUFFER: Mutex<Vec<String>> = Mutex::new(vec![]);
 }
 
@@ -101,6 +104,17 @@ fn check_init_file(filename: &str) {
         append_line(line, filename, false);
     }
 
+    let filename: &str = &shellexpand::tilde(AUTOLOAD_FILE);
+    if !Path::new(filename).is_file() {
+        match OpenOptions::new().write(true).create_new(true).open(filename) {
+            Ok(fileresult) => fileresult,
+            Err(e) => {
+                println_stderr!("Cannot create  file {} ({})", filename, e);
+                return;
+            }
+        };
+    }
+
 }
 
 fn append_line(line: &str, filename: &str, verbose: bool) -> bool {
@@ -150,9 +164,13 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
     if subcommand == "list" {
         empty_output_buffer();
         super::echo("", shell);
-        super::echo("  Autoloaded modules NOT managed by rsmodules:", shell);
+        super::echo("  Autoloaded modules but NOT managed by rsmodules:", shell);
         super::echo("", shell);
         parse_file(subcommand, args, initfile);
+        if initfile != &shellexpand::tilde("~/.login") && (shell == "csh" || shell == "tcsh") {
+            let initfile: &str = &shellexpand::tilde("~/.login");
+            parse_file(subcommand, args, initfile);
+        }
         echo_output_buffer(shell);
         super::echo("", shell);
     }
@@ -193,20 +211,30 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str) {
         let mut done = false;
         for (_, entry) in initfile.lines().enumerate() {
             let buffer = entry.unwrap();
-            let re = Regex::new(r#"^\s*(?P<module>module)\s+(?P<subcommand>[a-zA-Z0-9]*)\s+(?P<modules>.*)"#).unwrap();
+
+            if RE_SOURCE.is_match(&buffer) {
+                for cap in RE_SOURCE.captures_iter(&buffer) {
+                    let source = &cap["path"];
+                    let source: &str = &shellexpand::tilde(source);
+                    let source_file_name = Path::new(source).file_name().unwrap();
+
+                    if source_file_name != ".rsmodules_autoload" {
+                        parse_file(subcommand, args, source);
+                    }
+                }
+            }
 
             if subcommand == "list" {
-                for cap in re.captures_iter(&buffer) {
+                for cap in RE.captures_iter(&buffer) {
                     if &cap["subcommand"] == "load" {
                         list(&cap["modules"]);
                     }
                     //println_stderr!("'{}' '{}' '{}'", &cap["module"], &cap["subcommand"], &cap["modules"]);
                 }
-            } else if subcommand == "append" || subcommand == "add" || subcommand == "prepend" ||
-                      subcommand == "remove" {
+            } else if subcommand == "append" || subcommand == "add" || subcommand == "prepend" || subcommand == "remove" {
                 let mut matched = false;
                 if !done {
-                    for cap in re.captures_iter(&buffer) {
+                    for cap in RE.captures_iter(&buffer) {
                         if &cap["subcommand"] == "load" {
                             let mut modules: Vec<&str> = Vec::new();
                             for module in args.iter() {
@@ -224,12 +252,11 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str) {
                             if subcommand == "purge" {
                                 done = true;
                             } else {
-                                if modules.len() > 0 {
-                                    let module_list: String =
-                                        get_module_autoload_string(modules, &cap["modules"], subcommand);
-                                    output.push(format!("module load {}", module_list));
-                                    done = true;
-                                }
+                                //if modules.len() > 0 {
+                                let module_list: String = get_module_autoload_string(modules, &cap["modules"], subcommand);
+                                output.push(format!("module load {}", module_list));
+                                done = true;
+                                //}
                             }
                         }
                         matched = true;

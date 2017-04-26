@@ -462,27 +462,29 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         }
     }
 
-    if cnt > 50 {
-
-        super::echo("", shell);
-        super::echo("", shell);
-        let module;
-        if arg != "" {
-            let tmp = format!(" {}", arg);
-            module = tmp.clone();
-        } else {
-            module = arg.to_string();
-        }
-        super::echo(&format!("  Hint: use the command '{}module {}{} | more{}' to run the output through a pager.",
-                             bold_start,
-                             typed_command,
-                             module,
-                             bold_end),
-                    shell);
-    } else {
-        super::echo("", shell);
-    }
     if shell != "noshell" {
+        if cnt > 50 {
+
+            super::echo("", shell);
+            super::echo("", shell);
+            let module;
+            if arg != "" {
+                let tmp = format!(" {}", arg);
+                module = tmp.clone();
+            } else {
+                module = arg.to_string();
+            }
+            super::echo(&format!("  Hint: use the command '{}module {}{} | more{}' to run the output through a \
+                                  pager.",
+                                 bold_start,
+                                 typed_command,
+                                 module,
+                                 bold_end),
+                        shell);
+        } else {
+            super::echo("", shell);
+        }
+
         super::echo("", shell);
         super::echo(&format!("  {}*{} D means that the module is set as the default module.",
                              bold_start,
