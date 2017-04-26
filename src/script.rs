@@ -29,7 +29,7 @@ use std::path::{Path, PathBuf, is_separator};
 use std::io::Write;
 use std::fs::{metadata, read_dir};
 use std::os::unix::fs::PermissionsExt;
-use super::Rsmodule;
+use super::{Rsmodule, get_shell_info, echo};
 
 // WARNING: the scripts don't support tabbed indents in if else structures
 
@@ -192,7 +192,7 @@ fn is_loaded(var: String) -> bool {
 }
 
 fn unsetenv(var: String) {
-    let (shell, _) = super::get_shell_info();
+    let (shell, _) = get_shell_info();
     if shell == "bash" || shell == "zsh" {
         add_to_commands(format!("unset \"{}\"", var));
     } else if shell == "perl" {
@@ -269,7 +269,7 @@ fn remove_path(var: String, val: String) {
 }
 
 fn unset_alias(name: String, val: String) {
-    let (shell, _) = super::get_shell_info();
+    let (shell, _) = get_shell_info();
     if shell == "bash" || shell == "zsh" {
         add_to_commands(format!("unalias \"{}\"", name));
     } else if shell == "tcsh" || shell == "csh" {
@@ -278,21 +278,21 @@ fn unset_alias(name: String, val: String) {
 }
 
 fn set_alias(name: String, val: String) {
-    let (shell, _) = super::get_shell_info();
+    let (shell, _) = get_shell_info();
     if shell != "python" && shell != "perl" {
         add_to_commands(format!("alias {}=\"{}\"", name, val));
     }
 }
 
 fn system(cmd: String) {
-    let (shell, _) = super::get_shell_info();
+    let (shell, _) = get_shell_info();
     if shell != "python" && shell != "perl" {
         add_to_commands(cmd);
     }
 }
 
 fn load(module: String) {
-    let (shell, _) = super::get_shell_info();
+    let (shell, _) = get_shell_info();
 
     let modulepaths = super::get_module_paths(false);
     let mut rsmod_command: Rsmodule = Rsmodule {
@@ -309,7 +309,7 @@ fn load(module: String) {
 fn conflict(module: String) {
 
     if super::is_module_loaded(module.as_ref(), false) {
-        let (shell, _) = super::get_shell_info();
+        let (shell, _) = get_shell_info();
 
         let mut spaces = "  ";
         let mut bold_start: &str = "$(tput bold)";
@@ -328,30 +328,30 @@ fn conflict(module: String) {
 
         let ref shell = shell;
         if shell != "noshell" {
-            super::echo("", shell);
+            echo("", shell);
         }
-        super::echo(&format!("{}Cannot continue because the module {}{}{} is loaded.",
-                             spaces,
-                             bold_start,
-                             module,
-                             bold_end),
-                    shell);
+        echo(&format!("{}Cannot continue because the module {}{}{} is loaded.",
+                      spaces,
+                      bold_start,
+                      module,
+                      bold_end),
+             shell);
 
         if shell != "noshell" {
-            super::echo(&format!("{}You'll need to unload {}{}{} before you can continue:",
-                                 spaces,
-                                 bold_start,
-                                 module,
-                                 bold_end),
-                        shell);
-            super::echo("", shell);
-            super::echo(&format!("{}{}module unload {}{}",
-                                 bold_start,
-                                 spaces,
-                                 module,
-                                 bold_end),
-                        shell);
-            super::echo("", shell);
+            echo(&format!("{}You'll need to unload {}{}{} before you can continue:",
+                          spaces,
+                          bold_start,
+                          module,
+                          bold_end),
+                 shell);
+            echo("", shell);
+            echo(&format!("{}{}module unload {}{}",
+                          bold_start,
+                          spaces,
+                          module,
+                          bold_end),
+                 shell);
+            echo("", shell);
         }
         let mut data = CONFLICT.lock().unwrap();
         *data = true;
@@ -359,7 +359,7 @@ fn conflict(module: String) {
 }
 
 fn unload(module: String) {
-    let (shell, _) = super::get_shell_info();
+    let (shell, _) = get_shell_info();
     let ref shell: String = shell;
     let modulepaths = super::get_module_paths(false);
     let mut rsmod_command: Rsmodule = Rsmodule {

@@ -63,6 +63,7 @@ D perl/5.14.1 | Perl 5.14.1 is a highly capable, feature-rich programming langua
  * ```module undo``` Undo previous load/unload/switch/purge actions
  * ```module list``` Shows a list of all the loaded modules.
  * ```module autoload append|prepend|remove|list|purge [modulename(s)]``` Manages the auto loading of modules by adding them to your startup scripts.
+ * ```module delete [modulename(s)]``` Deletes one or more modulefiles. But only if you have the permissions to do so.
  * The output is not redirected to stderr, but to stdout. So you are able to use grep / rg on the output and it doesn't trigger errors in pipelines.
  * RSModules is fast because it's written in a compiled language and it is using cache files for listing the modules.
  * By using module info, users can easily discover what a module provides and how they use the software that is bundled with the module.
@@ -325,6 +326,15 @@ This is basicly the same as the ```module switch [from modulename] [to modulenam
 #### I want to autoload some modules everytime I login. What do I need to do ?
 
 The command ```module autoload``` is what you are looking for.
+
+#### I want to remove a module through a script, but I don't want the interactive mode.
+
+Call ```rsmodules``` directly and supply 'noshell' as the shell, example:
+```
+[user@awesome ~]$ /usr/local/bin/rsmodules noshell delete module/1.0 module/2.1
+Removal of module/1.0 module/2.1 was succesful. Don't forget to update the module cache.
+[user@awesome ~]$
+```
  
  
  

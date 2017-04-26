@@ -31,11 +31,20 @@ use std::fs::OpenOptions;
 use std::env;
 extern crate shellexpand;
 use regex::Regex;
+use super::rsmod::crash;
 
 use users::get_current_uid;
 
 fn read_input(msg: &str) -> String {
-    print!("  * {}: ", msg);
+    return read_input_shell(msg, "noshell");
+}
+
+pub fn read_input_shell(msg: &str, shell: &str) -> String {
+    if shell == "noshell" {
+        print!("{}", msg);
+    } else {
+        print_stderr!("{}", msg);
+    }
     io::stdout().flush().unwrap();
     let mut line = String::new();
     let stdin = io::stdin();
@@ -43,7 +52,7 @@ fn read_input(msg: &str) -> String {
     return line;
 }
 
-fn is_yes(answer: String) -> bool {
+pub fn is_yes(answer: String) -> bool {
 
     if answer == "Y\n" || answer == "y\n" || answer == "\n" || answer == "yes\n" || answer == "Yes\n" || answer == "YES\n" {
         return true;
@@ -131,8 +140,8 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
             if !recursive {
                 print_title("ENVIRONMENT SETUP");
             }
-            if is_yes(read_input("rsmodules is not setup yet to autoload when a user \
-                                opens a terminal. Do you want to do this now ? [Y/n]")) {
+            if is_yes(read_input(" * rsmodules is not setup yet to autoload when a user \
+                                opens a terminal. Do you want to do this now ? [Y/n]: ")) {
 
                 let mut bash_success: bool = false;
                 let mut csh_success: bool = false;
@@ -184,8 +193,8 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
             if !recursive {
                 print_title("ENVIRONMENT SETUP");
             }
-            if is_yes(read_input("rsmodules is not setup yet to autoload when you \
-                                open a new terminal.\n    Do you want to do this now ? [Y/n]")) {
+            if is_yes(read_input(" * rsmodules is not setup yet to autoload when you \
+                                open a new terminal.\n    Do you want to do this now ? [Y/n]: ")) {
                 // want to link rsmodules to /home and add it to bashrc
                 // read .cshrc and .bashrc line by line
                 // to detect if source ~/rsmodules.(c)sh exists in it
@@ -277,8 +286,8 @@ pub fn append_line(line: &str, filename: &str, verbose: bool) -> bool {
     };
 
     if let Err(e) = writeln!(file, "{}", line) {
-        super::rsmod::crash(super::CRASH_CANNOT_ADD_TO_ENV,
-                            &format!("Cannot append to file {} ({})", filename, e));
+        crash(super::CRASH_CANNOT_ADD_TO_ENV,
+              &format!("Cannot append to file {} ({})", filename, e));
     }
 
     if verbose {
@@ -341,8 +350,8 @@ fn add_path(newpath: &str, filename: &str, variable: &str, append: bool) -> bool
 
         for newline in newbuffer {
             if let Err(e) = writeln!(file, "{}", newline) {
-                super::rsmod::crash(super::CRASH_CANNOT_ADD_TO_ENV,
-                                    &format!("Cannot write to file {} ({})", filename, e));
+                crash(super::CRASH_CANNOT_ADD_TO_ENV,
+                      &format!("Cannot write to file {} ({})", filename, e));
             }
         }
 
@@ -440,7 +449,7 @@ pub fn run(recursive: bool) -> bool {
 
         if !recursive {
             print_title("MODULEPATH configuration");
-            line = read_input("No $MODULEPATH found, want to add one ? [Y/n]");
+            line = read_input(" * No $MODULEPATH found, want to add one ? [Y/n]:");
         }
 
         if is_yes(line) || recursive {
@@ -448,8 +457,8 @@ pub fn run(recursive: bool) -> bool {
             if get_current_uid() == 0 {
                 path = "/usr/local/modules";
             }
-            line = read_input(format!("Please enter a path where you want to save your module \
-                                       files [{}]",
+            line = read_input(format!(" * Please enter a path where you want to save your module \
+                                       files [{}]: ",
                                       path)
                 .as_ref());
 
@@ -460,8 +469,8 @@ pub fn run(recursive: bool) -> bool {
             }
 
             if Path::new(path).is_dir() {
-                if is_yes(read_input("Path already exists, are you sure you want to continue ? \
-                                      [Y/n]")) {
+                if is_yes(read_input(" * Path already exists, are you sure you want to continue ? \
+                                      [Y/n]: ")) {
 
                     update_setup_rsmodules_c_sh(false, path);
                     return true;
@@ -470,12 +479,12 @@ pub fn run(recursive: bool) -> bool {
                 }
 
             } else if Path::new(path).is_file() {
-                super::rsmod::crash(super::CRASH_MODULEPATH_IS_FILE,
-                                    "Modulepath cannot be a file");
+                crash(super::CRASH_MODULEPATH_IS_FILE,
+                      "Modulepath cannot be a file");
                 return false;
             } else {
-                if is_yes(read_input(format!("The folder {} doesn't exist, do you want to \
-                                              create it ? [Y/n]",
+                if is_yes(read_input(format!(" * The folder {} doesn't exist, do you want to \
+                                              create it ? [Y/n]: ",
                                              path)
                     .as_ref())) {
 

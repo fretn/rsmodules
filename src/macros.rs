@@ -29,6 +29,13 @@ macro_rules! println_stderr(
     } }
 );
 
+macro_rules! print_stderr(
+    ($($arg:tt)*) => { {
+        let r = write!(&mut ::std::io::stderr(), $($arg)*);
+        r.expect("failed printing to stderr");
+    } }
+);
+
 macro_rules! executable(
     () => ({
         let module = module_path!();

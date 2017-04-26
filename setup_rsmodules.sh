@@ -44,11 +44,11 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 			add|load)
 				COMPREPLY=( $(compgen -W "$(_module_not_yet_loaded)" -- "$cur") )
 				break;;
-			rm|remove|unload|switch|swap)
+			rm|unload|switch)
 				COMPREPLY=( $(IFS=: compgen -W "${LOADEDMODULES}" -- "$cur") )
 				break;;
 			autoload)
-				COMPREPLY=( $(IFS=: compgen -W "$(_module_avail)" -- "$cur") )
+				COMPREPLY=( $(compgen -W "$(_module_avail)" -- "$cur") )
 				break;;
 			esac
 		done
@@ -62,7 +62,7 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 		cmds="available \
 			list load purge info \
 			unload makecache add rm \
-			autoload undo refresh"
+			autoload undo refresh delete"
 
 		opts="-h --help"
 
@@ -70,6 +70,8 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 		info|load)    COMPREPLY=( $(compgen -W "$(_module_not_yet_loaded)" -- "$cur") );;
 		unload)
 				COMPREPLY=( $(IFS=: compgen -W "${LOADEDMODULES}" -- "$cur") );;
+		delete)
+				      COMPREPLY=( $(compgen -W "$(_module_avail)" -- "$cur") );;
 		autoload)
 				COMPREPLY=( $(IFS=: compgen -W "append:prepend:list:purge:remove" -- "$cur") );;
 		*)  if test $COMP_CWORD -gt 2

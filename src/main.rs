@@ -140,6 +140,10 @@ static LONG_HELP: &'static str = "
       are found in the $MODULEPATH variable. This ofcourse
       only works if you have the correct permissions. ;)
 
+    * delete
+      Deletes a modulefiles. As with makecache, this only works
+      if you have the correct permissions.
+
     * autoload append|prepend|remove|list|purge [module name(s)]
       Manages the autoloading of modules when opening a new terminal.
 ";
@@ -186,11 +190,11 @@ fn usage(in_eval: bool) {
     println_stderr!("");
 
     if in_eval {
-        error_msg = "  Usage: module <load|unload|list|switch|purge|refresh|available|undo|info|makecache|autoload> \
+        error_msg = "  Usage: module <load|unload|list|switch|purge|refresh|available|undo|info|makecache|delete|autoload> \
                      [module name]";
     } else {
         error_msg = "  Usage: rsmodules <shell> \
-                     <load|unload|list|switch|purge|refresh|available|undo|info|makecache|autoload> [module name]";
+                     <load|unload|list|switch|purge|refresh|available|undo|info|makecache|delete|autoload> [module name]";
     }
 
     println_stderr!("{}", &error_msg);
@@ -320,6 +324,7 @@ fn run(args: &Vec<String>) {
         command_list.push("help");
         command_list.push("undo");
         command_list.push("autoload");
+        command_list.push("delete");
         command_list.push("--help");
         command_list.push("-h");
         // TODO

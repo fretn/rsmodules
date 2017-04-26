@@ -23,6 +23,7 @@ complete module \
 'n#load#$mod_av#' \
 'n#info#$mod_av#' \
 'n#unload#$mod_av#' \
+'n#delete#$mod_av#' \
 'n#switch#$mod_av#' \
 'n#autoload#(append prepend purge list)#' \
 'p#1#(info load unload available \

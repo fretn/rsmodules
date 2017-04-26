@@ -3,6 +3,8 @@ use std::io::{Write, BufRead, BufReader};
 use std::path::Path;
 use std::fs::File;
 use std::sync::Mutex;
+use wizard::{append_line, detect_line};
+use super::echo;
 
 extern crate shellexpand;
 extern crate regex;
@@ -21,12 +23,12 @@ fn echo_output_buffer(shell: &str) {
     let output_buffer = OUTPUT_BUFFER.lock().unwrap();
 
     if output_buffer.len() == 0 {
-        super::echo("  None", shell);
+        echo("  None", shell);
         return;
     }
 
     for line in output_buffer.iter() {
-        super::echo(&format!("  * {}", line), shell);
+        echo(&format!("  * {}", line), shell);
     }
 
 }
@@ -117,14 +119,6 @@ fn check_init_file(filename: &str) {
 
 }
 
-fn append_line(line: &str, filename: &str, verbose: bool) -> bool {
-    return super::super::wizard::append_line(line, filename, verbose);
-}
-
-fn detect_line(line: &str, filename: &str) -> bool {
-    return super::super::wizard::detect_line(line, filename);
-}
-
 pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
     // .bashrc (and others)
     // should contain: source .rsmodules
@@ -163,16 +157,16 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
 
     if subcommand == "list" {
         empty_output_buffer();
-        super::echo("", shell);
-        super::echo("  Autoloaded modules but NOT managed by rsmodules:", shell);
-        super::echo("", shell);
+        echo("", shell);
+        echo("  Autoloaded modules but NOT managed by rsmodules:", shell);
+        echo("", shell);
         parse_file(subcommand, args, initfile);
         if initfile != &shellexpand::tilde("~/.login") && (shell == "csh" || shell == "tcsh") {
             let initfile: &str = &shellexpand::tilde("~/.login");
             parse_file(subcommand, args, initfile);
         }
         echo_output_buffer(shell);
-        super::echo("", shell);
+        echo("", shell);
     }
 
     empty_output_buffer();
@@ -186,10 +180,10 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
         }
 
         if output_buffer.len() > 0 {
-            super::echo("  Autoloaded modules managed by rsmodules:", shell);
-            super::echo("", shell);
+            echo("  Autoloaded modules managed by rsmodules:", shell);
+            echo("", shell);
             echo_output_buffer(shell);
-            super::echo("", shell);
+            echo("", shell);
         }
     }
 

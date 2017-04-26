@@ -37,6 +37,9 @@ mod cache;
 #[path = "autoload.rs"]
 mod autoload;
 
+#[path = "manage.rs"]
+mod manage;
+
 static DEFAULT_MODULE_PATH: &'static str = "/usr/local";
 static ENV_LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
 static ENV_UNDO: &'static str = "RSMODULES_UNDO"; // name of an env var
@@ -212,6 +215,10 @@ pub fn command(rsmod: &mut Rsmodule) {
         }
     } else if rsmod.cmd == "undo" {
         undo(rsmod);
+    } else if rsmod.cmd == "delete" {
+        manage::delete(rsmod);
+    } else if rsmod.cmd == "create" {
+        manage::create(rsmod);
     } else if rsmod.cmd == "autoload" {
         autoload(rsmod);
     }
@@ -709,7 +716,6 @@ fn autoload(rsmod: &mut Rsmodule) {
     let mut args: Vec<&str> = rsmod.arg.split_whitespace().collect();
 
     if args.len() == 0 {
-        //super::usage(true);
         println_stderr!("");
         println_stderr!("  Usage: module autoload [subcommand] [modulename(s)]");
         println_stderr!("");
@@ -735,13 +741,6 @@ fn autoload(rsmod: &mut Rsmodule) {
     }
 
     let subcommand = args.remove(0);
-
-    /*
-println_stderr!("{:?}", args);
-    if args.len() > 1 {
-        args.drain(0..1);
-    }
-    */
 
     autoload::run(subcommand, &mut args, rsmod.shell);
 }
