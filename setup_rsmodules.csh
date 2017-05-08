@@ -27,4 +27,4 @@ complete module \
 'n#switch#$mod_av#' \
 'n#autoload#(append prepend purge list)#' \
 'p#1#(info load unload available \
-    purge list autoload undo switch makecache)#'
+    purge list autoload undo switch makecache create)#'

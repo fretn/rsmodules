@@ -40,9 +40,9 @@ mod autoload;
 #[path = "manage.rs"]
 mod manage;
 
-static DEFAULT_MODULE_PATH: &'static str = "/usr/local";
-static ENV_LOADEDMODULES: &'static str = "LOADEDMODULES"; // name of an env var
-static ENV_UNDO: &'static str = "RSMODULES_UNDO"; // name of an env var
+static DEFAULT_MODULE_PATH: &str = "/usr/local";
+static ENV_LOADEDMODULES: &str = "LOADEDMODULES"; // name of an env var
+static ENV_UNDO: &str = "RSMODULES_UNDO"; // name of an env var
 
 #[derive(Debug)]
 pub struct Rsmodule<'a> {
@@ -718,6 +718,9 @@ fn autoload(rsmod: &mut Rsmodule) {
     if args.len() == 0 {
         println_stderr!("");
         println_stderr!("  Usage: module autoload [subcommand] [modulename(s)]");
+        println_stderr!("");
+        println_stderr!("  The module autoload command manages which modules that");
+        println_stderr!("  are autoloaded in your environment.");
         println_stderr!("");
         println_stderr!("  The following subcommands are available:");
         println_stderr!("");

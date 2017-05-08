@@ -45,6 +45,7 @@ extern crate users;
 
 extern crate shellexpand;
 extern crate regex;
+extern crate getopts;
 
 use std::io::Write;
 use std::fs::{File, remove_file};
@@ -70,11 +71,12 @@ static CRASH_MODULEPATH_IS_FILE: i32 = 7;
 static CRASH_CANNOT_ADD_TO_ENV: i32 = 8;
 static CRASH_MISSING_INIT_FILES: i32 = 9;
 static CRASH_GET_SHELL: i32 = 10;
+static CRASH_CREATE_ERROR: i32 = 11;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 
-static LONG_HELP: &'static str = "
+static LONG_HELP: &str = "
 
   RSModules manages your user environment on linux and macOS.
   The RSModules package is a tool to help users modifying their environment
@@ -139,6 +141,9 @@ static LONG_HELP: &'static str = "
       Updates the .modulesindex file in all the paths that
       are found in the $MODULEPATH variable. This ofcourse
       only works if you have the correct permissions. ;)
+
+    * create [modulename]
+      Starts a wizard to create a modulefile.
 
     * delete
       Deletes a modulefiles. As with makecache, this only works
@@ -294,13 +299,20 @@ fn run(args: &Vec<String>) {
         }
     };
 
+    let mut quoted_string: String;
     if args.len() >= 3 {
         command = &args[2];
         let matches: bool;
-        let mut modulenames: Vec<&str> = Vec::new();
+        let mut modulenames: Vec<String> = Vec::new();
         if args.len() > 3 {
             for i in 3..args.len() {
-                modulenames.push(&args[i]);
+                let whitespace: Vec<&str> = args[i].split_whitespace().collect();
+                if whitespace.len() > 1 {
+                    quoted_string = format!("\"{}\"", args[i]);
+                    modulenames.push(quoted_string);
+                } else {
+                    modulenames.push(args[i].clone());
+                }
             }
             //modulename = &args[3];
             tmp = modulenames.join(" ");
@@ -325,6 +337,7 @@ fn run(args: &Vec<String>) {
         command_list.push("undo");
         command_list.push("autoload");
         command_list.push("delete");
+        command_list.push("create");
         command_list.push("--help");
         command_list.push("-h");
         // TODO

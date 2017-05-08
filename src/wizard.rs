@@ -236,13 +236,13 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
                 if !detected_sh {
                     bash_updated = append_line("source ~/.rsmodules.sh",
                                                &shellexpand::tilde("~/.bashrc"),
-                                               true);
+                                               true, false);
                 }
 
                 if !detected_csh {
                     csh_updated = append_line("source ~/.rsmodules.csh",
                                               &shellexpand::tilde("~/.cshrc"),
-                                              true);
+                                              true, false);
                 }
 
                 if bash_updated || csh_updated {
@@ -260,10 +260,10 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
                 // create a dummy modules
                 append_line("prepend_path(\"PATH\",\"~/bin\")",
                             &format!("{}/testmodule", path),
-                            false);
+                            false, false);
                 append_line("description(\"This is just a sample module, which adds ~/bin to your path\")",
                             &format!("{}/testmodule", path),
-                            false);
+                            false, false);
                 // tell them to run the module avail command
                 println!("    Now run the command: module available");
 
@@ -275,12 +275,16 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
 
 }
 
-pub fn append_line(line: &str, filename: &str, verbose: bool) -> bool {
+pub fn append_line(line: &str, filename: &str, verbose: bool, stderr: bool) -> bool {
 
     let mut file: File = match OpenOptions::new().write(true).append(true).create(true).open(filename) {
         Ok(fileresult) => fileresult,
         Err(e) => {
-            println!("    - Cannot append to file {} ({})", filename, e);
+            if stderr {
+                println_stderr!("  Error: cannot append to file {} ({})", filename, e);
+            } else {
+                println!("    - Cannot append to file {} ({})", filename, e);
+            }
             return false;
         }
     };
@@ -291,7 +295,11 @@ pub fn append_line(line: &str, filename: &str, verbose: bool) -> bool {
     }
 
     if verbose {
-        println!("    - Succesfully added '{}' to {}", line, filename);
+        if stderr {
+            println_stderr!("    Succesfully added '{}' to {}", line, filename);
+        } else {
+            println!("    - Succesfully added '{}' to {}", line, filename);
+        }
     }
 
     return true;
@@ -463,9 +471,12 @@ pub fn run(recursive: bool) -> bool {
                 .as_ref());
 
             if line != "\n" {
+                /*
                 let len = line.len();
                 line.truncate(len - 1);
                 path = line.as_ref();
+                */
+                path = line.trim_right_matches('\n');
             }
 
             if Path::new(path).is_dir() {

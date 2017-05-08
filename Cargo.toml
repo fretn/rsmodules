@@ -13,6 +13,7 @@ rustc-serialize = "0.3.23"
 users = "0.5.0"
 shellexpand = "1.0.0"
 regex = "0.2.1"
+getopts = "0.2.14"
 
 [[bin]]
 name = "rsmodules"

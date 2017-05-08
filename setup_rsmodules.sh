@@ -62,7 +62,7 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 		cmds="available \
 			list load purge info \
 			unload makecache add rm \
-			autoload undo refresh delete"
+			autoload undo refresh delete create"
 
 		opts="-h --help"
 

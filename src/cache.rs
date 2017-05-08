@@ -31,7 +31,7 @@ extern crate bincode;
 use bincode::rustc_serialize::{encode_into, decode_from};
 use super::{echo, get_module_description, crash, get_module_paths, is_module_loaded};
 
-pub static MODULESINDEX: &'static str = ".modulesindex";
+pub static MODULESINDEX: &str = ".modulesindex";
 
 #[derive(RustcEncodable, RustcDecodable, Clone, Eq)]
 struct Module {

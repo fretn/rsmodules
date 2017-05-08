@@ -11,7 +11,7 @@ extern crate regex;
 
 use regex::Regex;
 
-static AUTOLOAD_FILE: &'static str = "~/.rsmodules_autoload";
+static AUTOLOAD_FILE: &str = "~/.rsmodules_autoload";
 lazy_static! {
     // Avoid compiling the same regex in a loop
     static ref RE: Regex = Regex::new(r#"^\s*(?P<module>module)\s+(?P<subcommand>[a-zA-Z0-9]*)\s+(?P<modules>.*)"#).unwrap();
@@ -19,12 +19,19 @@ lazy_static! {
     static ref OUTPUT_BUFFER: Mutex<Vec<String>> = Mutex::new(vec![]);
 }
 
-fn echo_output_buffer(shell: &str) {
+fn echo_output_buffer(shell: &str, title: &str) {
     let output_buffer = OUTPUT_BUFFER.lock().unwrap();
 
     if output_buffer.len() == 0 {
+		echo("", shell);
+        echo(&format!("{}", title), shell);
+		echo("", shell);
         echo("  None", shell);
         return;
+    } else {
+		echo("", shell);
+        echo(&format!("{}", title), shell);
+        echo("", shell);
     }
 
     for line in output_buffer.iter() {
@@ -101,9 +108,8 @@ fn is_module_autoloaded(module: &str, existing: &str) -> bool {
 
 fn check_init_file(filename: &str) {
     let line: &str = &format!("source {}", AUTOLOAD_FILE);
-    // FIXME: errors from detect and append_line are printed to stdout
     if !detect_line(line, filename) {
-        append_line(line, filename, false);
+        append_line(line, filename, false, true);
     }
 
     let filename: &str = &shellexpand::tilde(AUTOLOAD_FILE);
@@ -157,15 +163,15 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
 
     if subcommand == "list" {
         empty_output_buffer();
-        echo("", shell);
-        echo("  Autoloaded modules but NOT managed by rsmodules:", shell);
-        echo("", shell);
+        //echo("", shell);
+        //echo("  Autoloaded modules but NOT managed by rsmodules:", shell);
+        //echo("", shell);
         parse_file(subcommand, args, initfile);
         if initfile != &shellexpand::tilde("~/.login") && (shell == "csh" || shell == "tcsh") {
             let initfile: &str = &shellexpand::tilde("~/.login");
             parse_file(subcommand, args, initfile);
         }
-        echo_output_buffer(shell);
+        echo_output_buffer(shell,"  Autoloaded modules but NOT managed by rsmodules:");
         echo("", shell);
     }
 
@@ -180,9 +186,9 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
         }
 
         if output_buffer.len() > 0 {
-            echo("  Autoloaded modules managed by rsmodules:", shell);
-            echo("", shell);
-            echo_output_buffer(shell);
+//            echo("  Autoloaded modules managed by rsmodules:", shell);
+ //           echo("", shell);
+            echo_output_buffer(shell, "  Autoloaded modules managed by rsmodules:");
             echo("", shell);
         }
     }
@@ -248,7 +254,9 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str) {
                             } else {
                                 //if modules.len() > 0 {
                                 let module_list: String = get_module_autoload_string(modules, &cap["modules"], subcommand);
-                                output.push(format!("module load {}", module_list));
+                                if module_list.len() > 0 {
+                                    output.push(format!("module load {}", module_list));
+                                }
                                 done = true;
                                 //}
                             }
