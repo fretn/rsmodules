@@ -23,13 +23,13 @@ fn echo_output_buffer(shell: &str, title: &str) {
     let output_buffer = OUTPUT_BUFFER.lock().unwrap();
 
     if output_buffer.len() == 0 {
-		echo("", shell);
+        echo("", shell);
         echo(&format!("{}", title), shell);
-		echo("", shell);
+        echo("", shell);
         echo("  None", shell);
         return;
     } else {
-		echo("", shell);
+        echo("", shell);
         echo(&format!("{}", title), shell);
         echo("", shell);
     }
@@ -171,7 +171,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
             let initfile: &str = &shellexpand::tilde("~/.login");
             parse_file(subcommand, args, initfile);
         }
-        echo_output_buffer(shell,"  Autoloaded modules but NOT managed by rsmodules:");
+        echo_output_buffer(shell, "  Autoloaded modules but NOT managed by rsmodules:");
         echo("", shell);
     }
 
@@ -186,8 +186,8 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
         }
 
         if output_buffer.len() > 0 {
-//            echo("  Autoloaded modules managed by rsmodules:", shell);
- //           echo("", shell);
+            //            echo("  Autoloaded modules managed by rsmodules:", shell);
+            //           echo("", shell);
             echo_output_buffer(shell, "  Autoloaded modules managed by rsmodules:");
             echo("", shell);
         }

@@ -105,7 +105,8 @@ pub fn create(rsmod: &Rsmodule) {
         for (short, long, _, number, desc, hint) in option_commands.clone().into_iter() {
             if number == 0 {
                 opts.optflag(short, long, desc);
-            } else if number == 10 { // nasty
+            } else if number == 10 {
+                // nasty
                 opts.reqopt(short, long, desc, hint);
             } else {
                 opts.optmulti(short, long, desc, hint);
@@ -115,7 +116,7 @@ pub fn create(rsmod: &Rsmodule) {
         let args: Vec<String> = env::args().collect();
 
         let matches = match opts.parse(&args[3..]) {
-            Ok(m) => { m }
+            Ok(m) => m,
             Err(f) => {
                 crash!(super::super::CRASH_CREATE_ERROR, "{}", f.to_string());
             }
@@ -154,7 +155,7 @@ pub fn create(rsmod: &Rsmodule) {
         if matches.opt_present("f") {
             let filename = matches.opt_str("f").unwrap();
             match save(filename.clone(), &output) {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(e) => {
                     println_stderr!("Cannot write to file {} ({})", filename, e);
                     ::std::process::exit(super::super::CRASH_CREATE_ERROR);
@@ -175,7 +176,7 @@ fn get_modulename(arg: &str) -> String {
         ::std::process::exit(super::super::CRASH_CREATE_ERROR);
     }
 
-   return arg.to_string();
+    return arg.to_string();
 }
 
 fn save(filename: String, output: &Vec<String>) -> io::Result<()> {
@@ -188,18 +189,16 @@ fn save(filename: String, output: &Vec<String>) -> io::Result<()> {
 
         let mut file: File = match OpenOptions::new().write(true).create(true).truncate(true).open(&filename) {
             Ok(fileresult) => fileresult,
-            Err(_) => {
-                return Err(io::Error::last_os_error())
-            }
+            Err(_) => return Err(io::Error::last_os_error()),
         };
 
         for line in output {
             if let Err(_) = writeln!(file, "{}", line) {
-                return Err(io::Error::last_os_error())
+                return Err(io::Error::last_os_error());
             }
         }
         println_stderr!("\nThe creation of modulefile {} was succesful. Don't forget to update the module cache.",
-                filename);
+                        filename);
     } else {
         println_stderr!("The file {} already exists, aborting.", filename);
         ::std::process::exit(super::super::CRASH_CREATE_ERROR);
@@ -213,12 +212,15 @@ fn parse_opt(matches: &Matches, output: &mut Vec<String>, opt: &str, command: &s
         let value: Vec<String> = matches.opt_strs(opt);
         for i in value.iter() {
             if number == 1 {
-                    let msg = format!("{}(\"{}\");", command, i);
-                    output.push(msg);
+                let msg = format!("{}(\"{}\");", command, i);
+                output.push(msg);
             } else if number == 2 {
                 let result: Vec<&str> = i.split(",").collect();
                 if result.get(0) != None && result.get(1) != None {
-                    let msg = format!("{}(\"{}\",\"{}\");", command, result.get(0).unwrap(), result.get(1).unwrap());
+                    let msg = format!("{}(\"{}\",\"{}\");",
+                                      command,
+                                      result.get(0).unwrap(),
+                                      result.get(1).unwrap());
                     output.push(msg);
                 }
             }
@@ -228,11 +230,15 @@ fn parse_opt(matches: &Matches, output: &mut Vec<String>, opt: &str, command: &s
 
 pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, modulename: &str) {
     if !skip {
-        let desc = read_input_shell(&format!(" * Enter a description for the module {}: ", modulename), shell).trim_right_matches('\n').to_string();
+        let desc = read_input_shell(&format!(" * Enter a description for the module {}: ", modulename),
+                                    shell)
+            .trim_right_matches('\n')
+            .to_string();
         output.push(format!("description(\"{}\");", desc));
     }
 
-    if is_yes(read_input_shell(&format!(" * Do you want to add another description entry ? [Y/n]: "), shell)) {
+    if is_yes(read_input_shell(&format!(" * Do you want to add another description entry ? [Y/n]: "),
+                               shell)) {
         let desc = read_input_shell(&format!("   Enter your description: "), shell).trim_right_matches('\n').to_string();
         output.push(format!("description(\"{}\");", desc));
         add_description(shell, &mut output, true, modulename);
@@ -242,15 +248,23 @@ pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, mo
 
 pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
     if !skip {
-        let val = read_input_shell(&format!("   Enter the path where the executables can be found: "), shell).trim_right_matches('\n').to_string();
+        let val = read_input_shell(&format!("   Enter the path where the executables can be found: "),
+                                   shell)
+            .trim_right_matches('\n')
+            .to_string();
         output.push(format!("prepend_path(\"PATH\",\"{}\");", val));
-        if is_yes(read_input_shell(&format!(" * Do you want to set the LD_LIBRARY_PATH variable? [Y/n]: "), shell)) {
-            let val = read_input_shell(&format!("   Enter the path where the libraries can be found: "), shell).trim_right_matches('\n').to_string();
+        if is_yes(read_input_shell(&format!(" * Do you want to set the LD_LIBRARY_PATH variable? [Y/n]: "),
+                                   shell)) {
+            let val = read_input_shell(&format!("   Enter the path where the libraries can be found: "),
+                                       shell)
+                .trim_right_matches('\n')
+                .to_string();
             output.push(format!("prepend_path(\"LD_LIBRARY_PATH\",\"{}\");", val));
         }
     }
     println_stderr!("");
-    if is_yes(read_input_shell(&format!(" * Do you want to set another path variable? [Y/n]: "), shell)) {
+    if is_yes(read_input_shell(&format!(" * Do you want to set another path variable? [Y/n]: "),
+                               shell)) {
         let var = read_input_shell(&format!("   Enter the name of variable: "), shell).trim_right_matches('\n').to_string();
         let val = read_input_shell(&format!("   Enter the path you want to add: "), shell).trim_right_matches('\n').to_string();
         output.push(format!("prepend_path(\"{}\",\"{}\");", var, val));

@@ -715,31 +715,49 @@ fn undo(rsmod: &mut Rsmodule) {
 fn autoload(rsmod: &mut Rsmodule) {
     let mut args: Vec<&str> = rsmod.arg.split_whitespace().collect();
 
+    let mut bs: &str = "$(tput bold)";
+    let mut be: &str = "$(tput sgr0)";
+
+    if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
+        bs = "\\033[1m";
+        be = "\\033[0m";
+    }
+
     if args.len() == 0 {
-        println_stderr!("");
-        println_stderr!("  Usage: module autoload [subcommand] [modulename(s)]");
-        println_stderr!("");
-        println_stderr!("  The module autoload command manages which modules that");
-        println_stderr!("  are autoloaded in your environment.");
-        println_stderr!("");
-        println_stderr!("  The following subcommands are available:");
-        println_stderr!("");
-        println_stderr!("    * append [modulename(s)]");
-        println_stderr!("      Adds one or more module to the end of the list of autoloaded modules.");
-        println_stderr!("");
-        println_stderr!("    * prepend [modulename(s)]");
-        println_stderr!("      Adds one or more module to the beginning of the list of autoloaded modules.");
-        println_stderr!("");
-        println_stderr!("    * remove [modulename(s)]");
-        println_stderr!("      Removes one or more module from the \
-            list of autoloaded moules.");
-        println_stderr!("");
-        println_stderr!("    * list");
-        println_stderr!("      Shows a list of all autoloaded modules.");
-        println_stderr!("");
-        println_stderr!("    * purge");
-        println_stderr!("      Removes all the autoloaded modules.");
-        println_stderr!("");
+        echo("", rsmod.shell);
+        echo(&format!("  {}Usage{}: module autoload [subcommand] [modulename(s)]",
+                      bs,
+                      be),
+             rsmod.shell);
+        echo("", rsmod.shell);
+        echo("  The module autoload command manages which modules that",
+             rsmod.shell);
+        echo("  are autoloaded in your environment.", rsmod.shell);
+        echo("", rsmod.shell);
+        echo("  The following subcommands are available:", rsmod.shell);
+        echo("", rsmod.shell);
+        echo(&format!("    * {}append{} [modulename(s)]", bs, be),
+             rsmod.shell);
+        echo("      Adds one or more module to the end of the list of autoloaded modules.",
+             rsmod.shell);
+        echo("", rsmod.shell);
+        echo(&format!("    * {}prepend{} [modulename(s)]", bs, be),
+             rsmod.shell);
+        echo("      Adds one or more module to the beginning of the list of autoloaded modules.",
+             rsmod.shell);
+        echo("", rsmod.shell);
+        echo(&format!("    * {}remove{} [modulename(s)]", bs, be),
+             rsmod.shell);
+        echo("      Removes one or more module from the \
+            list of autoloaded moules.",
+             rsmod.shell);
+        echo("", rsmod.shell);
+        echo(&format!("    * {}list{}", bs, be), rsmod.shell);
+        echo("      Shows a list of all autoloaded modules.", rsmod.shell);
+        echo("", rsmod.shell);
+        echo(&format!("    * {}purge{}", bs, be), rsmod.shell);
+        echo("      Removes all the autoloaded modules.", rsmod.shell);
+        echo("", rsmod.shell);
         return;
     }
 

@@ -236,13 +236,15 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
                 if !detected_sh {
                     bash_updated = append_line("source ~/.rsmodules.sh",
                                                &shellexpand::tilde("~/.bashrc"),
-                                               true, false);
+                                               true,
+                                               false);
                 }
 
                 if !detected_csh {
                     csh_updated = append_line("source ~/.rsmodules.csh",
                                               &shellexpand::tilde("~/.cshrc"),
-                                              true, false);
+                                              true,
+                                              false);
                 }
 
                 if bash_updated || csh_updated {
@@ -260,10 +262,12 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
                 // create a dummy modules
                 append_line("prepend_path(\"PATH\",\"~/bin\")",
                             &format!("{}/testmodule", path),
-                            false, false);
+                            false,
+                            false);
                 append_line("description(\"This is just a sample module, which adds ~/bin to your path\")",
                             &format!("{}/testmodule", path),
-                            false, false);
+                            false,
+                            false);
                 // tell them to run the module avail command
                 println!("    Now run the command: module available");
 
