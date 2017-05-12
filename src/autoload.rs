@@ -2,58 +2,53 @@ use std::fs::OpenOptions;
 use std::io::{Write, BufRead, BufReader};
 use std::path::Path;
 use std::fs::File;
-use std::sync::Mutex;
 use wizard::{append_line, detect_line};
 use super::echo;
+use std::cmp::Ordering;
 
 extern crate shellexpand;
 extern crate regex;
 
 use regex::Regex;
 
+#[derive(Clone, Eq, Debug)]
+struct Module {
+    name: String,
+    path: String,
+}
+
+impl Module {
+    pub fn new() -> Module {
+        Module {
+            name: String::new(),
+            path: String::new(),
+        }
+    }
+}
+
+impl Ord for Module {
+    fn cmp(&self, other: &Module) -> Ordering {
+        self.path.to_lowercase().cmp(&other.path.to_lowercase())
+    }
+}
+
+impl PartialOrd for Module {
+    fn partial_cmp(&self, other: &Module) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for Module {
+    fn eq(&self, other: &Module) -> bool {
+        self.path == other.path
+    }
+}
+
 static AUTOLOAD_FILE: &str = "~/.rsmodules_autoload";
 lazy_static! {
     // Avoid compiling the same regex in a loop
     static ref RE: Regex = Regex::new(r#"^\s*(?P<module>module)\s+(?P<subcommand>[a-zA-Z0-9]*)\s+(?P<modules>.*)"#).unwrap();
     static ref RE_SOURCE: Regex = Regex::new(r#"^\s*(?P<source>\.|source)\s+(?P<path>.*)"#).unwrap();
-    static ref OUTPUT_BUFFER: Mutex<Vec<String>> = Mutex::new(vec![]);
-}
-
-fn echo_output_buffer(shell: &str, title: &str) {
-    let output_buffer = OUTPUT_BUFFER.lock().unwrap();
-
-    if output_buffer.len() == 0 {
-        echo("", shell);
-        echo(&format!("{}", title), shell);
-        echo("", shell);
-        echo("  None", shell);
-        return;
-    } else {
-        echo("", shell);
-        echo(&format!("{}", title), shell);
-        echo("", shell);
-    }
-
-    for line in output_buffer.iter() {
-        echo(&format!("  * {}", line), shell);
-    }
-
-}
-
-fn empty_output_buffer() {
-    let mut output_buffer = OUTPUT_BUFFER.lock().unwrap();
-    let ref mut output_buffer = *output_buffer;
-    output_buffer.clear();
-}
-
-fn list(modulenames: &str) {
-    let mut output_buffer = OUTPUT_BUFFER.lock().unwrap();
-    let ref mut output_buffer = *output_buffer;
-
-    let modulenames: Vec<&str> = modulenames.split_whitespace().collect();
-    for modulename in modulenames.iter() {
-        output_buffer.push(modulename.to_string());
-    }
 }
 
 fn get_module_autoload_string(modules: Vec<&str>, existing: &str, subcommand: &str) -> String {
@@ -141,6 +136,17 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
     // check if args.get(x) matches with one of them or not
     // if not, add it
 
+    let mut bs: &str = "$(tput bold)";
+    let mut be: &str = "$(tput sgr0)";
+
+    if shell == "tcsh" || shell == "csh" {
+        bs = "\\033[1m";
+        be = "\\033[0m";
+    }
+
+    // al = autoload
+    let mut al_modules: Vec<Module> = Vec::new();
+
     let initfile = match shell {
         "bash" => "~/.bashrc",
         "csh" => "~/.cshrc",
@@ -162,54 +168,84 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
     // write file
 
     if subcommand == "list" {
-        empty_output_buffer();
-        //echo("", shell);
-        //echo("  Autoloaded modules but NOT managed by rsmodules:", shell);
-        //echo("", shell);
-        parse_file(subcommand, args, initfile);
+        parse_file(subcommand, args, initfile, &mut al_modules);
         if initfile != &shellexpand::tilde("~/.login") && (shell == "csh" || shell == "tcsh") {
             let initfile: &str = &shellexpand::tilde("~/.login");
-            parse_file(subcommand, args, initfile);
+            parse_file(subcommand, args, initfile, &mut al_modules);
         }
-        echo_output_buffer(shell, "  Autoloaded modules but NOT managed by rsmodules:");
-        echo("", shell);
     }
 
-    empty_output_buffer();
-    parse_file(subcommand, args, &shellexpand::tilde(AUTOLOAD_FILE));
+    parse_file(subcommand,
+               args,
+               &shellexpand::tilde(AUTOLOAD_FILE),
+               &mut al_modules);
 
     if subcommand == "list" {
-        let output_buffer;
-        {
-            let _output_buffer = OUTPUT_BUFFER.lock().unwrap();
-            output_buffer = _output_buffer.clone();
+        al_modules.sort();
+        let mut old_path: String = String::new();
+        let mut count = 0;
+        for al_module in al_modules.iter() {
+            if al_module.path.clone() != shellexpand::tilde(AUTOLOAD_FILE) {
+                count += 1;
+            }
         }
 
-        if output_buffer.len() > 0 {
-            //            echo("  Autoloaded modules managed by rsmodules:", shell);
-            //           echo("", shell);
-            echo_output_buffer(shell, "  Autoloaded modules managed by rsmodules:");
+        if count != 0 {
+            echo("", shell);
+            echo("  Autoloaded modules NOT managed by RSModules:", shell);
+        }
+        count = 0;
+
+        for al_module in al_modules.iter() {
+            let path = al_module.path.clone();
+            if path != shellexpand::tilde(AUTOLOAD_FILE) {
+                if path != old_path {
+                    echo("", shell);
+                    echo(&format!("  Found in: {}", path), shell);
+                    echo("", shell);
+                }
+                echo(&format!("  * {}{}{}", bs, al_module.name, be), shell);
+                old_path = path;
+            } else {
+                count += 1;
+            }
+        }
+
+        if count != 0 {
+            echo("", shell);
+            echo("  Autoloaded modules managed by RSModules:", shell);
             echo("", shell);
         }
-    }
+        for al_module in al_modules.iter() {
+            let path = al_module.path.clone();
+            if path == shellexpand::tilde(AUTOLOAD_FILE) {
+                echo(&format!("  * {}{}{}", bs, al_module.name, be), shell);
+            }
+        }
 
+        if al_modules.len() == 0 {
+            echo("", shell);
+            echo("  No modules are autoloaded.", shell);
+        }
+        echo("", shell);
+    }
 }
 
-fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str) {
+fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_modules: &mut Vec<Module>) {
     let mut output: Vec<String> = Vec::new();
 
     let mut num_matches = 0;
     if Path::new(initfile).is_file() {
-        let initfile: File = match File::open(initfile) {
+        let init_file: File = match File::open(initfile) {
             Ok(initfile) => initfile,
             Err(_) => {
                 return;
             }
         };
 
-        let initfile = BufReader::new(initfile);
+        let initfile_contents = BufReader::new(init_file);
         let mut done = false;
-        for (_, entry) in initfile.lines().enumerate() {
+        for (_, entry) in initfile_contents.lines().enumerate() {
             let buffer = entry.unwrap();
 
             if RE_SOURCE.is_match(&buffer) {
@@ -219,15 +255,25 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str) {
                     let source_file_name = Path::new(source).file_name().unwrap();
 
                     if source_file_name != ".rsmodules_autoload" {
-                        parse_file(subcommand, args, source);
+                        parse_file(subcommand, args, source, &mut al_modules);
                     }
                 }
             }
 
             if subcommand == "list" {
+
                 for cap in RE.captures_iter(&buffer) {
                     if &cap["subcommand"] == "load" {
-                        list(&cap["modules"]);
+
+                        let modulenames: &str = &cap["modules"];
+                        let modulenames: Vec<&str> = modulenames.split_whitespace().collect();
+                        for modulename in modulenames.iter() {
+                            let mut al_module: Module = Module::new();
+                            al_module.name = modulename.to_string();
+                            al_module.path = initfile.to_string();
+                            al_modules.push(al_module);
+                        }
+
                     }
                     //println_stderr!("'{}' '{}' '{}'", &cap["module"], &cap["subcommand"], &cap["modules"]);
                 }
