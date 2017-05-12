@@ -120,6 +120,9 @@ static LONG_HELP: &str = "
     * purge
       Unloads all loaded modules.
 
+    * refurbish
+      Unloads all loaded modules. And loads the autoloaded modules.
+
     * refresh
       Reloads all loaded modules.
 
@@ -195,11 +198,11 @@ fn usage(in_eval: bool) {
     println_stderr!("");
 
     if in_eval {
-        error_msg = "  Usage: module <load|unload|list|switch|purge|refresh|available|undo|info|makecache|delete|autoload> \
+        error_msg = "  Usage: module <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload> \
                      [module name]";
     } else {
         error_msg = "  Usage: rsmodules <shell> \
-                     <load|unload|list|switch|purge|refresh|available|undo|info|makecache|delete|autoload> [module name]";
+                     <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload> [module name]";
     }
 
     println_stderr!("{}", &error_msg);
@@ -327,6 +330,7 @@ fn run(args: &Vec<String>) {
         command_list.push("available");
         command_list.push("list");
         command_list.push("purge");
+        command_list.push("refurbish");
         command_list.push("refresh");
         command_list.push("info");
         command_list.push("display");

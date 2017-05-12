@@ -62,7 +62,7 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 		cmds="available \
 			list load purge info \
 			unload makecache add rm \
-			autoload undo refresh delete create"
+			autoload refurbish undo refresh delete create"
 
 		opts="-h --help"
 
@@ -81,7 +81,7 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 				case "$cur" in
 				# The mappings below are optional abbreviations for convenience
 				ls)    COMPREPLY="list";;    # map ls -> list
-				r*)    COMPREPLY="rm";;    # also covers 'remove'
+				#r*)    COMPREPLY="rm";;    # also covers 'remove'
 				sw*)    COMPREPLY="switch";;
 
 				-*)    COMPREPLY=( $(compgen -W "$opts" -- "$cur") );;

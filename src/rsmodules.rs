@@ -202,6 +202,8 @@ pub fn command(rsmod: &mut Rsmodule) {
         list(rsmod);
     } else if rsmod.cmd == "purge" {
         purge(rsmod);
+    } else if rsmod.cmd == "refurbish" {
+        refurbish(rsmod);
     } else if rsmod.cmd == "refresh" {
         refresh(rsmod);
     } else if rsmod.cmd == "info" {
@@ -665,6 +667,15 @@ fn purge(rsmod: &mut Rsmodule) {
 
 }
 
+fn refurbish(rsmod: &mut Rsmodule) {
+    purge(rsmod);
+    let mut args: Vec<&str> = Vec::new();//rsmod.arg.split_whitespace().collect();
+    //let mut subcommand = args.remove(0);
+    //args.remove(0);
+    let subcommand = "refurbish";
+    autoload::run(subcommand, &mut args, rsmod.shell);
+}
+
 fn undo(rsmod: &mut Rsmodule) {
 
     let args = match env::var(ENV_UNDO) {
@@ -761,6 +772,7 @@ fn autoload(rsmod: &mut Rsmodule) {
         return;
     }
 
+// TODO: allow only for append, prepend, remove, list
     let subcommand = args.remove(0);
 
     autoload::run(subcommand, &mut args, rsmod.shell);

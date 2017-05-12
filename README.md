@@ -59,6 +59,7 @@ D perl/5.14.1 | Perl 5.14.1 is a highly capable, feature-rich programming langua
  * ```module switch [(partial)modulename from] [(partial)modulename to] ``` Switch between the requested modules.
  * ```module unload [(partial)modulename] [(partial)modulename] [...]``` Unloads the requested modules.
  * ```module purge``` Unloads all loaded modules.
+ * ```module refurbish``` Unloads all loaded modules and reloads all autoloaded modules
  * ```module refresh``` Reloads all loaded modules.
  * ```module undo``` Undo previous load/unload/switch/purge actions
  * ```module list``` Shows a list of all the loaded modules.

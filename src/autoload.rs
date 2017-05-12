@@ -3,7 +3,7 @@ use std::io::{Write, BufRead, BufReader};
 use std::path::Path;
 use std::fs::File;
 use wizard::{append_line, detect_line};
-use super::echo;
+use super::{echo, output};
 use std::cmp::Ordering;
 
 extern crate shellexpand;
@@ -167,7 +167,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
     //  if remove, remove module
     // write file
 
-    if subcommand == "list" {
+    if subcommand == "list" || subcommand == "refurbish" {
         parse_file(subcommand, args, initfile, &mut al_modules);
         if initfile != &shellexpand::tilde("~/.login") && (shell == "csh" || shell == "tcsh") {
             let initfile: &str = &shellexpand::tilde("~/.login");
@@ -180,7 +180,12 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
                &shellexpand::tilde(AUTOLOAD_FILE),
                &mut al_modules);
 
-    if subcommand == "list" {
+    if subcommand == "refurbish" {
+    
+        for al_module in al_modules.iter() {
+            output(format!("module load {}\n", al_module.name));
+        }
+    } else if subcommand == "list" {
         al_modules.sort();
         let mut old_path: String = String::new();
         let mut count = 0;
@@ -260,7 +265,7 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
                 }
             }
 
-            if subcommand == "list" {
+            if subcommand == "list" || subcommand == "refurbish" {
 
                 for cap in RE.captures_iter(&buffer) {
                     if &cap["subcommand"] == "load" {
