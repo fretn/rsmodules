@@ -570,6 +570,14 @@ pub fn get_loaded_list() -> Vec<(String, i64)> {
 fn list(rsmod: &mut Rsmodule) {
     let loadedmodules: String;
 
+    let mut bs: &str = "$(tput bold)";
+    let mut be: &str = "$(tput sgr0)";
+
+    if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
+        bs = "\\033[1m";
+        be = "\\033[0m";
+    }
+
     match env::var(ENV_LOADEDMODULES) {
         Ok(list) => loadedmodules = list,
         Err(_) => {
@@ -602,7 +610,7 @@ fn list(rsmod: &mut Rsmodule) {
             if rsmod.shell == "noshell" {
                 echo(module, rsmod.shell);
             } else {
-                echo(&format!("  * {}", module), rsmod.shell);
+                echo(&format!("  * {}{}{}", bs, module, be), rsmod.shell);
             }
         }
     }

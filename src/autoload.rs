@@ -156,7 +156,9 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
     };
 
     let initfile: &str = &shellexpand::tilde(initfile);
-    check_init_file(initfile);
+    if shell != "noshell" {
+        check_init_file(initfile);
+    }
 
     // for line in initfile
     // run regex
@@ -195,7 +197,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
             }
         }
 
-        if count != 0 {
+        if count != 0 && shell != "noshell" {
             echo("", shell);
             echo("  Autoloaded modules NOT managed by RSModules:", shell);
         }
@@ -204,19 +206,23 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
         for al_module in al_modules.iter() {
             let path = al_module.path.clone();
             if path != shellexpand::tilde(AUTOLOAD_FILE) {
-                if path != old_path {
+                if path != old_path && shell != "noshell" {
                     echo("", shell);
                     echo(&format!("  Found in: {}", path), shell);
                     echo("", shell);
                 }
-                echo(&format!("  * {}{}{}", bs, al_module.name, be), shell);
+                if shell == "noshell" {
+                    echo(&format!("{}", al_module.name), shell);
+                } else {
+                    echo(&format!("  * {}{}{}", bs, al_module.name, be), shell);
+                }
                 old_path = path;
             } else {
                 count += 1;
             }
         }
 
-        if count != 0 {
+        if count != 0  && shell != "noshell" {
             echo("", shell);
             echo("  Autoloaded modules managed by RSModules:", shell);
             echo("", shell);
@@ -224,15 +230,23 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
         for al_module in al_modules.iter() {
             let path = al_module.path.clone();
             if path == shellexpand::tilde(AUTOLOAD_FILE) {
-                echo(&format!("  * {}{}{}", bs, al_module.name, be), shell);
+                if shell == "noshell" {
+                    echo(&format!("{}", al_module.name), shell);
+                } else {
+                    echo(&format!("  * {}{}{}", bs, al_module.name, be), shell);
+                }
             }
         }
 
         if al_modules.len() == 0 {
-            echo("", shell);
-            echo("  No modules are autoloaded.", shell);
+            if shell != "noshell" {
+                echo("", shell);
+                echo("  No modules are autoloaded.", shell);
+            }
         }
-        echo("", shell);
+        if shell != "noshell" {
+            echo("", shell);
+        }
     }
 }
 
