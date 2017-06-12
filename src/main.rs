@@ -149,7 +149,7 @@ static LONG_HELP: &str = "
       Starts a wizard to create a modulefile.
 
     * delete
-      Deletes a modulefiles. As with makecache, this only works
+      Deletes a modulefile. As with makecache, this only works
       if you have the correct permissions.
 
     * autoload append|prepend|remove|list|purge [module name(s)]
