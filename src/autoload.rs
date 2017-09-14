@@ -2,7 +2,6 @@ use std::fs::OpenOptions;
 use std::io::{Write, BufRead, BufReader};
 use std::path::Path;
 use std::fs::File;
-use wizard::{append_line, detect_line};
 use super::{echo, output};
 use std::cmp::Ordering;
 
@@ -101,12 +100,8 @@ fn is_module_autoloaded(module: &str, existing: &str) -> bool {
     return false;
 }
 
-fn check_init_file(filename: &str) {
-    let line: &str = &format!("source {}", AUTOLOAD_FILE);
-    if !detect_line(line, filename) {
-        append_line(line, filename, false, true);
-    }
 
+fn create_autoload_file() {
     let filename: &str = &shellexpand::tilde(AUTOLOAD_FILE);
     if !Path::new(filename).is_file() {
         match OpenOptions::new().write(true).create_new(true).open(filename) {
@@ -156,9 +151,8 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
     };
 
     let initfile: &str = &shellexpand::tilde(initfile);
-    if shell != "noshell" {
-        check_init_file(initfile);
-    }
+
+    create_autoload_file();
 
     // for line in initfile
     // run regex

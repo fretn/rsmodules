@@ -16,6 +16,10 @@ else
         setenv PERL5LIB "$RSMODULES_INSTALL_DIR\:$PERL5LIB"
 endif
 
+if ( -f ~/.rsmodules_autoload ) then
+	source ~/.rsmodules_autoload
+endif
+
 # this should be a function, so everytime it is called the info is updated
 set mod_av="`$RSMODULES_INSTALL_DIR/rsmodules noshell avail`"
 

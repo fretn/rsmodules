@@ -19,6 +19,10 @@ else
 	export PERL5LIB="$RSMODULES_INSTALL_DIR:$PERL5LIB"
 fi
 
+if [ -f ~/.rsmodules_autoload ]; then
+	source ~/.rsmodules_autoload
+fi
+
 if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 	#
 	# Bash commandline completion (bash 3.0 and above)
@@ -29,6 +33,8 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 
 	_module_not_yet_loaded() {
 		comm -23  <(_module_avail|sort)  <(tr : '\n' <<<${LOADEDMODULES}|sort)
+		# workaround for galaxy bug
+		#_module_avail
 	}
 
 	_module_long_arg_list() {
