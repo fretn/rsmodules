@@ -177,7 +177,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
                &mut al_modules);
 
     if subcommand == "refurbish" {
-    
+
         for al_module in al_modules.iter() {
             output(format!("module load {}\n", al_module.name));
         }
@@ -216,7 +216,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
             }
         }
 
-        if count != 0  && shell != "noshell" {
+        if count != 0 && shell != "noshell" {
             echo("", shell);
             echo("  Autoloaded modules managed by RSModules:", shell);
             echo("", shell);

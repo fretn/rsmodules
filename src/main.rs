@@ -198,11 +198,13 @@ fn usage(in_eval: bool) {
     println_stderr!("");
 
     if in_eval {
-        error_msg = "  Usage: module <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload> \
-                     [module name]";
+        error_msg = "  Usage: module \
+                     <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload> [module \
+                     name]";
     } else {
         error_msg = "  Usage: rsmodules <shell> \
-                     <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload> [module name]";
+                     <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload> [module \
+                     name]";
     }
 
     println_stderr!("{}", &error_msg);

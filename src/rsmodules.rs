@@ -677,7 +677,7 @@ fn purge(rsmod: &mut Rsmodule) {
 
 fn refurbish(rsmod: &mut Rsmodule) {
     purge(rsmod);
-    let mut args: Vec<&str> = Vec::new();//rsmod.arg.split_whitespace().collect();
+    let mut args: Vec<&str> = Vec::new(); //rsmod.arg.split_whitespace().collect();
     //let mut subcommand = args.remove(0);
     //args.remove(0);
     let subcommand = "refurbish";
@@ -780,7 +780,7 @@ fn autoload(rsmod: &mut Rsmodule) {
         return;
     }
 
-// TODO: allow only for append, prepend, remove, list
+    // TODO: allow only for append, prepend, remove, list
     let subcommand = args.remove(0);
 
     autoload::run(subcommand, &mut args, rsmod.shell);
