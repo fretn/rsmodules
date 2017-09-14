@@ -20,6 +20,9 @@ if ( -f ~/.rsmodules_autoload ) then
 	source ~/.rsmodules_autoload
 endif
 
+# cleanup old tmp files from crashed rsmodules sessions
+find ~/.rsmodulestmp* -mtime +1 -exec rm -f {} \; >& /dev/null
+
 # this should be a function, so everytime it is called the info is updated
 set mod_av="`$RSMODULES_INSTALL_DIR/rsmodules noshell avail`"
 

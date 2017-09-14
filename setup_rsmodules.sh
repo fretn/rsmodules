@@ -23,6 +23,9 @@ if [ -f ~/.rsmodules_autoload ]; then
 	source ~/.rsmodules_autoload
 fi
 
+# cleanup old tmp files from crashed rsmodules sessions
+find ~/.rsmodulestmp* -mtime +1 -exec rm -f {} \;  2> /dev/null
+
 if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 	#
 	# Bash commandline completion (bash 3.0 and above)
