@@ -111,7 +111,7 @@ static LONG_HELP: &str = "
       Switches between two version of modules.
 
       This does the same as module load blast/1.2.3 when
-      blast/1.2.5 is loaded.
+      blast/1.2.5 was already loaded.
       This feature was added for compatibility reasons.
 
     * list
