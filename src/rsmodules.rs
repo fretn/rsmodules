@@ -731,57 +731,69 @@ fn undo(rsmod: &mut Rsmodule) {
 
 }
 
-fn autoload(rsmod: &mut Rsmodule) {
-    let mut args: Vec<&str> = rsmod.arg.split_whitespace().collect();
+fn autoload_usage(shell: &str) {
 
     let mut bs: &str = "$(tput bold)";
     let mut be: &str = "$(tput sgr0)";
 
-    if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
+    if shell == "tcsh" || shell == "csh" {
         bs = "\\033[1m";
         be = "\\033[0m";
     }
 
+    echo("", shell);
+    echo(&format!("  {}Usage{}: module autoload [subcommand] [modulename(s)]",
+                    bs,
+                    be),
+            shell);
+    echo("", shell);
+    echo("  The module autoload command manages which modules that",
+            shell);
+    echo("  are autoloaded in your environment.", shell);
+    echo("", shell);
+    echo("  The following subcommands are available:", shell);
+    echo("", shell);
+    echo(&format!("    * {}append{} [modulename(s)]", bs, be),
+            shell);
+    echo("      Adds one or more module to the end of the list of autoloaded modules.",
+            shell);
+    echo("", shell);
+    echo(&format!("    * {}prepend{} [modulename(s)]", bs, be),
+            shell);
+    echo("      Adds one or more module to the beginning of the list of autoloaded modules.",
+            shell);
+    echo("", shell);
+    echo(&format!("    * {}remove{} [modulename(s)]", bs, be),
+            shell);
+    echo("      Removes one or more module from the \
+        list of autoloaded moules.",
+            shell);
+    echo("", shell);
+    echo(&format!("    * {}list{}", bs, be), shell);
+    echo("      Shows a list of all autoloaded modules.", shell);
+    echo("", shell);
+    echo(&format!("    * {}purge{}", bs, be), shell);
+    echo("      Removes all the autoloaded modules.", shell);
+    echo("", shell);
+
+}
+
+fn autoload(rsmod: &mut Rsmodule) {
+    let mut args: Vec<&str> = rsmod.arg.split_whitespace().collect();
+
+
     if args.len() == 0 {
-        echo("", rsmod.shell);
-        echo(&format!("  {}Usage{}: module autoload [subcommand] [modulename(s)]",
-                      bs,
-                      be),
-             rsmod.shell);
-        echo("", rsmod.shell);
-        echo("  The module autoload command manages which modules that",
-             rsmod.shell);
-        echo("  are autoloaded in your environment.", rsmod.shell);
-        echo("", rsmod.shell);
-        echo("  The following subcommands are available:", rsmod.shell);
-        echo("", rsmod.shell);
-        echo(&format!("    * {}append{} [modulename(s)]", bs, be),
-             rsmod.shell);
-        echo("      Adds one or more module to the end of the list of autoloaded modules.",
-             rsmod.shell);
-        echo("", rsmod.shell);
-        echo(&format!("    * {}prepend{} [modulename(s)]", bs, be),
-             rsmod.shell);
-        echo("      Adds one or more module to the beginning of the list of autoloaded modules.",
-             rsmod.shell);
-        echo("", rsmod.shell);
-        echo(&format!("    * {}remove{} [modulename(s)]", bs, be),
-             rsmod.shell);
-        echo("      Removes one or more module from the \
-            list of autoloaded moules.",
-             rsmod.shell);
-        echo("", rsmod.shell);
-        echo(&format!("    * {}list{}", bs, be), rsmod.shell);
-        echo("      Shows a list of all autoloaded modules.", rsmod.shell);
-        echo("", rsmod.shell);
-        echo(&format!("    * {}purge{}", bs, be), rsmod.shell);
-        echo("      Removes all the autoloaded modules.", rsmod.shell);
-        echo("", rsmod.shell);
+        autoload_usage(rsmod.shell);
         return;
     }
 
     // TODO: allow only for append, prepend, remove, list
     let subcommand = args.remove(0);
+
+    if subcommand != "append" && subcommand != "prepend" && subcommand != "remove" && subcommand != "list" {
+        autoload_usage(rsmod.shell);
+        return;
+    }
 
     autoload::run(subcommand, &mut args, rsmod.shell);
 }
