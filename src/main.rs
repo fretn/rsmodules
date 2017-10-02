@@ -457,7 +457,7 @@ fn run(args: &Vec<String>) {
         // if it crashes we still need to delete the file
 
 
-        let cmd = format!("rm -f {}\n", tmp_file_path.display());
+        let cmd = format!("\\rm -f {}\n", tmp_file_path.display());
 
         let mut output_buffer = OUTPUT_BUFFER.lock().unwrap();
         let ref mut output_buffer = *output_buffer;
