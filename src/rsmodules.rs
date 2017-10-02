@@ -587,7 +587,8 @@ fn list(rsmod: &mut Rsmodule) {
 
     let mut loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
     loadedmodules.retain(|&x| x != "");
-    loadedmodules.sort();
+    // display loaded modules in loaded order
+    loadedmodules.reverse();
 
     if loadedmodules.len() > 0 {
         if rsmod.shell != "noshell" {
