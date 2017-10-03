@@ -9,7 +9,7 @@ if (! $?PYTHONPATH ) then
 else
         setenv PYTHONPATH "$RSMODULES_INSTALL_DIR\:$PYTHONPATH"
 endif
-exit;
+
 if (! $?PERL5LIB ) then
         setenv PERL5LIB "$RSMODULES_INSTALL_DIR"
 else
