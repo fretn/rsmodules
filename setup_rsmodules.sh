@@ -24,9 +24,9 @@ if [ -f ~/.rsmodules_autoload ]; then
 fi
 
 # cleanup old tmp files from crashed rsmodules sessions
-find ~/.rsmodulestmp* -mtime +1 -delete 2> /dev/null
+find ~/.rsmodulestmp* -mtime +1 -delete 2>&1 /dev/null
 # also cleanup empty tmp files
-find ~/.rsmodulestmp* -empty -delete 2> /dev/null
+find ~/.rsmodulestmp* -empty -delete 2>&1 /dev/null
 
 if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 	#
