@@ -227,7 +227,7 @@ fn set_global_tmpfile(tmp_file_path: String) {
     *tmp = true;
 }
 
-fn run(args: &Vec<String>) {
+fn run(args: &[String]) {
     let command: &str;
     let tmp: String;
     let mut modulename: &str = "";
