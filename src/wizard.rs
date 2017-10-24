@@ -25,7 +25,7 @@ SOFTWARE.
 use std::io::{self, Write, BufRead, BufReader};
 use std::fs::create_dir_all;
 use std::os::unix::fs::symlink;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::env;
