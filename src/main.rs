@@ -460,7 +460,7 @@ fn run(args: &Vec<String>) {
         let cmd = format!("\\rm -f {}\n", tmp_file_path.display());
 
         let mut output_buffer = OUTPUT_BUFFER.lock().unwrap();
-        let ref mut output_buffer = *output_buffer;
+        let output_buffer = &mut (*output_buffer);
         output_buffer.push(cmd);
 
         for line in output_buffer {
@@ -492,7 +492,7 @@ pub fn setenv(var: &str, val: &str, shell: &str) -> String {
 
 pub fn output(line: String) {
     let mut output_buffer = OUTPUT_BUFFER.lock().unwrap();
-    let ref mut output_buffer = *output_buffer;
+    let output_buffer = &mut (*output_buffer);
     output_buffer.push(line);
 }
 
