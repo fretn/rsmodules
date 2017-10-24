@@ -457,18 +457,20 @@ pub fn run(recursive: bool) -> bool {
 
         println!("");
 
-        let mut line: String = String::new();
-
-        if !recursive {
+        let mut line = if !recursive {
             print_title("MODULEPATH configuration");
-            line = read_input(" * No $MODULEPATH found, want to add one ? [Y/n]:");
-        }
+            read_input(" * No $MODULEPATH found, want to add one ? [Y/n]:")
+        } else {
+            String::new()
+        };
 
         if is_yes(line) || recursive {
-            let mut path: &str = &shellexpand::tilde("~/modules");
-            if get_current_uid() == 0 {
-                path = "/usr/local/modules";
-            }
+            let home_modules = &shellexpand::tilde("~/modules");
+            let mut path = if get_current_uid() == 0 {
+                "/usr/local/modules"
+            } else {
+                home_modules
+            };
             line = read_input(format!(" * Please enter a path where you want to save your module \
                                        files [{}]: ",
                                       path)
