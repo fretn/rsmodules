@@ -74,7 +74,7 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
     // if no permissions, tell them if they are an admin to run this as root
     // or just throw it in .bashrc and .personal_cshrc -> or first check if
 
-    let executable_path = PathBuf::from(env::current_exe().unwrap());
+    let executable_path = env::current_exe().unwrap();
     let executable_path = executable_path.parent();
     let current_path_sh: &str = &format!("{}/setup_rsmodules.sh", executable_path.unwrap().display());
     let current_path_csh: &str = &format!("{}/setup_rsmodules.csh", executable_path.unwrap().display());
@@ -389,7 +389,7 @@ fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
         let value: Vec<&str> = value.split(':').collect();
 
         for existing_path in &value {
-            if existing_path.to_string() == path.to_string() {
+            if existing_path == &path {
                 return String::from(input);
             }
         }
