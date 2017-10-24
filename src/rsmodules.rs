@@ -724,8 +724,8 @@ fn undo(rsmod: &mut Rsmodule) {
             args.reverse();
         }
 
-        output(super::setenv("RSMODULES_UNDO".to_string(),
-                             format!("{} {}", cmd, args.join(" ")),
+        output(super::setenv("RSMODULES_UNDO",
+                             &format!("{} {}", cmd, args.join(" ")),
                              rsmod.shell));
 
     }

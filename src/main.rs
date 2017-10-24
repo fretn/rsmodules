@@ -392,8 +392,8 @@ fn run(args: &Vec<String>) {
 
             if command_hit == "load" || command_hit == "unload" {
                 // undo doesn't work for dependency loaded modules
-                let data = setenv("RSMODULES_UNDO".to_string(),
-                                  format!("{} {}", command_hit, modulename.to_string()),
+                let data = setenv("RSMODULES_UNDO",
+                                  &format!("{} {}", command_hit, modulename.to_string()),
                                   &shell);
                 crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
                               tmpfile.write_all(data.as_bytes()));
@@ -408,8 +408,8 @@ fn run(args: &Vec<String>) {
 
             if command_hit == "switch" {
                 modulenames.reverse();
-                let data = setenv("RSMODULES_UNDO".to_string(),
-                                  format!("{} {}", command_hit, modulenames.join(" ")),
+                let data = setenv("RSMODULES_UNDO",
+                                  &format!("{} {}", command_hit, modulenames.join(" ")),
                                   &shell);
                 crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
                               tmpfile.write_all(data.as_bytes()));
@@ -422,8 +422,8 @@ fn run(args: &Vec<String>) {
                     args.push(arg);
                 }
                 let loadedmodules = args.join(" ");
-                let data = setenv("RSMODULES_UNDO".to_string(),
-                                  format!("unload {}", loadedmodules),
+                let data = setenv("RSMODULES_UNDO",
+                                  &format!("unload {}", loadedmodules),
                                   &shell);
                 crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
                               tmpfile.write_all(data.as_bytes()));
@@ -475,7 +475,7 @@ fn run(args: &Vec<String>) {
     }
 }
 
-pub fn setenv(var: String, val: String, shell: &str) -> String {
+pub fn setenv(var: &str, val: &str, shell: &str) -> String {
     let mut data: String = String::new();
     if shell == "bash" || shell == "zsh" {
         data = format!("export {}=\"{}\"\n", var, val);
