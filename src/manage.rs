@@ -237,9 +237,9 @@ pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, mo
         output.push(format!("description(\"{}\");", desc));
     }
 
-    if is_yes(read_input_shell(&format!(" * Do you want to add another description entry ? [Y/n]: "),
+    if is_yes(read_input_shell(" * Do you want to add another description entry ? [Y/n]: ",
                                shell)) {
-        let desc = read_input_shell(&format!("   Enter your description: "), shell).trim_right_matches('\n').to_string();
+        let desc = read_input_shell("   Enter your description: ", shell).trim_right_matches('\n').to_string();
         output.push(format!("description(\"{}\");", desc));
         add_description(shell, &mut output, true, modulename);
         println_stderr!("");
@@ -248,14 +248,14 @@ pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, mo
 
 pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
     if !skip {
-        let val = read_input_shell(&format!("   Enter the path where the executables can be found: "),
+        let val = read_input_shell("   Enter the path where the executables can be found: ",
                                    shell)
             .trim_right_matches('\n')
             .to_string();
         output.push(format!("prepend_path(\"PATH\",\"{}\");", val));
-        if is_yes(read_input_shell(&format!(" * Do you want to set the LD_LIBRARY_PATH variable? [Y/n]: "),
+        if is_yes(read_input_shell(" * Do you want to set the LD_LIBRARY_PATH variable? [Y/n]: ",
                                    shell)) {
-            let val = read_input_shell(&format!("   Enter the path where the libraries can be found: "),
+            let val = read_input_shell("   Enter the path where the libraries can be found: ",
                                        shell)
                 .trim_right_matches('\n')
                 .to_string();
@@ -263,7 +263,7 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
         }
     }
     println_stderr!("");
-    if is_yes(read_input_shell(&format!(" * Do you want to set another path variable? [Y/n]: "),
+    if is_yes(read_input_shell(" * Do you want to set another path variable? [Y/n]: ",
                                shell)) {
         let var = read_input_shell("   Enter the name of variable: ", shell).trim_right_matches('\n').to_string();
         let val = read_input_shell("   Enter the path you want to add: ", shell).trim_right_matches('\n').to_string();
