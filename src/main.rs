@@ -518,11 +518,7 @@ fn main() {
         usage(true);
     }
 
-    // FIXME: args.get(1) == Some(&"-h")
-    if args.len() >= 2 && (&args[1] == "-h" || &args[1] == "--help") {
-        usage(false);
-        return;
-    } else if args.len() >= 3 && (&args[1] == "-h" || &args[1] == "--help") {
+    if args.len() >= 2 && (args.get(1) == Some(&String::from("-h")) || args.get(1) == Some(&String::from("--help"))) {
         usage(false);
         return;
     }
