@@ -149,9 +149,6 @@ pub fn get_shell_info() -> (String, usize) {
     if args.len() >= 2 && (&args[1] == "-h" || &args[1] == "--help") {
         crash(super::CRASH_GET_SHELL, "Cannot get shell.");
         return err_return;
-    } else if args.len() >= 3 && (&args[1] == "-h" || &args[1] == "--help") {
-        crash(super::CRASH_GET_SHELL, "Cannot get shell.");
-        return err_return;
     }
 
     let mut shell: &str = &args[1];
@@ -337,8 +334,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
                                 break 'outer;
                             }
 
-                            // FIXME: replace with: splitter[1].starts_with("/")
-                            if !found && splitter[1].chars().next().unwrap() == '/' && module.0.starts_with(mdl) {
+                            if !found && splitter[1].starts_with('/') && module.0.starts_with(mdl) {
                                 selected_module = module.0.as_ref();
                                 found = true;
                                 let testpath = format!("{}/{}", modulepath, module.0);
