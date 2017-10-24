@@ -60,7 +60,7 @@ pub fn crash(signal: i32, message: &str) {
     let tmpfile_initialized = super::TMPFILE_INITIALIZED.lock().unwrap();
 
     if *tmpfile_initialized {
-        let ref path = *tmp_file_path;
+        let path = &(*tmp_file_path);
         fs::remove_file(path).unwrap();
     }
 
