@@ -351,7 +351,7 @@ fn add_path(newpath: &str, filename: &str, variable: &str, append: bool) -> bool
         }
     }
 
-    if newbuffer.len() > 0 {
+    if !newbuffer.is_empty() {
         let mut file: File = match OpenOptions::new().write(true).open(filename) {
             Ok(fileresult) => fileresult,
             Err(e) => {
@@ -395,7 +395,7 @@ fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
         }
 
         if append {
-            if value.len() > 0 && !(value.len() == 1 && value[0] == "") {
+            if !value.is_empty() && !(value.len() == 1 && value[0] == "") {
                 output = format!(r#"{} {}{}"{}:{}""#,
                                  &cap["export"],
                                  variable,
@@ -447,7 +447,7 @@ fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
 pub fn run(recursive: bool) -> bool {
     let module_paths: Vec<String> = super::rsmod::get_module_paths(true);
 
-    if module_paths.len() == 0 {
+    if module_paths.is_empty() {
 
 
         // TODO: ask if we have to copy rsmodules to a different folder
