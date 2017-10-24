@@ -310,13 +310,13 @@ fn run(args: &Vec<String>) {
         let matches: bool;
         let mut modulenames: Vec<String> = Vec::new();
         if args.len() > 3 {
-            for i in 3..args.len() {
-                let whitespace: Vec<&str> = args[i].split_whitespace().collect();
+            for arg in args.iter().skip(3) {
+                let whitespace: Vec<&str> = arg.split_whitespace().collect();
                 if whitespace.len() > 1 {
-                    quoted_string = format!("\"{}\"", args[i]);
+                    quoted_string = format!("\"{}\"", arg);
                     modulenames.push(quoted_string);
                 } else {
-                    modulenames.push(args[i].clone());
+                    modulenames.push(arg.clone());
                 }
             }
             //modulename = &args[3];
@@ -418,8 +418,8 @@ fn run(args: &Vec<String>) {
             if command_hit == "purge" {
                 let loaded_list = rsmod::get_loaded_list();
                 let mut args: Vec<String> = Vec::new();
-                for (arg, _) in loaded_list.into_iter() {
-                    args.push(arg);
+                for (argument, _) in loaded_list {
+                    args.push(argument);
                 }
                 let loadedmodules = args.join(" ");
                 let data = setenv("RSMODULES_UNDO",
@@ -431,7 +431,7 @@ fn run(args: &Vec<String>) {
             }
 
             let mut rsmod_command: Rsmodule = Rsmodule {
-                cmd: &command_hit,
+                cmd: command_hit,
                 typed_command: command,
                 arg: modulename,
                 search_path: &modulepaths,
