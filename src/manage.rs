@@ -210,17 +210,17 @@ fn save(filename: String, output: &Vec<String>) -> io::Result<()> {
 fn parse_opt(matches: &Matches, output: &mut Vec<String>, opt: &str, command: &str, number: i32) {
     if matches.opt_present(opt) {
         let value: Vec<String> = matches.opt_strs(opt);
-        for i in value.iter() {
+        for i in &value {
             if number == 1 {
                 let msg = format!("{}(\"{}\");", command, i);
                 output.push(msg);
             } else if number == 2 {
-                let result: Vec<&str> = i.split(",").collect();
+                let result: Vec<&str> = i.split(',').collect();
                 if result.get(0) != None && result.get(1) != None {
                     let msg = format!("{}(\"{}\",\"{}\");",
                                       command,
-                                      result.get(0).unwrap(),
-                                      result.get(1).unwrap());
+                                      &result[0],
+                                      &result[1]);
                     output.push(msg);
                 }
             }
