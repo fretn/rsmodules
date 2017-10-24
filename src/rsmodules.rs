@@ -469,7 +469,7 @@ pub fn is_module_loaded(name: &str, only_full_match: bool) -> bool {
         let part_module: Vec<&str> = module.split('/').collect();
         let part_name: Vec<&str> = name.split('/').collect();
 
-        if part_module.len() == 0 || part_name.len() == 0 {
+        if part_module.is_empty() || part_name.is_empty() {
             continue;
         }
 
@@ -590,7 +590,7 @@ fn list(rsmod: &mut Rsmodule) {
     // display loaded modules in loaded order
     loadedmodules.reverse();
 
-    if loadedmodules.len() > 0 {
+    if !loadedmodules.is_empty() {
         if rsmod.shell != "noshell" {
             echo("", rsmod.shell);
             echo("  Currently loaded modules:", rsmod.shell);
@@ -698,13 +698,13 @@ fn undo(rsmod: &mut Rsmodule) {
 
     let mut cmd: &str;
 
-    if args.len() == 0 {
+    if args.is_empty() {
         return;
     }
 
     if args.len() > 1 {
         // means we did a purge
-        cmd = args.get(0).unwrap();
+        cmd = &args[0];
         if cmd == "load" {
             cmd = "unload";
         } else if cmd == "unload" {
@@ -783,7 +783,7 @@ fn autoload(rsmod: &mut Rsmodule) {
     let mut args: Vec<&str> = rsmod.arg.split_whitespace().collect();
 
 
-    if args.len() == 0 {
+    if args.is_empty() {
         autoload_usage(rsmod.shell);
         return;
     }
