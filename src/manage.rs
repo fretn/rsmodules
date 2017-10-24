@@ -265,8 +265,8 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
     println_stderr!("");
     if is_yes(read_input_shell(&format!(" * Do you want to set another path variable? [Y/n]: "),
                                shell)) {
-        let var = read_input_shell(&format!("   Enter the name of variable: "), shell).trim_right_matches('\n').to_string();
-        let val = read_input_shell(&format!("   Enter the path you want to add: "), shell).trim_right_matches('\n').to_string();
+        let var = read_input_shell("   Enter the name of variable: ", shell).trim_right_matches('\n').to_string();
+        let val = read_input_shell("   Enter the path you want to add: ", shell).trim_right_matches('\n').to_string();
         output.push(format!("prepend_path(\"{}\",\"{}\");", var, val));
         add_path(shell, &mut output, true);
     }
