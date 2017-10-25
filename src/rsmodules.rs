@@ -234,13 +234,11 @@ fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, a
 
     script::run(path, action);
 
-    let data: Vec<String>;
-
-    if action == "info" {
-        data = script::get_info(rsmod.shell, selected_module);
+    let data = if action == "info" {
+        script::get_info(rsmod.shell, selected_module)
     } else {
-        data = script::get_output(selected_module, action, rsmod.shell);
-    }
+        script::get_output(selected_module, action, rsmod.shell)
+    };
 
     for mut line in data {
         if rsmod.shell != "perl" {
@@ -257,20 +255,18 @@ fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, a
 
 fn module_action(rsmod: &mut Rsmodule, action: &str) {
 
-    let mut reversed_modules;
-
-
     // when unloading we only want a list of the loaded modules
     // for matching modulenames :
     // we have: blast/1.2 and blast/1.3 (D) while blast/1.2 is loaded
     // and blast/1.3 is not loaded
     // module unload blast
     // should unload blast/1.2 and not blast/1.3
-    if action == "unload" {
-        reversed_modules = get_loaded_list();
+    let mut reversed_modules = if action == "unload" {
+        get_loaded_list()
     } else {
-        reversed_modules = get_module_list(rsmod.shell);
-    }
+        get_module_list(rsmod.shell)
+    };
+
     reversed_modules.reverse();
 
     if rsmod.arg == "" {
@@ -700,7 +696,7 @@ fn undo(rsmod: &mut Rsmodule) {
 
     if args.len() > 1 {
         // means we did a purge
-        cmd = &args[0];
+        cmd = args[0];
         if cmd == "load" {
             cmd = "unload";
         } else if cmd == "unload" {
@@ -740,31 +736,28 @@ fn autoload_usage(shell: &str) {
 
     echo("", shell);
     echo(&format!("  {}Usage{}: module autoload [subcommand] [modulename(s)]",
-                    bs,
-                    be),
-            shell);
+                  bs,
+                  be),
+         shell);
     echo("", shell);
     echo("  The module autoload command manages which modules that",
-            shell);
+         shell);
     echo("  are autoloaded in your environment.", shell);
     echo("", shell);
     echo("  The following subcommands are available:", shell);
     echo("", shell);
-    echo(&format!("    * {}append{} [modulename(s)]", bs, be),
-            shell);
+    echo(&format!("    * {}append{} [modulename(s)]", bs, be), shell);
     echo("      Adds one or more module to the end of the list of autoloaded modules.",
-            shell);
+         shell);
     echo("", shell);
-    echo(&format!("    * {}prepend{} [modulename(s)]", bs, be),
-            shell);
+    echo(&format!("    * {}prepend{} [modulename(s)]", bs, be), shell);
     echo("      Adds one or more module to the beginning of the list of autoloaded modules.",
-            shell);
+         shell);
     echo("", shell);
-    echo(&format!("    * {}remove{} [modulename(s)]", bs, be),
-            shell);
+    echo(&format!("    * {}remove{} [modulename(s)]", bs, be), shell);
     echo("      Removes one or more module from the \
         list of autoloaded moules.",
-            shell);
+         shell);
     echo("", shell);
     echo(&format!("    * {}list{}", bs, be), shell);
     echo("      Shows a list of all autoloaded modules.", shell);

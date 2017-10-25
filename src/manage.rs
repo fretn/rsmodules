@@ -154,7 +154,7 @@ pub fn create(rsmod: &Rsmodule) {
         // write to file
         if matches.opt_present("f") {
             let filename = matches.opt_str("f").unwrap();
-            match save(filename.clone(), &output) {
+            match save(&filename, &output) {
                 Ok(_) => {}
                 Err(e) => {
                     println_stderr!("Cannot write to file {} ({})", filename, e);
@@ -179,7 +179,7 @@ fn get_modulename(arg: &str) -> String {
     return arg.to_string();
 }
 
-fn save(filename: String, output: &Vec<String>) -> io::Result<()> {
+fn save(filename: &str, output: &Vec<String>) -> io::Result<()> {
 
     if !Path::new(&filename).is_file() {
 
@@ -193,7 +193,7 @@ fn save(filename: String, output: &Vec<String>) -> io::Result<()> {
         };
 
         for line in output {
-            if let Err(_) = writeln!(file, "{}", line) {
+            if writeln!(file, "{}", line).is_err() {
                 return Err(io::Error::last_os_error());
             }
         }
@@ -217,10 +217,7 @@ fn parse_opt(matches: &Matches, output: &mut Vec<String>, opt: &str, command: &s
             } else if number == 2 {
                 let result: Vec<&str> = i.split(',').collect();
                 if result.get(0) != None && result.get(1) != None {
-                    let msg = format!("{}(\"{}\",\"{}\");",
-                                      command,
-                                      &result[0],
-                                      &result[1]);
+                    let msg = format!("{}(\"{}\",\"{}\");", command, &result[0], &result[1]);
                     output.push(msg);
                 }
             }
