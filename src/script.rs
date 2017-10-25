@@ -65,28 +65,28 @@ fn add_to_env_vars(variable: &str, value: &str) {
     ENV_VARS.lock().unwrap().push((variable.to_string(), value.to_string()));
 }
 
-fn add_to_commands(data: String) {
-    COMMANDS.lock().unwrap().push(data);
+fn add_to_commands(data: &str) {
+    COMMANDS.lock().unwrap().push(data.to_string());
 }
 
-fn add_to_info_general(data: String) {
-    INFO_GENERAL.lock().unwrap().push(data);
+fn add_to_info_general(data: &str) {
+    INFO_GENERAL.lock().unwrap().push(data.to_string());
 }
 
-fn add_to_info_path(data: String) {
-    INFO_PATH.lock().unwrap().push(data);
+fn add_to_info_path(data: &str) {
+    INFO_PATH.lock().unwrap().push(data.to_string());
 }
 
-fn add_to_info_ld_library_path(data: String) {
-    INFO_LD_LIBRARY_PATH.lock().unwrap().push(data);
+fn add_to_info_ld_library_path(data: &str) {
+    INFO_LD_LIBRARY_PATH.lock().unwrap().push(data.to_string());
 }
 
-fn add_to_info_pythonpath(data: String) {
-    INFO_PYTHONPATH.lock().unwrap().push(data);
+fn add_to_info_pythonpath(data: &str) {
+    INFO_PYTHONPATH.lock().unwrap().push(data.to_string());
 }
 
-fn add_to_info_perl5lib(data: String) {
-    INFO_PERL5LIB.lock().unwrap().push(data);
+fn add_to_info_perl5lib(data: &str) {
+    INFO_PERL5LIB.lock().unwrap().push(data.to_string());
 }
 
 fn add_to_load(data: String) {
@@ -94,10 +94,10 @@ fn add_to_load(data: String) {
 }
 
 // functions for load and unload
-fn getenv(var: String) -> String {
+fn getenv(var: &str) -> String {
 
     match env::var(&var) {
-        Ok(res) => String::from(res),
+        Ok(res) => res,
         Err(_) => {
             show_warning!("${} not found", var);
             String::from("")
@@ -107,73 +107,73 @@ fn getenv(var: String) -> String {
 
 // dummy functions for unloading
 #[allow(unused_variables)]
-fn unsetenv_dummy(var: String) {}
+fn unsetenv_dummy(var: &str) {}
 #[allow(unused_variables)]
-fn remove_path_dummy(var: String, val: String) {}
+fn remove_path_dummy(var: &str, val: &str) {}
 #[allow(unused_variables)]
-fn system_dummy(cmd: String) {}
+fn system_dummy(cmd: &str) {}
 #[allow(unused_variables)]
-fn load_dummy(module: String) {}
+fn load_dummy(module: &str) {}
 #[allow(unused_variables)]
-fn conflict_dummy(module: String) {}
+fn conflict_dummy(module: &str) {}
 #[allow(unused_variables)]
-fn unload_dummy(module: String) {}
+fn unload_dummy(module: &str) {}
 #[allow(unused_variables)]
-fn description_dummy(desc: String) {}
+fn description_dummy(desc: &str) {}
 #[allow(unused_variables)]
-fn getenv_dummy(var: String) -> String {
+fn getenv_dummy(var: &str) -> String {
     String::new()
 }
 #[allow(unused_variables)]
-fn prepend_path_dummy(var: String, val: String) {}
+fn prepend_path_dummy(var: &str, val: &str) {}
 #[allow(unused_variables)]
-fn append_path_dummy(var: String, val: String) {}
+fn append_path_dummy(var: &str, val: &str) {}
 #[allow(unused_variables)]
-fn setenv_dummy(var: String, val: String) {}
+fn setenv_dummy(var: &str, val: &str) {}
 #[allow(unused_variables)]
-fn set_alias_dummy(name: String, val: String) {}
+fn set_alias_dummy(name: &str, val: &str) {}
 #[allow(unused_variables)]
-fn is_loaded_dummy(var: String) -> bool {
+fn is_loaded_dummy(var: &str) -> bool {
     true
 }
 
 // unload functions
 
 #[allow(unused_variables)]
-fn setenv_unload(var: String, val: String) {
+fn setenv_unload(var: &str, val: &str) {
     unsetenv(var);
 }
 
 // info functions
 
-fn setenv_info(var: String, val: String) {
-    add_to_info_general(format!("{}={}", var, val));
+fn setenv_info(var: &str, val: &str) {
+    add_to_info_general(&format!("{}={}", var, val));
 }
 
-fn prepend_path_info(var: String, val: String) {
+fn prepend_path_info(var: &str, val: &str) {
     if var == "PATH" {
-        add_to_info_path(format!("{}", val));
+        add_to_info_path(val);
     } else if var == "LD_LIBRARY_PATH" {
-        add_to_info_ld_library_path(format!("{}", val));
+        add_to_info_ld_library_path(val);
     } else if var == "PYTHONPATH" {
-        add_to_info_pythonpath(format!("{}", val));
+        add_to_info_pythonpath(val);
     } else if var == "PERL5LIB" {
-        add_to_info_perl5lib(format!("{}", val));
+        add_to_info_perl5lib(val);
     } else {
-        add_to_info_general(format!("{}={}", var, val));
+        add_to_info_general(&format!("{}={}", var, val));
     }
 }
-fn append_path_info(var: String, val: String) {
+fn append_path_info(var: &str, val: &str) {
     if var == "PATH" {
-        add_to_info_path(format!("{}", val));
+        add_to_info_path(val);
     } else if var == "LD_LIBRARY_PATH" {
-        add_to_info_ld_library_path(format!("{}", val));
+        add_to_info_ld_library_path(val);
     } else if var == "PYTHONPATH" {
-        add_to_info_pythonpath(format!("{}", val));
+        add_to_info_pythonpath(val);
     } else if var == "PERL5LIB" {
-        add_to_info_perl5lib(format!("{}", val));
+        add_to_info_perl5lib(val);
     } else {
-        add_to_info_general(format!("{}={}", var, val));
+        add_to_info_general(&format!("{}={}", var, val));
     }
 }
 
@@ -182,31 +182,31 @@ fn load_info(module: String) {
 }
 // load functions
 
-fn setenv(var: String, val: String) {
-    add_to_env_vars(&var, &val);
-    env::set_var(&var, format!("{}", val));
+fn setenv(var: &str, val: &str) {
+    add_to_env_vars(var, val);
+    env::set_var(&var, val);
 }
 
-fn is_loaded(var: String) -> bool {
-    return super::is_module_loaded(&var, false);
+fn is_loaded(var: &str) -> bool {
+    return super::is_module_loaded(var, false);
 }
 
-fn unsetenv(var: String) {
+fn unsetenv(var: &str) {
     let (shell, _) = get_shell_info();
     if shell == "bash" || shell == "zsh" {
-        add_to_commands(format!("unset \"{}\"", var));
+        add_to_commands(&format!("unset \"{}\"", var));
     } else if shell == "perl" {
-        add_to_commands(format!("undef \"{}\"", var));
+        add_to_commands(&format!("undef \"{}\"", var));
     } else if shell == "python" {
-        add_to_commands(format!("os.environ[\"{}\"] = \"\";", var));
-        add_to_commands(format!("del os.environ[\"{}\"];", var));
+        add_to_commands(&format!("os.environ[\"{}\"] = \"\";", var));
+        add_to_commands(&format!("del os.environ[\"{}\"];", var));
     } else {
-        add_to_commands(format!("unsetenv \"{}\"", var));
+        add_to_commands(&format!("unsetenv \"{}\"", var));
     }
     env::remove_var(&var);
 }
 
-fn prepend_path(var: String, val: String) {
+fn prepend_path(var: &str, val: &str) {
     let mut current_val: String = String::from("");
     let mut notfound: bool = false;
 
@@ -222,12 +222,12 @@ fn prepend_path(var: String, val: String) {
         setenv(var, val);
     } else {
         let final_val = format!("{}:{}", val, current_val);
-        add_to_env_vars(&var, &final_val);
+        add_to_env_vars(var, &final_val);
         env::set_var(&var, format!("{}:{}", val, current_val));
     }
 }
 
-fn append_path(var: String, val: String) {
+fn append_path(var: &str, val: &str) {
     let mut current_val: String = String::from("");
     let mut notfound: bool = false;
 
@@ -243,12 +243,12 @@ fn append_path(var: String, val: String) {
         setenv(var, val);
     } else {
         let final_val = format!("{}:{}", current_val, val);
-        add_to_env_vars(&var, &final_val);
+        add_to_env_vars(var, &final_val);
         env::set_var(&var, format!("{}:{}", current_val, val));
     }
 }
 
-fn remove_path(var: String, val: String) {
+fn remove_path(var: &str, val: &str) {
     let current_val: String;
 
     match env::var(&var) {
@@ -259,46 +259,46 @@ fn remove_path(var: String, val: String) {
         }
     };
 
-    let mut values: Vec<&str> = current_val.split(":").collect();
+    let mut values: Vec<&str> = current_val.split(':').collect();
     values.retain(|&x| x != val);
 
     let result = values.join(":");
 
-    add_to_env_vars(&var, &result);
-    env::set_var(&var, format!("{}", result));
+    add_to_env_vars(var, &result);
+    env::set_var(&var, result);
 }
 
-fn unset_alias(name: String, val: String) {
+fn unset_alias(name: &str, val: &str) {
     let (shell, _) = get_shell_info();
     if shell == "bash" || shell == "zsh" {
-        add_to_commands(format!("unalias \"{}\"", name));
+        add_to_commands(&format!("unalias \"{}\"", name));
     } else if shell == "tcsh" || shell == "csh" {
-        add_to_commands(format!("unalias \"{}={}\"", name, val));
+        add_to_commands(&format!("unalias \"{}={}\"", name, val));
     }
 }
 
-fn set_alias(name: String, val: String) {
+fn set_alias(name: &str, val: &str) {
     let (shell, _) = get_shell_info();
     if shell != "python" && shell != "perl" {
-        add_to_commands(format!("alias {}=\"{}\"", name, val));
+        add_to_commands(&format!("alias {}=\"{}\"", name, val));
     }
 }
 
-fn system(cmd: String) {
+fn system(cmd: &str) {
     let (shell, _) = get_shell_info();
     if shell != "python" && shell != "perl" {
         add_to_commands(cmd);
     }
 }
 
-fn load(module: String) {
+fn load(module: &str) {
     let (shell, _) = get_shell_info();
 
     let modulepaths = super::get_module_paths(false);
     let mut rsmod_command: Rsmodule = Rsmodule {
         cmd: "load",
         typed_command: "load",
-        arg: &module,
+        arg: module,
         search_path: &modulepaths,
         shell: &shell,
         shell_width: 80,
@@ -306,7 +306,7 @@ fn load(module: String) {
     super::command(&mut rsmod_command);
 }
 
-fn conflict(module: String) {
+fn conflict(module: &str) {
 
     if super::is_module_loaded(module.as_ref(), false) {
         let (shell, _) = get_shell_info();
@@ -326,7 +326,7 @@ fn conflict(module: String) {
             bold_end = "";
         }
 
-        let ref shell = shell;
+        let shell = &shell;
         if shell != "noshell" {
             echo("", shell);
         }
@@ -358,26 +358,26 @@ fn conflict(module: String) {
     }
 }
 
-fn unload(module: String) {
+fn unload(module: &str) {
     let (shell, _) = get_shell_info();
-    let ref shell: String = shell;
+    let shell: &String = &shell;
     let modulepaths = super::get_module_paths(false);
     let mut rsmod_command: Rsmodule = Rsmodule {
         cmd: "unload",
         typed_command: "unload",
-        arg: &module,
+        arg: module,
         search_path: &modulepaths,
-        shell: &shell,
+        shell: shell,
         shell_width: 80,
     };
     super::command(&mut rsmod_command);
 }
 
-fn description(desc: String) {
+fn description(desc: &str) {
     INFO_DESCRIPTION.lock().unwrap().push(desc.replace("\"", "\\\""));
 }
 
-fn description_cache(desc: String) {
+fn description_cache(desc: &str) {
     add_to_info_general(desc);
 }
 
@@ -469,7 +469,7 @@ pub fn get_description() -> Vec<String> {
     let mut output: Vec<String> = Vec::new();
 
     for line in INFO_GENERAL.lock().unwrap().iter() {
-        output.push(format!("{}", line.to_string()));
+        output.push(line.to_string());
         // there can be multiple description calls, but
         // only store the first line of the description in
         // the cache file
@@ -483,16 +483,14 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
 
     let data = CONFLICT.lock().unwrap();
 
-    if *data == true {
+    if *data {
         return Vec::new();
     }
 
     if action == "unload" {
-        remove_path(String::from(super::ENV_LOADEDMODULES),
-                    String::from(selected_module));
+        remove_path(super::ENV_LOADEDMODULES, selected_module);
     } else if action == "load" {
-        prepend_path(String::from(super::ENV_LOADEDMODULES),
-                     String::from(selected_module));
+        prepend_path(super::ENV_LOADEDMODULES, selected_module);
     }
 
     // this part must be below the above part
@@ -547,7 +545,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
                         bold_start,
                         "=".repeat(module.len() + 4),
                         bold_end));
-    output.push(format!("echo \"\""));
+    output.push(String::from("echo \"\""));
 
     if INFO_DESCRIPTION.lock().unwrap().iter().len() > 0 {
         got_output = true;
@@ -652,8 +650,8 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
         }
     }
 
-    if execs.len() > 0 {
-        output.push(format!("echo ''"));
+    if !execs.is_empty() {
+        output.push(String::from("echo ''"));
         if execs.len() > 1 {
             output.push(format!("echo \"{}Try one of these commands to run the program: {}\"",
                                 bold_start,
@@ -671,7 +669,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     }
 
     if got_output {
-        output.push(format!("echo ''"));
+        output.push(String::from("echo ''"));
     }
 
 
@@ -718,11 +716,11 @@ fn is_executable_file(path: &PathBuf) -> bool {
             let mut perms = p.parse::<i32>().unwrap();
 
             if perms - 4 >= 0 {
-                perms = perms - 4;
+                perms -= 4;
             }
 
             if perms - 2 >= 0 {
-                perms = perms - 2;
+                perms -= 2;
             }
 
             if perms - 1 >= 0 {
