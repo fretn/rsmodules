@@ -102,7 +102,7 @@ pub fn create(rsmod: &Rsmodule) {
         option_commands.push(("S", "system", "system", 1, "run a system command", "COMMAND"));
         option_commands.push(("A", "set-alias", "set_alias", 2, "create an alias", "COMMAND"));
 
-        for (short, long, _, number, desc, hint) in option_commands.clone().into_iter() {
+        for (short, long, _, number, desc, hint) in option_commands.clone() {
             if number == 0 {
                 opts.optflag(short, long, desc);
             } else if number == 10 {
@@ -124,7 +124,7 @@ pub fn create(rsmod: &Rsmodule) {
 
 
         let mut present: Vec<String> = Vec::new();
-        for (opt, _, _, _, _, _) in option_commands.clone().into_iter() {
+        for (opt, _, _, _, _, _) in option_commands.clone() {
             present.push(opt.to_string());
         }
 
@@ -145,7 +145,7 @@ pub fn create(rsmod: &Rsmodule) {
         }
 
         // parse other options
-        for (opt, _, command, number, _, _) in option_commands.into_iter() {
+        for (opt, _, command, number, _, _) in option_commands {
             if opt != "h" && opt != "f" {
                 parse_opt(&matches, &mut output, opt, command, number);
             }
@@ -179,7 +179,7 @@ fn get_modulename(arg: &str) -> String {
     return arg.to_string();
 }
 
-fn save(filename: &str, output: &Vec<String>) -> io::Result<()> {
+fn save(filename: &str, output: &[String]) -> io::Result<()> {
 
     if !Path::new(&filename).is_file() {
 
