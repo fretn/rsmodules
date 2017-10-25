@@ -106,7 +106,7 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
         return true;
     }
 
-    return false;
+    false
 }
 
 pub fn update(modulepath: &str, shell: &str) -> bool {
@@ -242,7 +242,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
         echo(&msg, shell);
     }
 
-    return true;
+    true
 }
 
 pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i64)>) {
@@ -322,11 +322,8 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                 let avmodule_lc: &str = avmodule_lc.as_ref();
                 let module_lc: &str = module_lc.as_ref();
 
-                if longest_name <= module.name.len() {
-                    // was starts_with
-                    if avmodule_lc.contains(module_lc) {
-                        longest_name = module.name.len();
-                    }
+                if longest_name <= module.name.len() && avmodule_lc.contains(module_lc) {
+                    longest_name = module.name.len();
                 }
             }
             longest_name += 1;
@@ -361,25 +358,20 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
 
         if simple_list {
             tmp = module.name.clone();
+        } else if is_module_loaded(module.name.as_ref(), true) {
+            tmp = format!("{} {}{:width$}{} | {}",
+                          default,
+                          bold_start,
+                          module.name,
+                          bold_end,
+                          description,
+                          width = longest_name);
         } else {
-
-            // print loaded modules in bold
-            if is_module_loaded(module.name.as_ref(), true) {
-
-                tmp = format!("{} {}{:width$}{} | {}",
-                              default,
-                              bold_start,
-                              module.name,
-                              bold_end,
-                              description,
-                              width = longest_name);
-            } else {
-                tmp = format!("{} {:width$} | {}",
-                              default,
-                              module.name,
-                              description,
-                              width = longest_name);
-            }
+            tmp = format!("{} {:width$} | {}",
+                          default,
+                          module.name,
+                          description,
+                          width = longest_name);
         }
 
 

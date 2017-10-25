@@ -95,13 +95,11 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
     let mut found_cachefile: bool = false;
     let modulepaths = get_module_paths(false);
 
-    let mut bold_start: &str = "$(tput bold)";
-    let mut bold_end: &str = "$(tput sgr0)";
-
-    if shell == "tcsh" || shell == "csh" {
-        bold_start = "\\033[1m";
-        bold_end = "\\033[0m";
-    }
+    let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
+        ("\\033[1m", "\\033[0m")
+    } else {
+        ("$(tput bold)", "$(tput sgr0)")
+    };
 
     for path in modulepaths {
         // test if cachefiles exist in the paths
@@ -131,7 +129,7 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
     }
 
     modules.sort();
-    return modules;
+    modules
 }
 
 pub fn get_shell_info() -> (String, usize) {
@@ -396,13 +394,12 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         run_modulefile(&modulefile, rsmod, selected_module, action);
 
         if replaced_module && other != "" && selected_module != "" {
-            let mut bold_start: &str = "$(tput bold)";
-            let mut bold_end: &str = "$(tput sgr0)";
 
-            if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
-                bold_start = "\\033[1m";
-                bold_end = "\\033[0m";
-            }
+            let (mut bold_start, mut bold_end) = if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
+                ("\\033[1m", "\\033[0m")
+            } else {
+                ("$(tput bold)", "$(tput sgr0)")
+            };
 
             let mut spaces = "  ";
             if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
@@ -413,13 +410,13 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
 
             let msg: String = format!("{}The previously loaded module {}{}{} has been replaced \
                                     with {}{}{}",
-                                        spaces,
-                                        bold_start,
-                                        other,
-                                        bold_end,
-                                        bold_start,
-                                        selected_module,
-                                        bold_end);
+                                      spaces,
+                                      bold_start,
+                                      other,
+                                      bold_end,
+                                      bold_start,
+                                      selected_module,
+                                      bold_end);
             if rsmod.shell != "noshell" {
                 echo("", rsmod.shell);
             }
@@ -558,13 +555,11 @@ pub fn get_loaded_list() -> Vec<(String, i64)> {
 fn list(rsmod: &mut Rsmodule) {
     let loadedmodules: String;
 
-    let mut bs: &str = "$(tput bold)";
-    let mut be: &str = "$(tput sgr0)";
-
-    if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
-        bs = "\\033[1m";
-        be = "\\033[0m";
-    }
+    let (bs, be) = if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
+        ("\\033[1m", "\\033[0m")
+    } else {
+        ("$(tput bold)", "$(tput sgr0)")
+    };
 
     match env::var(ENV_LOADEDMODULES) {
         Ok(list) => loadedmodules = list,
@@ -724,6 +719,13 @@ fn undo(rsmod: &mut Rsmodule) {
 
 fn autoload_usage(shell: &str) {
 
+    let (bs, be) = if shell == "tcsh" || shell == "csh" {
+        ("\\033[1m", "\\033[0m")
+    } else {
+        ("$(tput bold)", "$(tput sgr0)")
+    };
+
+    /*
     let mut bs: &str = "$(tput bold)";
     let mut be: &str = "$(tput sgr0)";
 
@@ -731,6 +733,7 @@ fn autoload_usage(shell: &str) {
         bs = "\\033[1m";
         be = "\\033[0m";
     }
+    */
 
     echo("", shell);
     echo(&format!("  {}Usage{}: module autoload [subcommand] [modulename(s)]",

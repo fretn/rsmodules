@@ -38,9 +38,9 @@ pub fn delete(rsmod: &Rsmodule) {
             let filename: &str = &format!("{}/{}", path, module);
             if Path::new(filename).is_file() {
                 if interactive {
-                    if is_yes(read_input_shell(&format!("Are you sure you want to delete the modulefile {} ? [Y/n]: ",
-                                                        filename),
-                                               rsmod.shell)) {
+                    if is_yes(&read_input_shell(&format!("Are you sure you want to delete the modulefile {} ? [Y/n]: ",
+                                                         filename),
+                                                rsmod.shell)) {
                         remove_file(filename);
                     } else {
                         println_stderr!("No module files where deleted.");
@@ -55,10 +55,10 @@ pub fn delete(rsmod: &Rsmodule) {
     let removed = REMOVED_MODULES.lock().unwrap();
     if *removed {
         if interactive &&
-           is_yes(read_input_shell(&format!("Removal of {} was sucessful.\nDo you want to update the module cache now ? \
+           is_yes(&read_input_shell(&format!("Removal of {} was sucessful.\nDo you want to update the module cache now ? \
                                              [Y/n]: ",
-                                            rsmod.arg),
-                                   rsmod.shell)) {
+                                             rsmod.arg),
+                                    rsmod.shell)) {
             let modulepaths = get_module_paths(false);
             for modulepath in modulepaths {
                 if modulepath != "" {
@@ -172,7 +172,7 @@ fn get_modulename(arg: &str) -> String {
         ::std::process::exit(super::super::CRASH_CREATE_ERROR);
     }
 
-    return arg.to_string();
+    arg.to_string()
 }
 
 fn save(filename: &str, output: &[String]) -> io::Result<()> {
@@ -230,8 +230,8 @@ pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, mo
         output.push(format!("description(\"{}\");", desc));
     }
 
-    if is_yes(read_input_shell(" * Do you want to add another description entry ? [Y/n]: ",
-                               shell)) {
+    if is_yes(&read_input_shell(" * Do you want to add another description entry ? [Y/n]: ",
+                                shell)) {
         let desc = read_input_shell("   Enter your description: ", shell).trim_right_matches('\n').to_string();
         output.push(format!("description(\"{}\");", desc));
         add_description(shell, &mut output, true, modulename);
@@ -246,8 +246,8 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
             .trim_right_matches('\n')
             .to_string();
         output.push(format!("prepend_path(\"PATH\",\"{}\");", val));
-        if is_yes(read_input_shell(" * Do you want to set the LD_LIBRARY_PATH variable? [Y/n]: ",
-                                   shell)) {
+        if is_yes(&read_input_shell(" * Do you want to set the LD_LIBRARY_PATH variable? [Y/n]: ",
+                                    shell)) {
             let val = read_input_shell("   Enter the path where the libraries can be found: ",
                                        shell)
                 .trim_right_matches('\n')
@@ -256,8 +256,8 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
         }
     }
     println_stderr!("");
-    if is_yes(read_input_shell(" * Do you want to set another path variable? [Y/n]: ",
-                               shell)) {
+    if is_yes(&read_input_shell(" * Do you want to set another path variable? [Y/n]: ",
+                                shell)) {
         let var = read_input_shell("   Enter the name of variable: ", shell).trim_right_matches('\n').to_string();
         let val = read_input_shell("   Enter the path you want to add: ", shell).trim_right_matches('\n').to_string();
         output.push(format!("prepend_path(\"{}\",\"{}\");", var, val));

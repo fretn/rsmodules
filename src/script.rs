@@ -188,7 +188,7 @@ fn setenv(var: &str, val: &str) {
 }
 
 fn is_loaded(var: &str) -> bool {
-    return super::is_module_loaded(var, false);
+    super::is_module_loaded(var, false)
 }
 
 fn unsetenv(var: &str) {
@@ -476,7 +476,7 @@ pub fn get_description() -> Vec<String> {
         break;
     }
 
-    return output;
+    output
 }
 
 pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<String> {
@@ -517,7 +517,7 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
         output.push(line.to_string());
     }
 
-    return output;
+    output
 }
 
 // this function prints information about the module
@@ -673,7 +673,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     }
 
 
-    return output;
+    output
 }
 
 // thx uucore
@@ -723,16 +723,13 @@ fn is_executable_file(path: &PathBuf) -> bool {
                 perms -= 2;
             }
 
-            if perms - 1 >= 0 {
-                //                perms = perms - 1;
-                if counter == 2 {
-                    return true;
-                }
+            if perms - 1 >= 0 && counter == 2 {
+                return true;
             }
             counter += 1;
 
         }
     }
 
-    return false;
+    false
 }

@@ -52,7 +52,7 @@ pub fn read_input_shell(msg: &str, shell: &str) -> String {
     line
 }
 
-pub fn is_yes(answer: String) -> bool {
+pub fn is_yes(answer: &str) -> bool {
 
     if answer == "Y\n" || answer == "y\n" || answer == "\n" || answer == "yes\n" || answer == "Yes\n" || answer == "YES\n" {
         return true;
@@ -140,7 +140,7 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
             if !recursive {
                 print_title("ENVIRONMENT SETUP");
             }
-            if is_yes(read_input(" * rsmodules is not setup yet to autoload when a user \
+            if is_yes(&read_input(" * rsmodules is not setup yet to autoload when a user \
                                 opens a terminal. Do you want to do this now ? [Y/n]: ")) {
 
                 let mut bash_success: bool = false;
@@ -193,7 +193,7 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
             if !recursive {
                 print_title("ENVIRONMENT SETUP");
             }
-            if is_yes(read_input(" * rsmodules is not setup yet to autoload when you \
+            if is_yes(&read_input(" * rsmodules is not setup yet to autoload when you \
                                 open a new terminal.\n    Do you want to do this now ? [Y/n]: ")) {
                 // want to link rsmodules to /home and add it to bashrc
                 // read .cshrc and .bashrc line by line
@@ -464,7 +464,7 @@ pub fn run(recursive: bool) -> bool {
             String::new()
         };
 
-        if is_yes(line) || recursive {
+        if is_yes(&line) || recursive {
             let home_modules = &shellexpand::tilde("~/modules");
             let mut path = if get_current_uid() == 0 {
                 "/usr/local/modules"
@@ -486,7 +486,7 @@ pub fn run(recursive: bool) -> bool {
             }
 
             if Path::new(path).is_dir() {
-                if is_yes(read_input(" * Path already exists, are you sure you want to continue ? \
+                if is_yes(&read_input(" * Path already exists, are you sure you want to continue ? \
                                       [Y/n]: ")) {
 
                     update_setup_rsmodules_c_sh(false, path);
@@ -499,9 +499,9 @@ pub fn run(recursive: bool) -> bool {
                 crash(super::CRASH_MODULEPATH_IS_FILE,
                       "Modulepath cannot be a file");
                 return false;
-            } else if is_yes(read_input(format!(" * The folder {} doesn't exist, do you want to \
+            } else if is_yes(&read_input(format!(" * The folder {} doesn't exist, do you want to \
                                               create it ? [Y/n]: ",
-                                                path)
+                                                 path)
                 .as_ref())) {
 
                 create_dir_all(path).unwrap();

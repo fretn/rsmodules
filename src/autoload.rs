@@ -85,7 +85,7 @@ fn get_module_autoload_string(modules: &[&str], existing: &str, subcommand: &str
         output = modules_output.join(" ");
     }
 
-    return output;
+    output
 }
 
 fn is_module_autoloaded(module: &str, existing: &str) -> bool {
@@ -97,7 +97,7 @@ fn is_module_autoloaded(module: &str, existing: &str) -> bool {
         }
     }
 
-    return false;
+    false
 }
 
 
@@ -232,11 +232,9 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
             }
         }
 
-        if al_modules.is_empty() {
-            if shell != "noshell" {
-                echo("", shell);
-                echo("  No modules are autoloaded.", shell);
-            }
+        if al_modules.is_empty() && shell != "noshell" {
+            echo("", shell);
+            echo("  No modules are autoloaded.", shell);
         }
         if shell != "noshell" {
             echo("", shell);
@@ -301,10 +299,8 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
                                     if !is_module_autoloaded(module, &cap["modules"]) {
                                         modules.push(module);
                                     }
-                                } else if subcommand == "remove" {
-                                    if is_module_autoloaded(module, &cap["modules"]) {
-                                        modules.push(module);
-                                    }
+                                } else if subcommand == "remove" && is_module_autoloaded(module, &cap["modules"]) {
+                                    modules.push(module);
                                 }
                             }
 
@@ -338,30 +334,26 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
     }
 
     //  when the file is empty, just add the module load command
-    if num_matches == 0 && Path::new(initfile).is_file() {
-        if subcommand == "append" || subcommand == "add" || subcommand == "prepend" {
-            output.push(format!("module load {}", args.join(" ")));
-        }
+    if num_matches == 0 && Path::new(initfile).is_file() &&
+       (subcommand == "append" || subcommand == "add" || subcommand == "prepend") {
+        output.push(format!("module load {}", args.join(" ")));
     }
 
     // write to the file ~/.rsmodules_autoload
-    if subcommand == "append" || subcommand == "add" || subcommand == "prepend" || subcommand == "remove" ||
-       subcommand == "purge" {
-        //if output.len() > 0 && initfile == &shellexpand::tilde(AUTOLOAD_FILE) {
-        if initfile == shellexpand::tilde(AUTOLOAD_FILE) {
-            let mut file: File = match OpenOptions::new().write(true).create(true).truncate(true).open(initfile) {
-                Ok(fileresult) => fileresult,
-                Err(e) => {
-                    println_stderr!("Cannot write to file {} ({})", initfile, e);
-                    return;
-                }
-            };
+    if (subcommand == "append" || subcommand == "add" || subcommand == "prepend" || subcommand == "remove" ||
+        subcommand == "purge") && initfile == shellexpand::tilde(AUTOLOAD_FILE) {
+        let mut file: File = match OpenOptions::new().write(true).create(true).truncate(true).open(initfile) {
+            Ok(fileresult) => fileresult,
+            Err(e) => {
+                println_stderr!("Cannot write to file {} ({})", initfile, e);
+                return;
+            }
+        };
 
-            for newline in output {
-                if let Err(e) = writeln!(file, "{}", newline) {
-                    super::crash(super::super::CRASH_CANNOT_ADD_TO_ENV,
-                                 &format!("Cannot write to file {} ({})", initfile, e));
-                }
+        for newline in output {
+            if let Err(e) = writeln!(file, "{}", newline) {
+                super::crash(super::super::CRASH_CANNOT_ADD_TO_ENV,
+                             &format!("Cannot write to file {} ({})", initfile, e));
             }
         }
     }
