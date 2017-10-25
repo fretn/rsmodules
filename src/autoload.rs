@@ -50,11 +50,11 @@ lazy_static! {
     static ref RE_SOURCE: Regex = Regex::new(r#"^\s*(?P<source>\.|source)\s+(?P<path>.*)"#).unwrap();
 }
 
-fn get_module_autoload_string(modules: Vec<&str>, existing: &str, subcommand: &str) -> String {
+fn get_module_autoload_string(modules: &[&str], existing: &str, subcommand: &str) -> String {
 
-    let mut output: String = format!("{}", existing);
+    let mut output: String = existing.to_string();
 
-    if modules.len() == 0 {
+    if modules.is_empty() {
         return output;
     }
 
@@ -69,7 +69,7 @@ fn get_module_autoload_string(modules: Vec<&str>, existing: &str, subcommand: &s
     if subcommand == "remove" {
         let mut modules_output: Vec<&str> = Vec::new();
         let existing: Vec<&str> = existing.split_whitespace().collect();
-        for existing_module in existing.iter() {
+        for existing_module in &existing {
             let mut found = false;
             for module in modules.iter() {
                 if module == existing_module {
@@ -82,7 +82,7 @@ fn get_module_autoload_string(modules: Vec<&str>, existing: &str, subcommand: &s
             }
         }
 
-        output = format!("{}", modules_output.join(" "));
+        output = modules_output.join(" ");
     }
 
     return output;
@@ -165,7 +165,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
 
     if subcommand == "list" || subcommand == "refurbish" {
         parse_file(subcommand, args, initfile, &mut al_modules);
-        if initfile != &shellexpand::tilde("~/.login") && (shell == "csh" || shell == "tcsh") {
+        if initfile != shellexpand::tilde("~/.login") && (shell == "csh" || shell == "tcsh") {
             let initfile: &str = &shellexpand::tilde("~/.login");
             parse_file(subcommand, args, initfile, &mut al_modules);
         }
@@ -178,14 +178,14 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
 
     if subcommand == "refurbish" {
 
-        for al_module in al_modules.iter() {
+        for al_module in &al_modules {
             output(format!("module load {}\n", al_module.name));
         }
     } else if subcommand == "list" {
         al_modules.sort();
         let mut old_path: String = String::new();
         let mut count = 0;
-        for al_module in al_modules.iter() {
+        for al_module in &al_modules {
             if al_module.path.clone() != shellexpand::tilde(AUTOLOAD_FILE) {
                 count += 1;
             }
@@ -197,7 +197,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
         }
         count = 0;
 
-        for al_module in al_modules.iter() {
+        for al_module in &al_modules {
             let path = al_module.path.clone();
             if path != shellexpand::tilde(AUTOLOAD_FILE) {
                 if path != old_path && shell != "noshell" {
@@ -206,7 +206,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
                     echo("", shell);
                 }
                 if shell == "noshell" {
-                    echo(&format!("{}", al_module.name), shell);
+                    echo(&al_module.name, shell);
                 } else {
                     echo(&format!("  * {}{}{}", bs, al_module.name, be), shell);
                 }
@@ -221,11 +221,11 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
             echo("  Autoloaded modules managed by RSModules:", shell);
             echo("", shell);
         }
-        for al_module in al_modules.iter() {
+        for al_module in &al_modules {
             let path = al_module.path.clone();
             if path == shellexpand::tilde(AUTOLOAD_FILE) {
                 if shell == "noshell" {
-                    echo(&format!("{}", al_module.name), shell);
+                    echo(&al_module.name, shell);
                 } else {
                     echo(&format!("  * {}{}{}", bs, al_module.name, be), shell);
                 }
@@ -280,7 +280,7 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
 
                         let modulenames: &str = &cap["modules"];
                         let modulenames: Vec<&str> = modulenames.split_whitespace().collect();
-                        for modulename in modulenames.iter() {
+                        for modulename in &modulenames {
                             let mut al_module: Module = Module::new();
                             al_module.name = modulename.to_string();
                             al_module.path = initfile.to_string();
@@ -312,8 +312,8 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
                                 done = true;
                             } else {
                                 //if modules.len() > 0 {
-                                let module_list: String = get_module_autoload_string(modules, &cap["modules"], subcommand);
-                                if module_list.len() > 0 {
+                                let module_list: String = get_module_autoload_string(&modules, &cap["modules"], subcommand);
+                                if !module_list.is_empty() {
                                     output.push(format!("module load {}", module_list));
                                 }
                                 done = true;
@@ -348,7 +348,7 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
     if subcommand == "append" || subcommand == "add" || subcommand == "prepend" || subcommand == "remove" ||
        subcommand == "purge" {
         //if output.len() > 0 && initfile == &shellexpand::tilde(AUTOLOAD_FILE) {
-        if initfile == &shellexpand::tilde(AUTOLOAD_FILE) {
+        if initfile == shellexpand::tilde(AUTOLOAD_FILE) {
             let mut file: File = match OpenOptions::new().write(true).create(true).truncate(true).open(initfile) {
                 Ok(fileresult) => fileresult,
                 Err(e) => {
