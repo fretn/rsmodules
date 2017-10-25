@@ -111,13 +111,11 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
 
 pub fn update(modulepath: &str, shell: &str) -> bool {
 
-    let mut bold_start: &str = "$(tput bold)";
-    let mut bold_end: &str = "$(tput sgr0)";
-
-    if shell == "tcsh" || shell == "csh" {
-        bold_start = "\\033[1m";
-        bold_end = "\\033[0m";
-    }
+    let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
+        ("\\033[1m", "\\033[0m")
+    } else {
+        ("$(tput bold)", "$(tput sgr0)")
+    };
 
     // list is: path to file, module name, default
     let mut list: Vec<(String, String, bool)> = Vec::new();
@@ -264,13 +262,12 @@ pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i
 }
 
 pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width: usize) {
-    let mut bold_start: &str = "$(tput bold)";
-    let mut bold_end: &str = "$(tput sgr0)";
 
-    if shell == "tcsh" || shell == "csh" {
-        bold_start = "\\033[1m";
-        bold_end = "\\033[0m";
-    }
+    let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
+        ("\\033[1m", "\\033[0m")
+    } else {
+        ("$(tput bold)", "$(tput sgr0)")
+    };
 
     let modulepaths = get_module_paths(false);
 

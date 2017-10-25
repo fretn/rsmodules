@@ -131,13 +131,12 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
     // check if args.get(x) matches with one of them or not
     // if not, add it
 
-    let mut bs: &str = "$(tput bold)";
-    let mut be: &str = "$(tput sgr0)";
 
-    if shell == "tcsh" || shell == "csh" {
-        bs = "\\033[1m";
-        be = "\\033[0m";
-    }
+    let (bs, be) = if shell == "tcsh" || shell == "csh" {
+        ("\\033[1m", "\\033[0m")
+    } else {
+        ("$(tput bold)", "$(tput sgr0)")
+    };
 
     // al = autoload
     let mut al_modules: Vec<Module> = Vec::new();
@@ -326,11 +325,9 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
                 }
             }
         }
-    } else {
+    } else if subcommand == "append" || subcommand == "add" || subcommand == "prepend" {
         // when the file doesn't exist, just add the module load command
-        if subcommand == "append" || subcommand == "add" || subcommand == "prepend" {
-            output.push(format!("module load {}", args.join(" ")));
-        }
+        output.push(format!("module load {}", args.join(" ")));
     }
 
     //  when the file is empty, just add the module load command

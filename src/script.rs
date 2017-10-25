@@ -312,13 +312,12 @@ fn conflict(module: &str) {
         let (shell, _) = get_shell_info();
 
         let mut spaces = "  ";
-        let mut bold_start: &str = "$(tput bold)";
-        let mut bold_end: &str = "$(tput sgr0)";
 
-        if shell == "tcsh" || shell == "csh" {
-            bold_start = "\\033[1m";
-            bold_end = "\\033[0m";
-        }
+        let (mut bold_start, mut bold_end) = if shell == "tcsh" || shell == "csh" {
+            ("\\033[1m", "\\033[0m")
+        } else {
+            ("$(tput bold)", "$(tput sgr0)")
+        };
 
         if shell == "noshell" || shell == "perl" || shell == "python" {
             spaces = "";
@@ -468,13 +467,11 @@ pub fn get_description() -> Vec<String> {
 
     let mut output: Vec<String> = Vec::new();
 
-    for line in INFO_GENERAL.lock().unwrap().iter() {
-        output.push(line.to_string());
-        // there can be multiple description calls, but
-        // only store the first line of the description in
-        // the cache file
-        break;
-    }
+
+    // there can be multiple description calls, but
+    // only store the first line of the description in
+    // the cache file
+    output.push(INFO_GENERAL.lock().unwrap().get(0).unwrap().to_string());
 
     output
 }
@@ -524,13 +521,12 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
 pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     let mut output: Vec<String> = Vec::new();
     let mut got_output: bool = false;
-    let mut bold_start: &str = "$(tput bold)";
-    let mut bold_end: &str = "$(tput sgr0)";
 
-    if shell == "tcsh" || shell == "csh" {
-        bold_start = "\\033[1m";
-        bold_end = "\\033[0m";
-    }
+    let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
+        ("\\033[1m", "\\033[0m")
+    } else {
+        ("$(tput bold)", "$(tput sgr0)")
+    };
 
     //output.push(format!("echo \"{:=^1$}\"", module.to_string(), module.len()+5));
     output.push(format!("echo \"{}{}{}\"",
