@@ -91,7 +91,7 @@ fn get_module_autoload_string(modules: &[&str], existing: &str, subcommand: &str
 fn is_module_autoloaded(module: &str, existing: &str) -> bool {
     let existing: Vec<&str> = existing.split_whitespace().collect();
 
-    for item in existing.iter() {
+    for item in &existing {
         if module == *item {
             return true;
         }
@@ -232,7 +232,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
             }
         }
 
-        if al_modules.len() == 0 {
+        if al_modules.is_empty() {
             if shell != "noshell" {
                 echo("", shell);
                 echo("  No modules are autoloaded.", shell);

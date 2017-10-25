@@ -87,7 +87,7 @@ pub fn get_module_paths(silent: bool) -> Vec<String> {
         modulepaths.push(path.to_string());
     }
 
-    return modulepaths;
+    modulepaths
 }
 
 pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
@@ -364,14 +364,12 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
             if other != "" && other != selected_module {
                 for modulepath in rsmod.search_path {
                     let testpath = format!("{}/{}", modulepath, other);
-                    if Path::new(&testpath).exists() {
+                    if Path::new(&testpath).exists() && Path::new(&testpath).is_file() {
 
-                        if Path::new(&testpath).is_file() {
-                            let tmpmodulefile: PathBuf = PathBuf::from(&testpath);
-                            // unload the module as we found the path to the file
-                            run_modulefile(&tmpmodulefile, rsmod, other.as_ref(), "unload");
-                            replaced_module = true;
-                        }
+                        let tmpmodulefile: PathBuf = PathBuf::from(&testpath);
+                        // unload the module as we found the path to the file
+                        run_modulefile(&tmpmodulefile, rsmod, other.as_ref(), "unload");
+                        replaced_module = true;
                     }
                 }
             }
@@ -397,39 +395,37 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         output(format!("# {} {}\n", action, selected_module));
         run_modulefile(&modulefile, rsmod, selected_module, action);
 
-        if replaced_module {
-            if other != "" && selected_module != "" {
-                let mut bold_start: &str = "$(tput bold)";
-                let mut bold_end: &str = "$(tput sgr0)";
+        if replaced_module && other != "" && selected_module != "" {
+            let mut bold_start: &str = "$(tput bold)";
+            let mut bold_end: &str = "$(tput sgr0)";
 
-                if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
-                    bold_start = "\\033[1m";
-                    bold_end = "\\033[0m";
-                }
+            if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
+                bold_start = "\\033[1m";
+                bold_end = "\\033[0m";
+            }
 
-                let mut spaces = "  ";
-                if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
-                    spaces = "";
-                    bold_start = "";
-                    bold_end = "";
-                }
+            let mut spaces = "  ";
+            if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
+                spaces = "";
+                bold_start = "";
+                bold_end = "";
+            }
 
-                let msg: String = format!("{}The previously loaded module {}{}{} has been replaced \
-                                        with {}{}{}",
-                                          spaces,
-                                          bold_start,
-                                          other,
-                                          bold_end,
-                                          bold_start,
-                                          selected_module,
-                                          bold_end);
-                if rsmod.shell != "noshell" {
-                    echo("", rsmod.shell);
-                }
-                echo(&msg, rsmod.shell);
-                if rsmod.shell != "noshell" {
-                    echo("", rsmod.shell);
-                }
+            let msg: String = format!("{}The previously loaded module {}{}{} has been replaced \
+                                    with {}{}{}",
+                                        spaces,
+                                        bold_start,
+                                        other,
+                                        bold_end,
+                                        bold_start,
+                                        selected_module,
+                                        bold_end);
+            if rsmod.shell != "noshell" {
+                echo("", rsmod.shell);
+            }
+            echo(&msg, rsmod.shell);
+            if rsmod.shell != "noshell" {
+                echo("", rsmod.shell);
             }
         }
     }
@@ -472,7 +468,7 @@ pub fn is_module_loaded(name: &str, only_full_match: bool) -> bool {
         }
     }
 
-    return false;
+    false
 }
 
 pub fn get_other_version_of_loaded_module(name: &str) -> String {
@@ -496,7 +492,7 @@ pub fn get_other_version_of_loaded_module(name: &str) -> String {
         }
     }
 
-    return String::new();
+    String::new()
 }
 
 pub fn is_other_version_of_module_loaded(name: &str) -> bool {
@@ -520,7 +516,7 @@ pub fn is_other_version_of_module_loaded(name: &str) -> bool {
         }
     }
 
-    return false;
+    false
 }
 
 pub fn echo(line: &str, shell: &str) {
@@ -556,7 +552,7 @@ pub fn get_loaded_list() -> Vec<(String, i64)> {
     }
     result.sort();
 
-    return result;
+    result
 }
 
 fn list(rsmod: &mut Rsmodule) {
@@ -589,10 +585,12 @@ fn list(rsmod: &mut Rsmodule) {
             echo("", rsmod.shell);
         }
     } else {
-        let mut spaces = "  ";
-        if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
-            spaces = "";
-        }
+        let spaces = if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
+            ""
+        } else {
+            "  "
+        };
+
         echo("", rsmod.shell);
         echo(&format!("{}There are no modules loaded.", spaces),
              rsmod.shell);

@@ -175,16 +175,16 @@ fn is_shell_supported(shell: &str) -> bool {
         return true;
     }
 
-    return false;
+    false
 }
 
 #[cfg(debug_assertions)]
 fn release_debug() -> String {
-    return String::from(" (debug)");
+    String::from(" (debug)")
 }
 #[cfg(not(debug_assertions))]
 fn release_debug() -> String {
-    return String::from("");
+    String::from("")
 }
 
 fn usage(in_eval: bool) {
@@ -399,11 +399,9 @@ fn run(args: &[String]) {
                               tmpfile.write_all(data.as_bytes()));
             }
 
-            if command_hit == "switch" {
-                if args.len() != 5 {
-                    usage(true);
-                    return;
-                }
+            if command_hit == "switch" && args.len() != 5 {
+                usage(true);
+                return;
             }
 
             if command_hit == "switch" {
@@ -487,7 +485,7 @@ pub fn setenv(var: &str, val: &str, shell: &str) -> String {
         data = format!("$ENV{{{}}}=\"{}\";\n", var, val);
     }
 
-    return data;
+    data
 }
 
 pub fn output(line: String) {

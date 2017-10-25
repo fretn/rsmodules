@@ -36,7 +36,7 @@ use super::rsmod::crash;
 use users::get_current_uid;
 
 fn read_input(msg: &str) -> String {
-    return read_input_shell(msg, "noshell");
+    read_input_shell(msg, "noshell")
 }
 
 pub fn read_input_shell(msg: &str, shell: &str) -> String {
@@ -49,7 +49,7 @@ pub fn read_input_shell(msg: &str, shell: &str) -> String {
     let mut line = String::new();
     let stdin = io::stdin();
     stdin.lock().read_line(&mut line).expect("Could not read line");
-    return line;
+    line
 }
 
 pub fn is_yes(answer: String) -> bool {
@@ -58,7 +58,7 @@ pub fn is_yes(answer: String) -> bool {
         return true;
     }
 
-    return false;
+    false
 }
 
 fn print_title(title: &str) {
@@ -306,7 +306,7 @@ pub fn append_line(line: &str, filename: &str, verbose: bool, stderr: bool) -> b
         }
     }
 
-    return true;
+    true
 }
 
 pub fn detect_line(line: &str, file: &str) -> bool {
@@ -327,7 +327,7 @@ pub fn detect_line(line: &str, file: &str) -> bool {
         }
     }
 
-    return false;
+    false
 }
 
 // go over the file line by line, do we have
@@ -369,7 +369,7 @@ fn add_path(newpath: &str, filename: &str, variable: &str, append: bool) -> bool
 
     }
 
-    return true;
+    true
 }
 
 // match against export MODULEPATH="" and setenv MODULEPATH ""
@@ -418,7 +418,7 @@ fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
         }
     }
 
-    return output;
+    output
 }
 
 // if no modulepath variable found, or it is empty
@@ -499,26 +499,24 @@ pub fn run(recursive: bool) -> bool {
                 crash(super::CRASH_MODULEPATH_IS_FILE,
                       "Modulepath cannot be a file");
                 return false;
-            } else {
-                if is_yes(read_input(format!(" * The folder {} doesn't exist, do you want to \
+            } else if is_yes(read_input(format!(" * The folder {} doesn't exist, do you want to \
                                               create it ? [Y/n]: ",
-                                             path)
-                    .as_ref())) {
+                                                path)
+                .as_ref())) {
 
-                    create_dir_all(path).unwrap();
-                    println!("");
-                    println!("    - Succesfully created {}", path);
-                    update_setup_rsmodules_c_sh(false, path);
-                    return true;
-                } else {
-                    println!("");
-                    println!("   ==== WARNING: Don't forget to create: {} ====", path);
-                    update_setup_rsmodules_c_sh(false, path);
-                    return true;
-                }
+                create_dir_all(path).unwrap();
+                println!("");
+                println!("    - Succesfully created {}", path);
+                update_setup_rsmodules_c_sh(false, path);
+                return true;
+            } else {
+                println!("");
+                println!("   ==== WARNING: Don't forget to create: {} ====", path);
+                update_setup_rsmodules_c_sh(false, path);
+                return true;
             }
         }
     }
 
-    return false;
+    false
 }

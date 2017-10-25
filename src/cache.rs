@@ -163,7 +163,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
                     }
 
                     if second != "." && !is_version_file {
-                        let default = get_default_version(&modulepath, modulename);
+                        let default = get_default_version(modulepath, modulename);
                         list.push((str_path.to_string(), modulename.to_string(), default));
                         index_succes += 1;
                     }
@@ -277,11 +277,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
     // prints a nice list for module av
     // no gaps, no default, no description
     // usefull for parsing, eg for bash completion
-    let simple_list = if shell == "noshell" || shell == "python" || shell == "perl" {
-        true
-    } else {
-        false
-    };
+    let simple_list = shell == "noshell" || shell == "python" || shell == "perl";
 
     let mut longest_name = 0;
     let mut decoded: Vec<Module> = Vec::new();
@@ -464,13 +460,12 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
 
             echo("", shell);
             echo("", shell);
-            let module;
-            if arg != "" {
+            let module = if arg != "" {
                 let tmp = format!(" {}", arg);
-                module = tmp.clone();
+                tmp.clone()
             } else {
-                module = arg.to_string();
-            }
+                arg.to_string()
+            };
             echo(&format!("  Hint: use the command '{}module {}{} | more{}' to run the output through a \
                                   pager.",
                           bold_start,

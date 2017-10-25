@@ -30,11 +30,7 @@ fn remove_file(filename: &str) {
 }
 
 pub fn delete(rsmod: &Rsmodule) {
-    let interactive = if rsmod.shell == "noshell" {
-        false
-    } else {
-        true
-    };
+    let interactive = !(rsmod.shell == "noshell");
 
     let toremove: Vec<&str> = rsmod.arg.split_whitespace().collect();
     for module in &toremove {
@@ -78,7 +74,7 @@ pub fn delete(rsmod: &Rsmodule) {
 
 fn print_usage(opts: &Options) {
     let brief = "Usage: module create [options]";
-    println_stderr!("{}", opts.usage(&brief));
+    println_stderr!("{}", opts.usage(brief));
 }
 
 pub fn create(rsmod: &Rsmodule) {
