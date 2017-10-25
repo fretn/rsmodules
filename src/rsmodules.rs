@@ -119,7 +119,7 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
                           bold_end,
                           path),
                  shell);
-            if cache::update(path, shell) {
+            if cache::update(&path, shell) {
                 cache::parse_modules_cache_file(&testpath, &mut modules);
                 found_cachefile = true;
             }
@@ -209,7 +209,7 @@ pub fn command(rsmod: &mut Rsmodule) {
         let modulepaths = get_module_paths(false);
         for modulepath in modulepaths {
             if modulepath != "" {
-                cache::update(modulepath, rsmod.shell);
+                cache::update(&modulepath, rsmod.shell);
             }
         }
     } else if rsmod.cmd == "undo" {

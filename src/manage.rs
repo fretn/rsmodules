@@ -66,7 +66,7 @@ pub fn delete(rsmod: &Rsmodule) {
             let modulepaths = get_module_paths(false);
             for modulepath in modulepaths {
                 if modulepath != "" {
-                    super::cache::update(modulepath, rsmod.shell);
+                    super::cache::update(&modulepath, rsmod.shell);
                 }
             }
         } else {

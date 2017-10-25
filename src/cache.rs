@@ -80,10 +80,8 @@ fn add_module(name: String, description: String, flags: i64, modules: &mut Vec<M
 
 fn get_default_version(modulepath: &str, modulename: &str) -> bool {
     let parts: Vec<&str> = modulename.split('/').collect();
-    let mut groupname: &str = "";
-    if parts.len() >= 1 {
-        groupname = parts[0];
-    }
+    let groupname = if parts.len() >= 1 { parts[0] } else { "" };
+
     let tmp = format!("{}/{}/.version", modulepath, groupname);
     let module_path = Path::new(&tmp);
 
@@ -111,7 +109,7 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
     return false;
 }
 
-pub fn update(modulepath: String, shell: &str) -> bool {
+pub fn update(modulepath: &str, shell: &str) -> bool {
 
     let mut bold_start: &str = "$(tput bold)";
     let mut bold_end: &str = "$(tput sgr0)";
@@ -139,11 +137,11 @@ pub fn update(modulepath: String, shell: &str) -> bool {
                 if modulename != "" {
 
                     let first = modulename.chars().next().unwrap();
-                    let mut second = "";
-
-                    if modulename.len() >= 2 {
-                        second = &modulename[1..2];
-                    }
+                    let second = if modulename.len() >= 2 {
+                        &modulename[1..2]
+                    } else {
+                        ""
+                    };
 
                     if modulename == MODULESINDEX {
                         continue;
@@ -276,14 +274,14 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
 
     let modulepaths = get_module_paths(false);
 
-    let mut simple_list: bool = false;
-
     // prints a nice list for module av
     // no gaps, no default, no description
     // usefull for parsing, eg for bash completion
-    if shell == "noshell" || shell == "python" || shell == "perl" {
-        simple_list = true;
-    }
+    let simple_list = if shell == "noshell" || shell == "python" || shell == "perl" {
+        true
+    } else {
+        false
+    };
 
     let mut longest_name = 0;
     let mut decoded: Vec<Module> = Vec::new();
@@ -297,7 +295,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                               bold_end,
                               modulepath),
                      shell);
-                if update(modulepath.clone(), shell) {
+                if update(&modulepath, shell) {
                     match File::open(format!("{}/{}", modulepath, MODULESINDEX)) {
                         Ok(file) => file,
                         Err(_) => {
@@ -335,7 +333,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                     }
                 }
             }
-            longest_name = longest_name + 1;
+            longest_name += 1;
 
         } else {
             for module in decoded.clone() {
@@ -343,7 +341,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                     longest_name = module.name.len();
                 }
             }
-            longest_name = longest_name + 1;
+            longest_name += 1;
         }
     }
 
@@ -363,14 +361,10 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         }
         previous_description = module.description;
 
-        let mut default: &str = " ";
-
-        if module.flags == 1 {
-            default = "D";
-        }
+        let default = if module.flags == 1 { "D" } else { " " };
 
         if simple_list {
-            tmp = format!("{}", module.name);
+            tmp = module.name.clone();
         } else {
 
             // print loaded modules in bold
@@ -405,10 +399,11 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                 if first_char != previous_first_char && !simple_list {
                     // add a newline
                     if cnt == 1 {
-                        let mut width = longest_name;
-                        if longest_name > 12 {
-                            width = longest_name - 12;
-                        }
+                        let width = if longest_name > 12 {
+                            longest_name - 12
+                        } else {
+                            longest_name
+                        };
                         echo("", shell);
                         echo(&format!("  {}Module name{} {:width$} | {}Description{}",
                                       bold_start,
@@ -436,10 +431,11 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
             if first_char != previous_first_char && !simple_list {
                 // add a newline
                 if cnt == 1 {
-                    let mut width = longest_name;
-                    if longest_name > 12 {
-                        width = longest_name - 12;
-                    }
+                    let width = if longest_name > 12 {
+                        longest_name - 12
+                    } else {
+                        longest_name
+                    };
                     echo("", shell);
                     echo(&format!("  {}Module name{} {:width$} | {}Description{}",
                                   bold_start,
