@@ -30,14 +30,14 @@ fn remove_file(filename: &str) {
 }
 
 pub fn delete(rsmod: &Rsmodule) {
-    let mut interactive: bool = true;
-
-    if rsmod.shell == "noshell" {
-        interactive = false;
-    }
+    let interactive = if rsmod.shell == "noshell" {
+        false
+    } else {
+        true
+    };
 
     let toremove: Vec<&str> = rsmod.arg.split_whitespace().collect();
-    for module in toremove.iter() {
+    for module in &toremove {
         for path in rsmod.search_path.iter() {
             let filename: &str = &format!("{}/{}", path, module);
             if Path::new(filename).is_file() {
@@ -76,8 +76,8 @@ pub fn delete(rsmod: &Rsmodule) {
     }
 }
 
-fn print_usage(opts: Options) {
-    let brief = format!("Usage: module create [options]");
+fn print_usage(opts: &Options) {
+    let brief = "Usage: module create [options]";
     println_stderr!("{}", opts.usage(&brief));
 }
 
@@ -131,7 +131,7 @@ pub fn create(rsmod: &Rsmodule) {
         let present: bool = matches.opts_present(&present);
         if !present {
             if rsmod.arg != "" {
-                print_usage(opts);
+                print_usage(&opts);
             } else {
                 run_create_wizard(rsmod.shell, &mut output, get_modulename(rsmod.arg).as_ref());
             }
@@ -140,7 +140,7 @@ pub fn create(rsmod: &Rsmodule) {
 
         // help
         if matches.opt_present("h") {
-            print_usage(opts);
+            print_usage(&opts);
             return;
         }
 
