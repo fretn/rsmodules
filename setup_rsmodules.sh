@@ -26,7 +26,7 @@ fi
 # cleanup old tmp files from crashed rsmodules sessions
 find ~/.rsmodulestmp* -mtime +1 -delete > /dev/null 2>&1
 # also cleanup empty tmp files
-find ~/.rsmodulestmp* -empty -delete > /dev/null 2>&1
+find ~/.rsmodulestmp* -mtime +1 -empty -delete > /dev/null 2>&1
 
 if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 	#
