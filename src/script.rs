@@ -107,32 +107,45 @@ fn getenv(var: &str) -> String {
 
 // dummy functions for unloading
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn unsetenv_dummy(var: String) {}
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn remove_path_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn system_dummy(cmd: String) {}
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn load_dummy(module: String) {}
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn conflict_dummy(module: String) {}
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn unload_dummy(module: String) {}
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn description_dummy(desc: String) {}
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn getenv_dummy(var: String) -> String {
     String::new()
 }
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn prepend_path_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn append_path_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn setenv_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn set_alias_dummy(name: String, val: String) {}
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn is_loaded_dummy(var: String) -> bool {
     true
 }
@@ -140,16 +153,19 @@ fn is_loaded_dummy(var: String) -> bool {
 // unload functions
 
 #[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn setenv_unload(var: String, val: String) {
     unsetenv(var);
 }
 
 // info functions
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn setenv_info(var: String, val: String) {
     add_to_info_general(&format!("{}={}", var, val));
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn prepend_path_info(var: String, val: String) {
     if var == "PATH" {
         add_to_info_path(&val);
@@ -163,6 +179,7 @@ fn prepend_path_info(var: String, val: String) {
         add_to_info_general(&format!("{}={}", var, val));
     }
 }
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn append_path_info(var: String, val: String) {
     if var == "PATH" {
         add_to_info_path(&val);
@@ -177,20 +194,24 @@ fn append_path_info(var: String, val: String) {
     }
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn load_info(module: String) {
     add_to_load(module);
 }
 // load functions
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn setenv(var: String, val: String) {
     add_to_env_vars(&var, &val);
     env::set_var(&var, val);
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn is_loaded(var: String) -> bool {
     super::is_module_loaded(&var, false)
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn unsetenv(var: String) {
     let (shell, _) = get_shell_info();
     if shell == "bash" || shell == "zsh" {
@@ -206,6 +227,7 @@ fn unsetenv(var: String) {
     env::remove_var(&var);
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn prepend_path(var: String, val: String) {
     let mut current_val: String = String::from("");
     let mut notfound: bool = false;
@@ -227,6 +249,7 @@ fn prepend_path(var: String, val: String) {
     }
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn append_path(var: String, val: String) {
     let mut current_val: String = String::from("");
     let mut notfound: bool = false;
@@ -248,6 +271,7 @@ fn append_path(var: String, val: String) {
     }
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn remove_path(var: String, val: String) {
     let current_val: String;
 
@@ -268,6 +292,7 @@ fn remove_path(var: String, val: String) {
     env::set_var(&var, result);
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn unset_alias(name: String, val: String) {
     let (shell, _) = get_shell_info();
     if shell == "bash" || shell == "zsh" {
@@ -277,6 +302,7 @@ fn unset_alias(name: String, val: String) {
     }
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn set_alias(name: String, val: String) {
     let (shell, _) = get_shell_info();
     if shell != "python" && shell != "perl" {
@@ -284,6 +310,7 @@ fn set_alias(name: String, val: String) {
     }
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn system(cmd: String) {
     let (shell, _) = get_shell_info();
     if shell != "python" && shell != "perl" {
@@ -291,6 +318,7 @@ fn system(cmd: String) {
     }
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn load(module: String) {
     let (shell, _) = get_shell_info();
 
@@ -306,6 +334,7 @@ fn load(module: String) {
     super::command(&mut rsmod_command);
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn conflict(module: String) {
 
     if super::is_module_loaded(module.as_ref(), false) {
@@ -356,6 +385,7 @@ fn conflict(module: String) {
     }
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn unload(module: String) {
     let (shell, _) = get_shell_info();
     let shell: &String = &shell;
@@ -371,6 +401,7 @@ fn unload(module: String) {
     super::command(&mut rsmod_command);
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn description(desc: String) {
     INFO_DESCRIPTION.lock().unwrap().push(desc.replace("\"", "\\\""));
 }
@@ -482,9 +513,11 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
     }
 
     if action == "unload" {
-        remove_path(super::ENV_LOADEDMODULES.to_string(), selected_module.to_string());
+        remove_path(super::ENV_LOADEDMODULES.to_string(),
+                    selected_module.to_string());
     } else if action == "load" {
-        prepend_path(super::ENV_LOADEDMODULES.to_string(), selected_module.to_string());
+        prepend_path(super::ENV_LOADEDMODULES.to_string(),
+                     selected_module.to_string());
     }
 
     // this part must be below the above part

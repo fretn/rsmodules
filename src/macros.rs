@@ -21,9 +21,6 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-
-
-//
 macro_rules! println_stderr(
     ($($arg:tt)*) => { {
         let r = writeln!(&mut ::std::io::stderr(), $($arg)*);
@@ -100,6 +97,7 @@ macro_rules! crash(
     })
 );
 
+#[allow(unused_macros)]
 macro_rules! exit(
     ($exitcode:expr) => ({
         ::std::process::exit($exitcode)
