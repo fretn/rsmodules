@@ -107,71 +107,71 @@ fn getenv(var: &str) -> String {
 
 // dummy functions for unloading
 #[allow(unused_variables)]
-fn unsetenv_dummy(var: &str) {}
+fn unsetenv_dummy(var: String) {}
 #[allow(unused_variables)]
-fn remove_path_dummy(var: &str, val: &str) {}
+fn remove_path_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
-fn system_dummy(cmd: &str) {}
+fn system_dummy(cmd: String) {}
 #[allow(unused_variables)]
-fn load_dummy(module: &str) {}
+fn load_dummy(module: String) {}
 #[allow(unused_variables)]
-fn conflict_dummy(module: &str) {}
+fn conflict_dummy(module: String) {}
 #[allow(unused_variables)]
-fn unload_dummy(module: &str) {}
+fn unload_dummy(module: String) {}
 #[allow(unused_variables)]
-fn description_dummy(desc: &str) {}
+fn description_dummy(desc: String) {}
 #[allow(unused_variables)]
-fn getenv_dummy(var: &str) -> String {
+fn getenv_dummy(var: String) -> String {
     String::new()
 }
 #[allow(unused_variables)]
-fn prepend_path_dummy(var: &str, val: &str) {}
+fn prepend_path_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
-fn append_path_dummy(var: &str, val: &str) {}
+fn append_path_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
-fn setenv_dummy(var: &str, val: &str) {}
+fn setenv_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
-fn set_alias_dummy(name: &str, val: &str) {}
+fn set_alias_dummy(name: String, val: String) {}
 #[allow(unused_variables)]
-fn is_loaded_dummy(var: &str) -> bool {
+fn is_loaded_dummy(var: String) -> bool {
     true
 }
 
 // unload functions
 
 #[allow(unused_variables)]
-fn setenv_unload(var: &str, val: &str) {
+fn setenv_unload(var: String, val: String) {
     unsetenv(var);
 }
 
 // info functions
 
-fn setenv_info(var: &str, val: &str) {
+fn setenv_info(var: String, val: String) {
     add_to_info_general(&format!("{}={}", var, val));
 }
 
-fn prepend_path_info(var: &str, val: &str) {
+fn prepend_path_info(var: String, val: String) {
     if var == "PATH" {
-        add_to_info_path(val);
+        add_to_info_path(&val);
     } else if var == "LD_LIBRARY_PATH" {
-        add_to_info_ld_library_path(val);
+        add_to_info_ld_library_path(&val);
     } else if var == "PYTHONPATH" {
-        add_to_info_pythonpath(val);
+        add_to_info_pythonpath(&val);
     } else if var == "PERL5LIB" {
-        add_to_info_perl5lib(val);
+        add_to_info_perl5lib(&val);
     } else {
         add_to_info_general(&format!("{}={}", var, val));
     }
 }
-fn append_path_info(var: &str, val: &str) {
+fn append_path_info(var: String, val: String) {
     if var == "PATH" {
-        add_to_info_path(val);
+        add_to_info_path(&val);
     } else if var == "LD_LIBRARY_PATH" {
-        add_to_info_ld_library_path(val);
+        add_to_info_ld_library_path(&val);
     } else if var == "PYTHONPATH" {
-        add_to_info_pythonpath(val);
+        add_to_info_pythonpath(&val);
     } else if var == "PERL5LIB" {
-        add_to_info_perl5lib(val);
+        add_to_info_perl5lib(&val);
     } else {
         add_to_info_general(&format!("{}={}", var, val));
     }
@@ -182,16 +182,16 @@ fn load_info(module: String) {
 }
 // load functions
 
-fn setenv(var: &str, val: &str) {
-    add_to_env_vars(var, val);
+fn setenv(var: String, val: String) {
+    add_to_env_vars(&var, &val);
     env::set_var(&var, val);
 }
 
-fn is_loaded(var: &str) -> bool {
-    super::is_module_loaded(var, false)
+fn is_loaded(var: String) -> bool {
+    super::is_module_loaded(&var, false)
 }
 
-fn unsetenv(var: &str) {
+fn unsetenv(var: String) {
     let (shell, _) = get_shell_info();
     if shell == "bash" || shell == "zsh" {
         add_to_commands(&format!("unset \"{}\"", var));
@@ -206,7 +206,7 @@ fn unsetenv(var: &str) {
     env::remove_var(&var);
 }
 
-fn prepend_path(var: &str, val: &str) {
+fn prepend_path(var: String, val: String) {
     let mut current_val: String = String::from("");
     let mut notfound: bool = false;
 
@@ -222,12 +222,12 @@ fn prepend_path(var: &str, val: &str) {
         setenv(var, val);
     } else {
         let final_val = format!("{}:{}", val, current_val);
-        add_to_env_vars(var, &final_val);
+        add_to_env_vars(&var, &final_val);
         env::set_var(&var, format!("{}:{}", val, current_val));
     }
 }
 
-fn append_path(var: &str, val: &str) {
+fn append_path(var: String, val: String) {
     let mut current_val: String = String::from("");
     let mut notfound: bool = false;
 
@@ -243,12 +243,12 @@ fn append_path(var: &str, val: &str) {
         setenv(var, val);
     } else {
         let final_val = format!("{}:{}", current_val, val);
-        add_to_env_vars(var, &final_val);
+        add_to_env_vars(&var, &final_val);
         env::set_var(&var, format!("{}:{}", current_val, val));
     }
 }
 
-fn remove_path(var: &str, val: &str) {
+fn remove_path(var: String, val: String) {
     let current_val: String;
 
     match env::var(&var) {
@@ -264,11 +264,11 @@ fn remove_path(var: &str, val: &str) {
 
     let result = values.join(":");
 
-    add_to_env_vars(var, &result);
+    add_to_env_vars(&var, &result);
     env::set_var(&var, result);
 }
 
-fn unset_alias(name: &str, val: &str) {
+fn unset_alias(name: String, val: String) {
     let (shell, _) = get_shell_info();
     if shell == "bash" || shell == "zsh" {
         add_to_commands(&format!("unalias \"{}\"", name));
@@ -277,28 +277,28 @@ fn unset_alias(name: &str, val: &str) {
     }
 }
 
-fn set_alias(name: &str, val: &str) {
+fn set_alias(name: String, val: String) {
     let (shell, _) = get_shell_info();
     if shell != "python" && shell != "perl" {
         add_to_commands(&format!("alias {}=\"{}\"", name, val));
     }
 }
 
-fn system(cmd: &str) {
+fn system(cmd: String) {
     let (shell, _) = get_shell_info();
     if shell != "python" && shell != "perl" {
-        add_to_commands(cmd);
+        add_to_commands(&cmd);
     }
 }
 
-fn load(module: &str) {
+fn load(module: String) {
     let (shell, _) = get_shell_info();
 
     let modulepaths = super::get_module_paths(false);
     let mut rsmod_command: Rsmodule = Rsmodule {
         cmd: "load",
         typed_command: "load",
-        arg: module,
+        arg: &module,
         search_path: &modulepaths,
         shell: &shell,
         shell_width: 80,
@@ -306,7 +306,7 @@ fn load(module: &str) {
     super::command(&mut rsmod_command);
 }
 
-fn conflict(module: &str) {
+fn conflict(module: String) {
 
     if super::is_module_loaded(module.as_ref(), false) {
         let (shell, _) = get_shell_info();
@@ -356,14 +356,14 @@ fn conflict(module: &str) {
     }
 }
 
-fn unload(module: &str) {
+fn unload(module: String) {
     let (shell, _) = get_shell_info();
     let shell: &String = &shell;
     let modulepaths = super::get_module_paths(false);
     let mut rsmod_command: Rsmodule = Rsmodule {
         cmd: "unload",
         typed_command: "unload",
-        arg: module,
+        arg: &module,
         search_path: &modulepaths,
         shell: shell,
         shell_width: 80,
@@ -371,7 +371,7 @@ fn unload(module: &str) {
     super::command(&mut rsmod_command);
 }
 
-fn description(desc: &str) {
+fn description(desc: String) {
     INFO_DESCRIPTION.lock().unwrap().push(desc.replace("\"", "\\\""));
 }
 
@@ -482,9 +482,9 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
     }
 
     if action == "unload" {
-        remove_path(super::ENV_LOADEDMODULES, selected_module);
+        remove_path(super::ENV_LOADEDMODULES.to_string(), selected_module.to_string());
     } else if action == "load" {
-        prepend_path(super::ENV_LOADEDMODULES, selected_module);
+        prepend_path(super::ENV_LOADEDMODULES.to_string(), selected_module.to_string());
     }
 
     // this part must be below the above part
