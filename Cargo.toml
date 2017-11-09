@@ -6,7 +6,7 @@ authors = ["Frederik Delaere <frederik.delaere@ugent.be>"]
 [dependencies]
 rand = "0.3"
 lazy_static = "0.2"
-rhai = "0.4.0"
+rhai = "0.7.1"
 walkdir = "1"
 bincode = "0.6.1"
 rustc-serialize = "0.3.23"
