@@ -47,14 +47,15 @@ extern crate shellexpand;
 extern crate regex;
 extern crate getopts;
 
+use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::io::Write;
 use std::fs::{File, remove_file};
 use std::path::PathBuf;
 use std::env;
-use std::sync::Mutex;
 
 lazy_static! {
-    static ref TMPFILE_INITIALIZED: Mutex<bool> = Mutex::new(false);
+    static ref TMPFILE_INITIALIZED: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
     static ref TMPFILE_PATH: Mutex<String> = Mutex::new(String::new());
     static ref OUTPUT_BUFFER: Mutex<Vec<String>> = Mutex::new(vec![]);
 }
@@ -223,8 +224,7 @@ fn set_global_tmpfile(tmp_file_path: String) {
     let mut tmp = TMPFILE_PATH.lock().unwrap();
     *tmp = tmp_file_path;
 
-    let mut tmp = TMPFILE_INITIALIZED.lock().unwrap();
-    *tmp = true;
+    TMPFILE_INITIALIZED.store(true, Ordering::Relaxed);
 }
 
 fn run(args: &[String]) {
@@ -495,8 +495,7 @@ pub fn output(line: String) {
 }
 
 fn init() {
-    let mut tmp = TMPFILE_INITIALIZED.lock().unwrap();
-    *tmp = false;
+    TMPFILE_INITIALIZED.store(false, Ordering::Relaxed);
 }
 
 fn main() {

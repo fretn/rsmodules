@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+use std::sync::atomic::Ordering;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::io::Write;
@@ -57,9 +58,8 @@ pub struct Rsmodule<'a> {
 pub fn crash(signal: i32, message: &str) {
 
     let tmp_file_path = super::TMPFILE_PATH.lock().unwrap();
-    let tmpfile_initialized = super::TMPFILE_INITIALIZED.lock().unwrap();
 
-    if *tmpfile_initialized {
+    if super::TMPFILE_INITIALIZED.load(Ordering::Relaxed) {
         let path = &(*tmp_file_path);
         fs::remove_file(path).unwrap();
     }
@@ -460,8 +460,6 @@ pub fn is_module_loaded(name: &str, only_full_match: bool) -> bool {
 
         if part_module[0] == part_name[0] && !only_full_match {
             return true;
-        } else {
-            continue;
         }
     }
 

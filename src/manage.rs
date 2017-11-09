@@ -8,12 +8,13 @@ use std::path::Path;
 use std::env;
 use rsmod::{Rsmodule, get_module_paths};
 use wizard::{is_yes, read_input_shell};
-use std::sync::Mutex;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use getopts::{Options, Matches};
 
 lazy_static! {
-	static ref REMOVED_MODULES: Mutex<bool> = Mutex::new(false);
+    static ref REMOVED_MODULES: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
 }
 
 fn remove_file(filename: &str) {
@@ -24,8 +25,7 @@ fn remove_file(filename: &str) {
     });
 
     if !err {
-        let mut removed = REMOVED_MODULES.lock().unwrap();
-        *removed = true;
+        REMOVED_MODULES.store(true, Ordering::Relaxed);
     }
 }
 
@@ -52,8 +52,7 @@ pub fn delete(rsmod: &Rsmodule) {
         }
     }
 
-    let removed = REMOVED_MODULES.lock().unwrap();
-    if *removed {
+    if REMOVED_MODULES.load(Ordering::Relaxed) {
         if interactive &&
            is_yes(&read_input_shell(&format!("Removal of {} was sucessful.\nDo you want to update the module cache now ? \
                                              [Y/n]: ",

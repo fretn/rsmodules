@@ -24,7 +24,8 @@ SOFTWARE.
 extern crate rhai;
 use self::rhai::{Engine, FnRegister};
 use std::env;
-use std::sync::Mutex;
+use std::sync::{Mutex, Arc};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::path::{Path, PathBuf, is_separator};
 use std::io::Write;
 use std::fs::{metadata, read_dir};
@@ -36,7 +37,7 @@ use super::{Rsmodule, get_shell_info, echo};
 lazy_static! {
     static ref ENV_VARS: Mutex<Vec<(String, String)>> = Mutex::new(vec![]);
     static ref COMMANDS: Mutex<Vec<String>> = Mutex::new(vec![]);
-    static ref CONFLICT: Mutex<bool> = Mutex::new(false);
+    static ref CONFLICT: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
     static ref INFO_DESCRIPTION: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_GENERAL: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
@@ -57,8 +58,7 @@ fn init_vars_and_commands() {
     INFO_PERL5LIB.lock().unwrap().clear();
     LOAD.lock().unwrap().clear();
 
-    let mut tmp = CONFLICT.lock().unwrap();
-    *tmp = false;
+    CONFLICT.store(false, Ordering::Relaxed);
 }
 
 fn add_to_env_vars(variable: &str, value: &str) {
@@ -352,8 +352,7 @@ fn conflict(module: &str) {
                  shell);
             echo("", shell);
         }
-        let mut data = CONFLICT.lock().unwrap();
-        *data = true;
+        CONFLICT.store(true, Ordering::Relaxed);
     }
 }
 
@@ -478,9 +477,7 @@ pub fn get_description() -> Vec<String> {
 
 pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<String> {
 
-    let data = CONFLICT.lock().unwrap();
-
-    if *data {
+    if CONFLICT.load(Ordering::Relaxed) {
         return Vec::new();
     }
 
