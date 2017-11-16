@@ -501,7 +501,10 @@ pub fn get_description() -> Vec<String> {
     // there can be multiple description calls, but
     // only store the first line of the description in
     // the cache file
-    output.push(INFO_GENERAL.lock().unwrap().get(0).unwrap().to_string());
+    let desc: Vec<String> = INFO_GENERAL.lock().unwrap().to_vec();
+    if !desc.is_empty() {
+        output.push(INFO_GENERAL.lock().unwrap().get(0).unwrap().to_string());
+    }
 
     output
 }
