@@ -114,7 +114,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
     let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
         ("\\033[1m", "\\033[0m")
     } else {
-        ("$(tput bold)", "$(tput sgr0)")
+        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
     };
 
     // list is: path to file, module name, default
@@ -266,7 +266,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
     let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
         ("\\033[1m", "\\033[0m")
     } else {
-        ("$(tput bold)", "$(tput sgr0)")
+        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
     };
 
     let modulepaths = get_module_paths(false);

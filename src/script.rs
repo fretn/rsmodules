@@ -345,7 +345,7 @@ fn conflict(module: String) {
         let (mut bold_start, mut bold_end) = if shell == "tcsh" || shell == "csh" {
             ("\\033[1m", "\\033[0m")
         } else {
-            ("$(tput bold)", "$(tput sgr0)")
+            ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
         };
 
         if shell == "noshell" || shell == "perl" || shell == "python" {
@@ -555,7 +555,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
         ("\\033[1m", "\\033[0m")
     } else {
-        ("$(tput bold)", "$(tput sgr0)")
+        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
     };
 
     //output.push(format!("echo \"{:=^1$}\"", module.to_string(), module.len()+5));

@@ -135,7 +135,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
     let (bs, be) = if shell == "tcsh" || shell == "csh" {
         ("\\033[1m", "\\033[0m")
     } else {
-        ("$(tput bold)", "$(tput sgr0)")
+        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
     };
 
     // al = autoload

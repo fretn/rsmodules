@@ -98,7 +98,7 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
     let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
         ("\\033[1m", "\\033[0m")
     } else {
-        ("$(tput bold)", "$(tput sgr0)")
+        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
     };
 
     for path in modulepaths {
@@ -398,7 +398,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
             let (mut bold_start, mut bold_end) = if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
                 ("\\033[1m", "\\033[0m")
             } else {
-                ("$(tput bold)", "$(tput sgr0)")
+                ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
             };
 
             let mut spaces = "  ";
@@ -556,7 +556,7 @@ fn list(rsmod: &mut Rsmodule) {
     let (bs, be) = if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
         ("\\033[1m", "\\033[0m")
     } else {
-        ("$(tput bold)", "$(tput sgr0)")
+        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
     };
 
     match env::var(ENV_LOADEDMODULES) {
@@ -720,12 +720,12 @@ fn autoload_usage(shell: &str) {
     let (bs, be) = if shell == "tcsh" || shell == "csh" {
         ("\\033[1m", "\\033[0m")
     } else {
-        ("$(tput bold)", "$(tput sgr0)")
+        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
     };
 
     /*
-    let mut bs: &str = "$(tput bold)";
-    let mut be: &str = "$(tput sgr0)";
+    let mut bs: &str = "$(tput -T xterm bold)";
+    let mut be: &str = "$(tput -T xterm sgr0)";
 
     if shell == "tcsh" || shell == "csh" {
         bs = "\\033[1m";
