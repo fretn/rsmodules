@@ -406,8 +406,8 @@ fn description(desc: String) {
     INFO_DESCRIPTION.lock().unwrap().push(desc.replace("\"", "\\\""));
 }
 
-fn description_cache(desc: &str) {
-    add_to_info_general(desc);
+fn description_cache(desc: String) {
+    add_to_info_general(&desc);
 }
 
 pub fn run(path: &PathBuf, action: &str) {
