@@ -34,8 +34,8 @@ An example says more than a thousand words:
 /usr/bin/perl
 [user@awesome ~]$ module av perl
 
-  Module name        | Description
-                     |                     
+  Module name | Description
+              |                     
   perl/5.10.1 | 
 D perl/5.14.1 | Perl 5.14.1 is a highly capable, feature-rich programming language with over 29 years of development.
   perl/5.8.9  | 
