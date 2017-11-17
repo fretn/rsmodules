@@ -22,15 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 extern crate rhai;
+//extern crate is_executable;
 use self::rhai::{Engine, FnRegister};
 use std::env;
 use std::sync::{Mutex, Arc};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::path::{Path, PathBuf, is_separator};
 use std::io::Write;
-use std::fs::{metadata, read_dir};
-use std::os::unix::fs::PermissionsExt;
+use std::fs::read_dir;
 use super::{Rsmodule, get_shell_info, echo};
+use is_executable::IsExecutable;
 
 // WARNING: the scripts don't support tabbed indents in if else structures
 
@@ -406,6 +407,7 @@ fn description(desc: String) {
     INFO_DESCRIPTION.lock().unwrap().push(desc.replace("\"", "\\\""));
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn description_cache(desc: String) {
     add_to_info_general(&desc);
 }
@@ -671,7 +673,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
                     continue;
                 }
 
-                if is_executable_file(&path) {
+				if path.is_executable() {
                     execs.push(format!("echo '{}'", strip_dir(path.to_str().unwrap())));
                     got_output = true;
                 }
@@ -719,46 +721,4 @@ fn strip_dir(fullname: &str) -> String {
         Some(c) => c.as_os_str().to_str().unwrap().to_owned(),
         None => "".to_owned(),
     }
-}
-
-fn is_executable_file(path: &PathBuf) -> bool {
-    let meta = match metadata(path) {
-        Ok(metadata) => metadata,
-        Err(_) => return false,
-    };
-    let perm = meta.permissions();
-
-    let mut octal_number = 0;
-    let mut decimal_number = perm.mode();
-    let mut i: u32 = 1;
-    while decimal_number != 0 {
-        octal_number += (decimal_number % 8) * i;
-        decimal_number /= 8;
-        i *= 10;
-    }
-
-    let perm: String = octal_number.to_string();
-    let perm = perm.split("");
-    let mut counter = 0;
-    for p in perm {
-        if p != "" {
-            let mut perms = p.parse::<i32>().unwrap();
-
-            if perms - 4 >= 0 {
-                perms -= 4;
-            }
-
-            if perms - 2 >= 0 {
-                perms -= 2;
-            }
-
-            if perms - 1 >= 0 && counter == 2 {
-                return true;
-            }
-            counter += 1;
-
-        }
-    }
-
-    false
 }

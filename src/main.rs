@@ -46,6 +46,7 @@ extern crate users;
 extern crate shellexpand;
 extern crate regex;
 extern crate getopts;
+extern crate is_executable;
 
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
