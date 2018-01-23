@@ -98,6 +98,7 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
     let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
         ("\\033[1m", "\\033[0m")
     } else {
+        // FIXME: use ansi-term
         ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
     };
 

@@ -47,6 +47,8 @@ extern crate shellexpand;
 extern crate regex;
 extern crate getopts;
 extern crate is_executable;
+extern crate gumdrop;
+#[macro_use] extern crate gumdrop_derive;
 
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};

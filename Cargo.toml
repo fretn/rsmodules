@@ -15,6 +15,8 @@ shellexpand = "1.0.0"
 regex = "0.2.1"
 getopts = "0.2.14"
 is_executable = "0.1.0"
+gumdrop = { git =  'https://github.com/murarth/gumdrop.git' }
+gumdrop_derive = { git = 'https://github.com/murarth/gumdrop.git', path = "gumdrop_derive" }
 
 [[bin]]
 name = "rsmodules"

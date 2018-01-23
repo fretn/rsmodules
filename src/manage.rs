@@ -5,13 +5,15 @@ use std::fs::File;
 use std::io::Write;
 use std::io;
 use std::path::Path;
-use std::env;
+use std::env::args;
 use rsmod::{Rsmodule, get_module_paths};
 use wizard::{is_yes, read_input_shell};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use getopts::{Options, Matches};
+//use getopts::{Options, Matches};
+
+use gumdrop::Options;
 
 lazy_static! {
     static ref REMOVED_MODULES: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
@@ -71,12 +73,125 @@ pub fn delete(rsmod: &Rsmodule) {
     }
 }
 
+/*
 fn print_usage(opts: &Options) {
     let brief = "Usage: module create [options]";
     println_stderr!("{}", opts.usage(brief));
 }
+*/
+
+#[derive(Debug, Default, Options)]
+struct CreateOptions {
+    // Contains "free" arguments -- those that are not options.
+    // If no `free` field is declared, free arguments will result in an error.
+    #[options(free)]
+    free: Vec<String>,
+
+    // Boolean options are treated as flags, taking no additional values.
+    // The optional `help` attribute is displayed in `usage` text.
+    #[options(help = "Print this help message")]
+    help: bool,
+
+    #[options(no_short, help = "Output filename")]
+    filename: Option<String>,
+
+    #[options(no_short, help = "Prepend a path to a variable")]
+    prepend_path: Vec<(String, String)>,
+
+    #[options(no_short, help = "Append a path to a variable")]
+    append_path: Vec<(String, String)>,
+
+    #[options(no_short, help = "Remove a path from a variable")]
+    remove_path: Vec<(String, String)>,
+
+    #[options(no_short, help = "Set a variable")]
+    setenv: Vec<(String,String)>,
+
+    #[options(no_short, help = "Get a variable")]
+    getenv: Vec<String>,
+
+    #[options(no_short, help = "Unset a variable")]
+    unsetenv: Vec<String>,
+
+    #[options(no_short, help = "A description for the module file")]
+    description: Vec<String>,
+
+    #[options(no_short, help = "Load a module")]
+    load: Vec<String>,
+
+    #[options(no_short, help = "Unload a module")]
+    unload: Vec<String>,
+
+    #[options(no_short, help = "Conflict with a module")]
+    conflict: Vec<String>,
+
+    #[options(no_short, help = "Run a system command")]
+    system: Vec<String>,
+
+    #[options(no_short, help = "Create an alias")]
+    set_alias: Vec<String>,
+}
+
+fn print_help(args: &Vec<String>) {
+	//let args: Vec<String> = args().collect();
+
+    // Printing usage text for the `--help` option is handled explicitly
+    // by the program.
+    // However, `derive(Options)` does generate information about all
+    // defined options.
+    println_stderr!("Usage: {} [OPTIONS] [ARGUMENTS]", args[0]);
+    println_stderr!("");
+    println_stderr!("{}", CreateOptions::usage());
+}
+
+fn prepare_for_saving(filename: &str, output: &[String]) {
+
+    match save(filename, &output) {
+        Ok(_) => {}
+        Err(e) => {
+            println_stderr!("Cannot write to file {} ({})", filename, e);
+            ::std::process::exit(super::super::CRASH_CREATE_ERROR);
+        }
+    }
+}
 
 pub fn create(rsmod: &Rsmodule) {
+    let mut output: Vec<String> = Vec::new();
+	let args: Vec<String> = args().collect();
+
+    // Remember to skip the first argument. That's the program name.
+    let opts = match CreateOptions::parse_args_default(&args[3..]) {
+        Ok(opts) => opts,
+        Err(e) => {
+            println_stderr!("{}: {}", args[0], e);
+            return;
+        }
+    };
+
+    if opts.help {
+        print_help(&args);
+    } else {
+
+        if rsmod.arg == "" {
+            let filename = run_create_wizard(rsmod.shell, &mut output);
+            prepare_for_saving(&filename, &output);
+        } else {
+            if opts.filename == None {
+                print_help(&args);
+                println_stderr!("");
+                println_stderr!("Error:");
+                println_stderr!("");
+                println_stderr!("  --filename is required");
+                println_stderr!("");
+            } else {
+                println_stderr!("{:#?}", opts);
+                prepare_for_saving(&opts.filename.unwrap(), &output);
+            }
+        }
+    }
+}
+/*
+pub fn _create(rsmod: &Rsmodule) {
     let mut output: Vec<String> = Vec::new();
 
     if rsmod.shell == "noshell" {
@@ -173,6 +288,7 @@ fn get_modulename(arg: &str) -> String {
 
     arg.to_string()
 }
+*/
 
 fn save(filename: &str, output: &[String]) -> io::Result<()> {
 
@@ -202,6 +318,7 @@ fn save(filename: &str, output: &[String]) -> io::Result<()> {
     Ok(())
 }
 
+/*
 fn parse_opt(matches: &Matches, output: &mut Vec<String>, opt: &str, command: &str, number: i32) {
     if matches.opt_present(opt) {
         let value: Vec<String> = matches.opt_strs(opt);
@@ -219,6 +336,7 @@ fn parse_opt(matches: &Matches, output: &mut Vec<String>, opt: &str, command: &s
         }
     }
 }
+*/
 
 pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, modulename: &str) {
     if !skip {
@@ -264,7 +382,7 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
     }
 }
 
-pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>, modulename: &str) {
+pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
     println_stderr!("");
     // Where do you want to save this modulefile ?
     // for path in modulepath
@@ -277,9 +395,24 @@ pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>, modulename: 
 
     //
     println_stderr!("");
-    add_description(shell, &mut output, false, modulename);
+
+    // todo: tabcompletion
+    // https://github.com/shaleh/rust-readline/blob/master/examples/fileman.rs
+    let folder = read_input_shell(&format!(" * Enter the folder where the modulefile will be saved: "),
+                                shell)
+        .trim_right_matches('\n')
+        .to_string();
+
+    let modulename = read_input_shell(&format!(" * Enter the name of the module: "),
+                                shell)
+        .trim_right_matches('\n')
+        .to_string();
+
+    add_description(shell, &mut output, false, &modulename);
     add_path(shell, &mut output, false);
     for line in output {
         println_stderr!("{}", line);
     }
+
+    format!("{}/{}", folder, modulename)
 }
