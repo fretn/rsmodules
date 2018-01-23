@@ -437,7 +437,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
             } else {
                 arg.to_string()
             };
-            let msg = format!("{} {} | more", typed_command, module);
+            let msg = format!("module {} {}| more", typed_command, module);
             echo(
                 &format!(
                     "  Hint: use the command '{}' to run the output through a \
