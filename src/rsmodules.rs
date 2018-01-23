@@ -28,6 +28,7 @@ use std::io::Write;
 use std::env;
 use std::str::FromStr;
 use super::output;
+use super::bold;
 
 #[path = "script.rs"]
 mod script;
@@ -47,16 +48,15 @@ static ENV_UNDO: &str = "RSMODULES_UNDO"; // name of an env var
 
 #[derive(Debug)]
 pub struct Rsmodule<'a> {
-    pub cmd: &'a str, // load|list|avail|...
-    pub typed_command: &'a str, // load|list|avail|...
-    pub arg: &'a str, // blast/12.1 | blast | blast/12
+    pub cmd: &'a str,                 // load|list|avail|...
+    pub typed_command: &'a str,       // load|list|avail|...
+    pub arg: &'a str,                 // blast/12.1 | blast | blast/12
     pub search_path: &'a Vec<String>, // module paths
-    pub shell: &'a str, // tcsh|csh|bash|zsh
+    pub shell: &'a str,               // tcsh|csh|bash|zsh
     pub shell_width: usize,
 }
 
 pub fn crash(signal: i32, message: &str) {
-
     let tmp_file_path = super::TMPFILE_PATH.lock().unwrap();
 
     if super::TMPFILE_INITIALIZED.load(Ordering::Relaxed) {
@@ -95,13 +95,6 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
     let mut found_cachefile: bool = false;
     let modulepaths = get_module_paths(false);
 
-    let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
-        ("\\033[1m", "\\033[0m")
-    } else {
-        // FIXME: use ansi-term
-        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
-    };
-
     for path in modulepaths {
         // test if cachefiles exist in the paths
         // if they don't and we have write permission in that folder
@@ -113,11 +106,14 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
             cache::parse_modules_cache_file(&testpath, &mut modules);
             found_cachefile = true;
         } else {
-            echo(&format!("  {}WARNING{}: {} doesn't contain an index.",
-                          bold_start,
-                          bold_end,
-                          path),
-                 shell);
+            echo(
+                &format!(
+                    "  {}: {} doesn't contain an index.",
+                    bold(shell, "WARNING"),
+                    path
+                ),
+                shell,
+            );
             if cache::update(&path, shell) {
                 cache::parse_modules_cache_file(&testpath, &mut modules);
                 found_cachefile = true;
@@ -169,7 +165,6 @@ pub fn get_shell_info() -> (String, usize) {
 }
 
 pub fn command(rsmod: &mut Rsmodule) {
-
     if rsmod.cmd == "load" {
         module_action(rsmod, "load");
     } else if rsmod.cmd == "unload" {
@@ -190,10 +185,12 @@ pub fn command(rsmod: &mut Rsmodule) {
         rsmod.arg = load;
         module_action(rsmod, "load");
     } else if rsmod.cmd == "available" {
-        cache::get_module_list(rsmod.arg,
-                               rsmod.typed_command,
-                               rsmod.shell,
-                               rsmod.shell_width);
+        cache::get_module_list(
+            rsmod.arg,
+            rsmod.typed_command,
+            rsmod.shell,
+            rsmod.shell_width,
+        );
     } else if rsmod.cmd == "list" {
         list(rsmod);
     } else if rsmod.cmd == "purge" {
@@ -223,14 +220,12 @@ pub fn command(rsmod: &mut Rsmodule) {
 }
 
 pub fn get_module_description(path: &PathBuf, action: &str) -> Vec<String> {
-
     script::run(path, action);
 
     script::get_description()
 }
 
 fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, action: &str) {
-
     script::run(path, action);
 
     let data = if action == "info" {
@@ -253,7 +248,6 @@ fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, a
 }
 
 fn module_action(rsmod: &mut Rsmodule, action: &str) {
-
     // when unloading we only want a list of the loaded modules
     // for matching modulenames :
     // we have: blast/1.2 and blast/1.3 (D) while blast/1.2 is loaded
@@ -296,14 +290,12 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         'outer: for modulepath in rsmod.search_path {
             let testpath = format!("{}/{}", modulepath, mdl);
             if Path::new(&testpath).exists() {
-
                 // we got it, now we need to figure out if its a partial match or not
                 if Path::new(&testpath).is_file() {
                     found = true;
                     modulefile = PathBuf::from(&testpath);
                 } else {
                     for module in &reversed_modules {
-
                         // we got a partial match, now we need to find the default module
                         // for this folder or subfolders
                         // loop through all the modules and get the first one
@@ -316,7 +308,6 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
                         // prevent that: module load blast loads blastz
                         let splitter: Vec<&str> = module.0.split(mdl).collect();
                         if splitter.len() > 1 {
-
                             if found && module.0.starts_with(mdl) && module.1 == 1 {
                                 selected_module = module.0.as_ref();
                                 let testpath = format!("{}/{}", modulepath, module.0);
@@ -364,7 +355,6 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
                 for modulepath in rsmod.search_path {
                     let testpath = format!("{}/{}", modulepath, other);
                     if Path::new(&testpath).exists() && Path::new(&testpath).is_file() {
-
                         let tmpmodulefile: PathBuf = PathBuf::from(&testpath);
                         // unload the module as we found the path to the file
                         run_modulefile(&tmpmodulefile, rsmod, other.as_ref(), "unload");
@@ -372,7 +362,6 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
                     }
                 }
             }
-
         }
 
         // check if we are already loaded (LOADEDMODULES env var)
@@ -395,29 +384,19 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         run_modulefile(&modulefile, rsmod, selected_module, action);
 
         if replaced_module && other != "" && selected_module != "" {
-
-            let (mut bold_start, mut bold_end) = if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
-                ("\\033[1m", "\\033[0m")
+            let spaces = if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
+                ""
             } else {
-                ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
+                "  "
             };
 
-            let mut spaces = "  ";
-            if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
-                spaces = "";
-                bold_start = "";
-                bold_end = "";
-            }
-
-            let msg: String = format!("{}The previously loaded module {}{}{} has been replaced \
-                                    with {}{}{}",
-                                      spaces,
-                                      bold_start,
-                                      other,
-                                      bold_end,
-                                      bold_start,
-                                      selected_module,
-                                      bold_end);
+            let msg: String = format!(
+                "{}The previously loaded module {} has been replaced \
+                 with {}",
+                spaces,
+                bold(rsmod.shell, &other),
+                bold(rsmod.shell, selected_module)
+            );
             if rsmod.shell != "noshell" {
                 echo("", rsmod.shell);
             }
@@ -430,7 +409,6 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
 }
 
 pub fn is_module_loaded(name: &str, only_full_match: bool) -> bool {
-
     if name == "" {
         return false;
     }
@@ -445,7 +423,6 @@ pub fn is_module_loaded(name: &str, only_full_match: bool) -> bool {
 
     let loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
     for module in loadedmodules {
-
         // full match
         if module == name {
             return true;
@@ -554,12 +531,6 @@ pub fn get_loaded_list() -> Vec<(String, i64)> {
 fn list(rsmod: &mut Rsmodule) {
     let loadedmodules: String;
 
-    let (bs, be) = if rsmod.shell == "tcsh" || rsmod.shell == "csh" {
-        ("\\033[1m", "\\033[0m")
-    } else {
-        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
-    };
-
     match env::var(ENV_LOADEDMODULES) {
         Ok(list) => loadedmodules = list,
         Err(_) => {
@@ -586,16 +557,17 @@ fn list(rsmod: &mut Rsmodule) {
         };
 
         echo("", rsmod.shell);
-        echo(&format!("{}There are no modules loaded.", spaces),
-             rsmod.shell);
+        echo(
+            &format!("{}There are no modules loaded.", spaces),
+            rsmod.shell,
+        );
     }
     for module in loadedmodules {
-
         if module != "" {
             if rsmod.shell == "noshell" {
                 echo(module, rsmod.shell);
             } else {
-                echo(&format!("  * {}{}{}", bs, module, be), rsmod.shell);
+                echo(&format!("  * {}", bold(rsmod.shell, module)), rsmod.shell);
             }
         }
     }
@@ -616,7 +588,6 @@ fn refresh(rsmod: &mut Rsmodule) {
 
     let loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
     for module in loadedmodules {
-
         if module != "" {
             let mut rsmod_command: Rsmodule = Rsmodule {
                 cmd: "load",
@@ -629,7 +600,6 @@ fn refresh(rsmod: &mut Rsmodule) {
             command(&mut rsmod_command);
         }
     }
-
 }
 
 fn purge(rsmod: &mut Rsmodule) {
@@ -644,7 +614,6 @@ fn purge(rsmod: &mut Rsmodule) {
 
     let loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
     for module in loadedmodules {
-
         if module != "" {
             let mut rsmod_command: Rsmodule = Rsmodule {
                 cmd: "unload",
@@ -657,20 +626,18 @@ fn purge(rsmod: &mut Rsmodule) {
             command(&mut rsmod_command);
         }
     }
-
 }
 
 fn refurbish(rsmod: &mut Rsmodule) {
     purge(rsmod);
     let mut args: Vec<&str> = Vec::new(); //rsmod.arg.split_whitespace().collect();
-    //let mut subcommand = args.remove(0);
-    //args.remove(0);
+                                          //let mut subcommand = args.remove(0);
+                                          //args.remove(0);
     let subcommand = "refurbish";
     autoload::run(subcommand, &mut args, rsmod.shell);
 }
 
 fn undo(rsmod: &mut Rsmodule) {
-
     let args = match env::var(ENV_UNDO) {
         Ok(list) => list,
         Err(_) => {
@@ -708,64 +675,58 @@ fn undo(rsmod: &mut Rsmodule) {
             args.reverse();
         }
 
-        output(super::setenv("RSMODULES_UNDO",
-                             &format!("{} {}", cmd, args.join(" ")),
-                             rsmod.shell));
-
+        output(super::setenv(
+            "RSMODULES_UNDO",
+            &format!("{} {}", cmd, args.join(" ")),
+            rsmod.shell,
+        ));
     }
-
 }
 
 fn autoload_usage(shell: &str) {
 
-    let (bs, be) = if shell == "tcsh" || shell == "csh" {
-        ("\\033[1m", "\\033[0m")
-    } else {
-        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
-    };
-
-    /*
-    let mut bs: &str = "$(tput -T xterm bold)";
-    let mut be: &str = "$(tput -T xterm sgr0)";
-
-    if shell == "tcsh" || shell == "csh" {
-        bs = "\\033[1m";
-        be = "\\033[0m";
-    }
-    */
-
     echo("", shell);
-    echo(&format!("  {}Usage{}: module autoload [subcommand] [modulename(s)]",
-                  bs,
-                  be),
-         shell);
+    echo(
+        &format!(
+            "  {}: module autoload [subcommand] [modulename(s)]",
+            bold(shell, "Usage")
+        ),
+        shell,
+    );
     echo("", shell);
-    echo("  The module autoload command manages which modules that",
-         shell);
+    echo(
+        "  The module autoload command manages which modules that",
+        shell,
+    );
     echo("  are autoloaded in your environment.", shell);
     echo("", shell);
     echo("  The following subcommands are available:", shell);
     echo("", shell);
-    echo(&format!("    * {}append{} [modulename(s)]", bs, be), shell);
-    echo("      Adds one or more module to the end of the list of autoloaded modules.",
-         shell);
+    echo(&format!("{}", bold(shell, "    * append [modulename(s)]")), shell);
+    echo(
+        "      Adds one or more module to the end of the list of autoloaded modules.",
+        shell,
+    );
     echo("", shell);
-    echo(&format!("    * {}prepend{} [modulename(s)]", bs, be), shell);
-    echo("      Adds one or more module to the beginning of the list of autoloaded modules.",
-         shell);
+    echo(&format!("{}", bold(shell, "    * prepend [modulename(s)]")), shell);
+    echo(
+        "      Adds one or more module to the beginning of the list of autoloaded modules.",
+        shell,
+    );
     echo("", shell);
-    echo(&format!("    * {}remove{} [modulename(s)]", bs, be), shell);
-    echo("      Removes one or more module from the \
-        list of autoloaded moules.",
-         shell);
+    echo(&format!("{}", bold(shell, "    * remove [modulename(s)]")), shell);
+    echo(
+        "      Removes one or more module from the \
+         list of autoloaded moules.",
+        shell,
+    );
     echo("", shell);
-    echo(&format!("    * {}list{}", bs, be), shell);
+    echo(&format!("{}", bold(shell, "    * list")), shell);
     echo("      Shows a list of all autoloaded modules.", shell);
     echo("", shell);
-    echo(&format!("    * {}purge{}", bs, be), shell);
+    echo(&format!("{}", bold(shell, "    * purge")), shell);
     echo("      Removes all the autoloaded modules.", shell);
     echo("", shell);
-
 }
 
 fn autoload(rsmod: &mut Rsmodule) {
@@ -808,10 +769,14 @@ mod tests {
     #[test]
     fn _get_other_version_of_module_loaded() {
         env::set_var("LOADEDMODULES", "blast/12.3:blast/11.1");
-        assert_eq!("blast/12.3",
-                   get_other_version_of_loaded_module("blast/11.1"));
-        assert_eq!("blast/12.3",
-                   get_other_version_of_loaded_module("blast/x86_64/11.1"));
+        assert_eq!(
+            "blast/12.3",
+            get_other_version_of_loaded_module("blast/11.1")
+        );
+        assert_eq!(
+            "blast/12.3",
+            get_other_version_of_loaded_module("blast/x86_64/11.1")
+        );
         assert_eq!("", get_other_version_of_loaded_module("perl"));
         assert_eq!("", get_other_version_of_loaded_module(""));
     }
@@ -823,15 +788,19 @@ mod tests {
         assert_eq!(false, is_module_loaded("bla", false));
         assert_eq!(true, is_module_loaded("blast", false));
 
-        env::set_var("LOADEDMODULES",
-                     "gcc/x86_64/4.8.2:armadillo/x86_64/4.300.2:igraph/x86_64/0.6.5:python2/x86_64/2.7.2:\
-                      gcc/x86_64/4.8.2:python/x86_64/3.5.1:");
+        env::set_var(
+            "LOADEDMODULES",
+            "gcc/x86_64/4.8.2:armadillo/x86_64/4.300.2:igraph/x86_64/0.6.5:python2/x86_64/2.7.2:\
+             gcc/x86_64/4.8.2:python/x86_64/3.5.1:",
+        );
         assert_eq!(true, is_module_loaded("python", false));
         assert_eq!(true, is_module_loaded("python/x86_64/3.5.1", false));
         assert_eq!(true, is_module_loaded("python2", false));
-        env::set_var("LOADEDMODULES",
-                     "gcc/x86_64/4.8.2:armadillo/x86_64/4.300.2:igraph/x86_64/0.6.5:gcc/x86_64/4.8.2:python/x86_64/3.\
-                      5.1:");
+        env::set_var(
+            "LOADEDMODULES",
+            "gcc/x86_64/4.8.2:armadillo/x86_64/4.300.2:igraph/x86_64/0.6.5:gcc/x86_64/4.8.2:python/x86_64/3.\
+             5.1:",
+        );
         assert_eq!(false, is_module_loaded("python2", false));
     }
 

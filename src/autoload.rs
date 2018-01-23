@@ -1,12 +1,13 @@
 use std::fs::OpenOptions;
-use std::io::{Write, BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 use std::fs::File;
 use super::{echo, output};
 use std::cmp::Ordering;
+use super::super::bold;
 
-extern crate shellexpand;
 extern crate regex;
+extern crate shellexpand;
 
 use regex::Regex;
 
@@ -51,7 +52,6 @@ lazy_static! {
 }
 
 fn get_module_autoload_string(modules: &[&str], existing: &str, subcommand: &str) -> String {
-
     let mut output: String = existing.to_string();
 
     if modules.is_empty() {
@@ -104,7 +104,11 @@ fn is_module_autoloaded(module: &str, existing: &str) -> bool {
 fn create_autoload_file() {
     let filename: &str = &shellexpand::tilde(AUTOLOAD_FILE);
     if !Path::new(filename).is_file() {
-        match OpenOptions::new().write(true).create_new(true).open(filename) {
+        match OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(filename)
+        {
             Ok(fileresult) => fileresult,
             Err(e) => {
                 println_stderr!("Cannot create  file {} ({})", filename, e);
@@ -112,7 +116,6 @@ fn create_autoload_file() {
             }
         };
     }
-
 }
 
 pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
@@ -131,12 +134,6 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
     // check if args.get(x) matches with one of them or not
     // if not, add it
 
-
-    let (bs, be) = if shell == "tcsh" || shell == "csh" {
-        ("\\033[1m", "\\033[0m")
-    } else {
-        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
-    };
 
     // al = autoload
     let mut al_modules: Vec<Module> = Vec::new();
@@ -170,13 +167,14 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
         }
     }
 
-    parse_file(subcommand,
-               args,
-               &shellexpand::tilde(AUTOLOAD_FILE),
-               &mut al_modules);
+    parse_file(
+        subcommand,
+        args,
+        &shellexpand::tilde(AUTOLOAD_FILE),
+        &mut al_modules,
+    );
 
     if subcommand == "refurbish" {
-
         for al_module in &al_modules {
             output(format!("module load {}\n", al_module.name));
         }
@@ -207,7 +205,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
                 if shell == "noshell" {
                     echo(&al_module.name, shell);
                 } else {
-                    echo(&format!("  * {}{}{}", bs, al_module.name, be), shell);
+                    echo(&format!("  * {}", bold(shell, &al_module.name)), shell);
                 }
                 old_path = path;
             } else {
@@ -226,7 +224,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
                 if shell == "noshell" {
                     echo(&al_module.name, shell);
                 } else {
-                    echo(&format!("  * {}{}{}", bs, al_module.name, be), shell);
+                    echo(&format!("  * {}", bold(shell, &al_module.name)), shell);
                 }
             }
         }
@@ -271,10 +269,8 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
             }
 
             if subcommand == "list" || subcommand == "refurbish" {
-
                 for cap in RE.captures_iter(&buffer) {
                     if &cap["subcommand"] == "load" {
-
                         let modulenames: &str = &cap["modules"];
                         let modulenames: Vec<&str> = modulenames.split_whitespace().collect();
                         for modulename in &modulenames {
@@ -283,7 +279,6 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
                             al_module.path = initfile.to_string();
                             al_modules.push(al_module);
                         }
-
                     }
                     //println_stderr!("'{}' '{}' '{}'", &cap["module"], &cap["subcommand"], &cap["modules"]);
                 }
@@ -331,15 +326,22 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
     }
 
     //  when the file is empty, just add the module load command
-    if num_matches == 0 && Path::new(initfile).is_file() &&
-       (subcommand == "append" || subcommand == "add" || subcommand == "prepend") {
+    if num_matches == 0 && Path::new(initfile).is_file()
+        && (subcommand == "append" || subcommand == "add" || subcommand == "prepend")
+    {
         output.push(format!("module load {}", args.join(" ")));
     }
 
     // write to the file ~/.rsmodules_autoload
-    if (subcommand == "append" || subcommand == "add" || subcommand == "prepend" || subcommand == "remove" ||
-        subcommand == "purge") && initfile == shellexpand::tilde(AUTOLOAD_FILE) {
-        let mut file: File = match OpenOptions::new().write(true).create(true).truncate(true).open(initfile) {
+    if (subcommand == "append" || subcommand == "add" || subcommand == "prepend" || subcommand == "remove"
+        || subcommand == "purge") && initfile == shellexpand::tilde(AUTOLOAD_FILE)
+    {
+        let mut file: File = match OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(initfile)
+        {
             Ok(fileresult) => fileresult,
             Err(e) => {
                 println_stderr!("Cannot write to file {} ({})", initfile, e);
@@ -349,8 +351,10 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
 
         for newline in output {
             if let Err(e) = writeln!(file, "{}", newline) {
-                super::crash(super::super::CRASH_CANNOT_ADD_TO_ENV,
-                             &format!("Cannot write to file {} ({})", initfile, e));
+                super::crash(
+                    super::super::CRASH_CANNOT_ADD_TO_ENV,
+                    &format!("Cannot write to file {} ({})", initfile, e),
+                );
             }
         }
     }

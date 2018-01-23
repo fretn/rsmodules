@@ -21,15 +21,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use std::io::{BufWriter, BufReader, BufRead};
+use std::io::{BufRead, BufReader, BufWriter};
 use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::cmp::Ordering;
+use super::super::bold;
 
 use walkdir::WalkDir;
 extern crate bincode;
-use bincode::rustc_serialize::{encode_into, decode_from};
-use super::{echo, get_module_description, crash, get_module_paths, is_module_loaded};
+use bincode::rustc_serialize::{decode_from, encode_into};
+use super::{crash, echo, get_module_description, get_module_paths, is_module_loaded};
 
 pub static MODULESINDEX: &str = ".modulesindex";
 
@@ -110,13 +111,6 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
 }
 
 pub fn update(modulepath: &str, shell: &str) -> bool {
-
-    let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
-        ("\\033[1m", "\\033[0m")
-    } else {
-        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
-    };
-
     // list is: path to file, module name, default
     let mut list: Vec<(String, String, bool)> = Vec::new();
     let module_path = Path::new(&modulepath);
@@ -124,16 +118,13 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
     let mut index_default: i32 = 0;
 
     for entry in WalkDir::new(module_path).into_iter().filter_map(|e| e.ok()) {
-
         let str_path: &str = entry.path().to_str().unwrap();
 
         let part: Vec<&str> = str_path.split(&modulepath).collect();
 
         if !entry.path().is_dir() {
-
             for mut modulename in part {
                 if modulename != "" {
-
                     let first = modulename.chars().next().unwrap();
                     let second = if modulename.len() >= 2 {
                         &modulename[1..2]
@@ -198,12 +189,11 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
         Err(_) => {
             if shell != "noshell" {
                 echo("", shell);
-                let msg: String = format!("  {}WARNING{}: {}{}{} could NOT be indexed.",
-                                          bold_start,
-                                          bold_end,
-                                          bold_start,
-                                          modulepath,
-                                          bold_end);
+                let msg: String = format!(
+                    "  {}: {} could NOT be indexed.",
+                    bold(shell, "WARNING"),
+                    bold(shell, modulepath)
+                );
                 echo(&msg, shell);
             } else {
                 let msg: String = format!("{} failed", modulepath);
@@ -218,21 +208,14 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
 
     if shell != "noshell" {
         echo("", shell);
-        let msg: String = format!("  {}{}{} was succesfully indexed.",
-                                  bold_start,
-                                  modulepath,
-                                  bold_end);
+        let msg: String = format!("  {} was succesfully indexed.", bold(shell, modulepath));
         echo(&msg, shell);
         echo("", shell);
-        let msg: String = format!("  * Total number of modules: {}{}{}",
-                                  bold_start,
-                                  index_succes,
-                                  bold_end);
+        let tmp = format!("{}", index_succes);
+        let msg: String = format!("  * Total number of modules: {}", bold(shell, &tmp));
         echo(&msg, shell);
-        let msg: String = format!("  * Number of default (D) modules: {}{}{}",
-                                  bold_start,
-                                  index_default,
-                                  bold_end);
+        let tmp = format!("{}", index_default);
+        let msg: String = format!("  * Number of default (D) modules: {}", bold(shell, &tmp));
         echo(&msg, shell);
         echo("", shell);
     } else {
@@ -244,12 +227,13 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
 }
 
 pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i64)>) {
-
     let file: File = match File::open(filename) {
         Ok(file) => file,
         Err(_) => {
-            crash(super::super::CRASH_COULDNT_OPEN_CACHE_FILE,
-                  "modules_cache_file: couldn't open the required index file");
+            crash(
+                super::super::CRASH_COULDNT_OPEN_CACHE_FILE,
+                "modules_cache_file: couldn't open the required index file",
+            );
             return;
         }
     };
@@ -262,13 +246,6 @@ pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i
 }
 
 pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width: usize) {
-
-    let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
-        ("\\033[1m", "\\033[0m")
-    } else {
-        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
-    };
-
     let modulepaths = get_module_paths(false);
 
     // prints a nice list for module av
@@ -279,15 +256,17 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
     let mut longest_name = 0;
     let mut decoded: Vec<Module> = Vec::new();
     for modulepath in modulepaths.clone() {
-
         let file: File = match File::open(format!("{}/{}", modulepath, MODULESINDEX)) {
             Ok(file) => file,
             Err(_) => {
-                echo(&format!("  {}WARNING{}: {} doesn't contain an index.",
-                              bold_start,
-                              bold_end,
-                              modulepath),
-                     shell);
+                echo(
+                    &format!(
+                        "  {}: {} doesn't contain an index.",
+                        bold(shell, "WARNING"),
+                        modulepath
+                    ),
+                    shell,
+                );
                 if update(&modulepath, shell) {
                     match File::open(format!("{}/{}", modulepath, MODULESINDEX)) {
                         Ok(file) => file,
@@ -302,7 +281,6 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                     continue;
                 }
             }
-
         };
 
         let mut reader = BufReader::new(file);
@@ -313,7 +291,6 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
 
         if arg != "" {
             for module in decoded.clone() {
-
                 let avmodule_lc: String = module.name.to_lowercase();
                 let module_lc: String = arg.to_lowercase();
                 let avmodule_lc: &str = avmodule_lc.as_ref();
@@ -324,7 +301,6 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                 }
             }
             longest_name += 1;
-
         } else {
             for module in decoded.clone() {
                 if longest_name <= module.name.len() {
@@ -356,19 +332,22 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         if simple_list {
             tmp = module.name.clone();
         } else if is_module_loaded(module.name.as_ref(), true) {
-            tmp = format!("{} {}{:width$}{} | {}",
-                          default,
-                          bold_start,
-                          module.name,
-                          bold_end,
-                          description,
-                          width = longest_name);
+            tmp = format!(
+                "{} {}{:width$} | {}",
+                default,
+                bold(shell, &module.name),
+                " ",
+                description,
+                width = longest_name - module.name.len()
+            );
         } else {
-            tmp = format!("{} {:width$} | {}",
-                          default,
-                          module.name,
-                          description,
-                          width = longest_name);
+            tmp = format!(
+                "{} {:width$} | {}",
+                default,
+                module.name,
+                description,
+                width = longest_name
+            );
         }
 
 
@@ -390,14 +369,16 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                             longest_name
                         };
                         echo("", shell);
-                        echo(&format!("  {}Module name{} {:width$} | {}Description{}",
-                                      bold_start,
-                                      bold_end,
-                                      " ",
-                                      bold_start,
-                                      bold_end,
-                                      width = width),
-                             shell);
+                        echo(
+                            &format!(
+                                "  {} {:width$} | {}",
+                                bold(shell, "Module name"),
+                                " ",
+                                bold(shell, "Description"),
+                                width = width
+                            ),
+                            shell,
+                        );
                         echo(&format!("  {:width$} |", " ", width = longest_name), shell);
                     } else {
                         echo(&format!("  {:width$} |", " ", width = longest_name), shell);
@@ -422,14 +403,16 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                         longest_name
                     };
                     echo("", shell);
-                    echo(&format!("  {}Module name{} {:width$} | {}Description{}",
-                                  bold_start,
-                                  bold_end,
-                                  " ",
-                                  bold_start,
-                                  bold_end,
-                                  width = width),
-                         shell);
+                    echo(
+                        &format!(
+                            "  {} {:width$} | {}",
+                            bold(shell, "Module name"),
+                            " ",
+                            bold(shell, "Description"),
+                            width = width
+                        ),
+                        shell,
+                    );
                     echo(&format!("  {:width$} |", " ", width = longest_name), shell);
                 } else {
                     echo(&format!("  {:width$} |", " ", width = longest_name), shell);
@@ -446,7 +429,6 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
 
     if shell != "noshell" && cnt != 0 {
         if cnt > 50 {
-
             echo("", shell);
             echo("", shell);
             let module = if arg != "" {
@@ -455,28 +437,35 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
             } else {
                 arg.to_string()
             };
-            echo(&format!("  Hint: use the command '{}module {}{} | more{}' to run the output through a \
-                                  pager.",
-                          bold_start,
-                          typed_command,
-                          module,
-                          bold_end),
-                 shell);
+            let msg = format!("{} {} | more", typed_command, module);
+            echo(
+                &format!(
+                    "  Hint: use the command '{}' to run the output through a \
+                     pager.",
+                    bold(shell, &msg)
+                ),
+                shell,
+            );
         } else {
             echo("", shell);
         }
 
         echo("", shell);
-        echo(&format!("  {}*{} D means that the module is set as the default module.",
-                      bold_start,
-                      bold_end),
-             shell);
-        echo(&format!("  {}*{} Loaded modules are printed in {}bold{}.",
-                      bold_start,
-                      bold_end,
-                      bold_start,
-                      bold_end),
-             shell);
+        echo(
+            &format!(
+                "  {} D means that the module is set as the default module.",
+                bold(shell, "*")
+            ),
+            shell,
+        );
+        echo(
+            &format!(
+                "  {} Loaded modules are printed in {}.",
+                bold(shell, "*"),
+                bold(shell, "bold")
+            ),
+            shell,
+        );
         echo("", shell);
     }
 }

@@ -17,6 +17,7 @@ getopts = "0.2.14"
 is_executable = "0.1.0"
 gumdrop = { git =  'https://github.com/murarth/gumdrop.git' }
 gumdrop_derive = { git = 'https://github.com/murarth/gumdrop.git', path = "gumdrop_derive" }
+ansi_term = "0.9"
 
 [[bin]]
 name = "rsmodules"

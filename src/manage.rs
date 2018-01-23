@@ -6,7 +6,7 @@ use std::io::Write;
 use std::io;
 use std::path::Path;
 use std::env::args;
-use rsmod::{Rsmodule, get_module_paths};
+use rsmod::{get_module_paths, Rsmodule};
 use wizard::{is_yes, read_input_shell};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -40,9 +40,13 @@ pub fn delete(rsmod: &Rsmodule) {
             let filename: &str = &format!("{}/{}", path, module);
             if Path::new(filename).is_file() {
                 if interactive {
-                    if is_yes(&read_input_shell(&format!("Are you sure you want to delete the modulefile {} ? [Y/n]: ",
-                                                         filename),
-                                                rsmod.shell)) {
+                    if is_yes(&read_input_shell(
+                        &format!(
+                            "Are you sure you want to delete the modulefile {} ? [Y/n]: ",
+                            filename
+                        ),
+                        rsmod.shell,
+                    )) {
                         remove_file(filename);
                     } else {
                         println_stderr!("No module files where deleted.");
@@ -55,11 +59,15 @@ pub fn delete(rsmod: &Rsmodule) {
     }
 
     if REMOVED_MODULES.load(Ordering::Relaxed) {
-        if interactive &&
-           is_yes(&read_input_shell(&format!("Removal of {} was sucessful.\nDo you want to update the module cache now ? \
-                                             [Y/n]: ",
-                                             rsmod.arg),
-                                    rsmod.shell)) {
+        if interactive
+            && is_yes(&read_input_shell(
+                &format!(
+                    "Removal of {} was sucessful.\nDo you want to update the module cache now ? \
+                     [Y/n]: ",
+                    rsmod.arg
+                ),
+                rsmod.shell,
+            )) {
             let modulepaths = get_module_paths(false);
             for modulepath in modulepaths {
                 if modulepath != "" {
@@ -67,8 +75,10 @@ pub fn delete(rsmod: &Rsmodule) {
                 }
             }
         } else {
-            println!("Removal of {} was succesful. Don't forget to update the module cache.",
-                     rsmod.arg);
+            println!(
+                "Removal of {} was succesful. Don't forget to update the module cache.",
+                rsmod.arg
+            );
         }
     }
 }
@@ -84,56 +94,41 @@ fn print_usage(opts: &Options) {
 struct CreateOptions {
     // Contains "free" arguments -- those that are not options.
     // If no `free` field is declared, free arguments will result in an error.
-    #[options(free)]
-    free: Vec<String>,
+    #[options(free)] free: Vec<String>,
 
     // Boolean options are treated as flags, taking no additional values.
     // The optional `help` attribute is displayed in `usage` text.
-    #[options(help = "Print this help message")]
-    help: bool,
+    #[options(help = "Print this help message")] help: bool,
 
-    #[options(no_short, help = "Output filename")]
-    filename: Option<String>,
+    #[options(no_short, help = "Output filename")] filename: Option<String>,
 
-    #[options(no_short, help = "Prepend a path to a variable")]
-    prepend_path: Vec<(String, String)>,
+    #[options(no_short, help = "Prepend a path to a variable")] prepend_path: Vec<(String, String)>,
 
-    #[options(no_short, help = "Append a path to a variable")]
-    append_path: Vec<(String, String)>,
+    #[options(no_short, help = "Append a path to a variable")] append_path: Vec<(String, String)>,
 
-    #[options(no_short, help = "Remove a path from a variable")]
-    remove_path: Vec<(String, String)>,
+    #[options(no_short, help = "Remove a path from a variable")] remove_path: Vec<(String, String)>,
 
-    #[options(no_short, help = "Set a variable")]
-    setenv: Vec<(String,String)>,
+    #[options(no_short, help = "Set a variable")] setenv: Vec<(String, String)>,
 
-    #[options(no_short, help = "Get a variable")]
-    getenv: Vec<String>,
+    #[options(no_short, help = "Get a variable")] getenv: Vec<String>,
 
-    #[options(no_short, help = "Unset a variable")]
-    unsetenv: Vec<String>,
+    #[options(no_short, help = "Unset a variable")] unsetenv: Vec<String>,
 
-    #[options(no_short, help = "A description for the module file")]
-    description: Vec<String>,
+    #[options(no_short, help = "A description for the module file")] description: Vec<String>,
 
-    #[options(no_short, help = "Load a module")]
-    load: Vec<String>,
+    #[options(no_short, help = "Load a module")] load: Vec<String>,
 
-    #[options(no_short, help = "Unload a module")]
-    unload: Vec<String>,
+    #[options(no_short, help = "Unload a module")] unload: Vec<String>,
 
-    #[options(no_short, help = "Conflict with a module")]
-    conflict: Vec<String>,
+    #[options(no_short, help = "Conflict with a module")] conflict: Vec<String>,
 
-    #[options(no_short, help = "Run a system command")]
-    system: Vec<String>,
+    #[options(no_short, help = "Run a system command")] system: Vec<String>,
 
-    #[options(no_short, help = "Create an alias")]
-    set_alias: Vec<String>,
+    #[options(no_short, help = "Create an alias")] set_alias: Vec<String>,
 }
 
-fn print_help(args: &Vec<String>) {
-	//let args: Vec<String> = args().collect();
+fn print_help(args: &[String]) {
+    //let args: Vec<String> = args().collect();
 
     // Printing usage text for the `--help` option is handled explicitly
     // by the program.
@@ -145,8 +140,7 @@ fn print_help(args: &Vec<String>) {
 }
 
 fn prepare_for_saving(filename: &str, output: &[String]) {
-
-    match save(filename, &output) {
+    match save(filename, output) {
         Ok(_) => {}
         Err(e) => {
             println_stderr!("Cannot write to file {} ({})", filename, e);
@@ -157,7 +151,7 @@ fn prepare_for_saving(filename: &str, output: &[String]) {
 
 pub fn create(rsmod: &Rsmodule) {
     let mut output: Vec<String> = Vec::new();
-	let args: Vec<String> = args().collect();
+    let args: Vec<String> = args().collect();
 
     // Remember to skip the first argument. That's the program name.
     let opts = match CreateOptions::parse_args_default(&args[3..]) {
@@ -171,7 +165,6 @@ pub fn create(rsmod: &Rsmodule) {
     if opts.help {
         print_help(&args);
     } else {
-
         if rsmod.arg == "" {
             let filename = run_create_wizard(rsmod.shell, &mut output);
             prepare_for_saving(&filename, &output);
@@ -291,14 +284,17 @@ fn get_modulename(arg: &str) -> String {
 */
 
 fn save(filename: &str, output: &[String]) -> io::Result<()> {
-
     if !Path::new(&filename).is_file() {
-
         let mut path = Path::new(&filename);
         path = path.parent().unwrap();
         create_dir_all(path)?;
 
-        let mut file: File = match OpenOptions::new().write(true).create(true).truncate(true).open(&filename) {
+        let mut file: File = match OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&filename)
+        {
             Ok(fileresult) => fileresult,
             Err(_) => return Err(io::Error::last_os_error()),
         };
@@ -308,8 +304,10 @@ fn save(filename: &str, output: &[String]) -> io::Result<()> {
                 return Err(io::Error::last_os_error());
             }
         }
-        println_stderr!("\nThe creation of modulefile {} was succesful. Don't forget to update the module cache.",
-                        filename);
+        println_stderr!(
+            "\nThe creation of modulefile {} was succesful. Don't forget to update the module cache.",
+            filename
+        );
     } else {
         println_stderr!("The file {} already exists, aborting.", filename);
         ::std::process::exit(super::super::CRASH_CREATE_ERROR);
@@ -340,16 +338,21 @@ fn parse_opt(matches: &Matches, output: &mut Vec<String>, opt: &str, command: &s
 
 pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, modulename: &str) {
     if !skip {
-        let desc = read_input_shell(&format!(" * Enter a description for the module {}: ", modulename),
-                                    shell)
-            .trim_right_matches('\n')
+        let desc = read_input_shell(
+            &format!(" * Enter a description for the module {}: ", modulename),
+            shell,
+        ).trim_right_matches('\n')
             .to_string();
         output.push(format!("description(\"{}\");", desc));
     }
 
-    if is_yes(&read_input_shell(" * Do you want to add another description entry ? [Y/n]: ",
-                                shell)) {
-        let desc = read_input_shell("   Enter your description: ", shell).trim_right_matches('\n').to_string();
+    if is_yes(&read_input_shell(
+        " * Do you want to add another description entry ? [Y/n]: ",
+        shell,
+    )) {
+        let desc = read_input_shell("   Enter your description: ", shell)
+            .trim_right_matches('\n')
+            .to_string();
         output.push(format!("description(\"{}\");", desc));
         add_description(shell, &mut output, true, modulename);
         println_stderr!("");
@@ -358,25 +361,35 @@ pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, mo
 
 pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
     if !skip {
-        let val = read_input_shell("   Enter the path where the executables can be found: ",
-                                   shell)
-            .trim_right_matches('\n')
+        let val = read_input_shell(
+            "   Enter the path where the executables can be found: ",
+            shell,
+        ).trim_right_matches('\n')
             .to_string();
         output.push(format!("prepend_path(\"PATH\",\"{}\");", val));
-        if is_yes(&read_input_shell(" * Do you want to set the LD_LIBRARY_PATH variable? [Y/n]: ",
-                                    shell)) {
-            let val = read_input_shell("   Enter the path where the libraries can be found: ",
-                                       shell)
-                .trim_right_matches('\n')
+        if is_yes(&read_input_shell(
+            " * Do you want to set the LD_LIBRARY_PATH variable? [Y/n]: ",
+            shell,
+        )) {
+            let val = read_input_shell(
+                "   Enter the path where the libraries can be found: ",
+                shell,
+            ).trim_right_matches('\n')
                 .to_string();
             output.push(format!("prepend_path(\"LD_LIBRARY_PATH\",\"{}\");", val));
         }
     }
     println_stderr!("");
-    if is_yes(&read_input_shell(" * Do you want to set another path variable? [Y/n]: ",
-                                shell)) {
-        let var = read_input_shell("   Enter the name of variable: ", shell).trim_right_matches('\n').to_string();
-        let val = read_input_shell("   Enter the path you want to add: ", shell).trim_right_matches('\n').to_string();
+    if is_yes(&read_input_shell(
+        " * Do you want to set another path variable? [Y/n]: ",
+        shell,
+    )) {
+        let var = read_input_shell("   Enter the name of variable: ", shell)
+            .trim_right_matches('\n')
+            .to_string();
+        let val = read_input_shell("   Enter the path you want to add: ", shell)
+            .trim_right_matches('\n')
+            .to_string();
         output.push(format!("prepend_path(\"{}\",\"{}\");", var, val));
         add_path(shell, &mut output, true);
     }
@@ -398,13 +411,13 @@ pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
 
     // todo: tabcompletion
     // https://github.com/shaleh/rust-readline/blob/master/examples/fileman.rs
-    let folder = read_input_shell(&format!(" * Enter the folder where the modulefile will be saved: "),
-                                shell)
-        .trim_right_matches('\n')
+    let folder = read_input_shell(
+        " * Enter the folder where the modulefile will be saved: ",
+        shell,
+    ).trim_right_matches('\n')
         .to_string();
 
-    let modulename = read_input_shell(&format!(" * Enter the name of the module: "),
-                                shell)
+    let modulename = read_input_shell(" * Enter the name of the module: ", shell)
         .trim_right_matches('\n')
         .to_string();
 

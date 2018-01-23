@@ -25,13 +25,14 @@ extern crate rhai;
 //extern crate is_executable;
 use self::rhai::{Engine, FnRegister};
 use std::env;
-use std::sync::{Mutex, Arc};
+use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::path::{Path, PathBuf, is_separator};
+use std::path::{is_separator, Path, PathBuf};
 use std::io::Write;
 use std::fs::read_dir;
-use super::{Rsmodule, get_shell_info, echo};
+use super::{echo, get_shell_info, Rsmodule};
 use is_executable::IsExecutable;
+use super::super::bold;
 
 // WARNING: the scripts don't support tabbed indents in if else structures
 
@@ -63,7 +64,10 @@ fn init_vars_and_commands() {
 }
 
 fn add_to_env_vars(variable: &str, value: &str) {
-    ENV_VARS.lock().unwrap().push((variable.to_string(), value.to_string()));
+    ENV_VARS
+        .lock()
+        .unwrap()
+        .push((variable.to_string(), value.to_string()));
 }
 
 fn add_to_commands(data: &str) {
@@ -96,7 +100,6 @@ fn add_to_load(data: String) {
 
 // functions for load and unload
 fn getenv(var: &str) -> String {
-
     match env::var(&var) {
         Ok(res) => res,
         Err(_) => {
@@ -337,49 +340,41 @@ fn load(module: String) {
 
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn conflict(module: String) {
-
     if super::is_module_loaded(module.as_ref(), false) {
         let (shell, _) = get_shell_info();
 
-        let mut spaces = "  ";
-
-        let (mut bold_start, mut bold_end) = if shell == "tcsh" || shell == "csh" {
-            ("\\033[1m", "\\033[0m")
+        let spaces = if shell == "noshell" || shell == "perl" || shell == "python" {
+            ""
         } else {
-            ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
+            "  "
         };
 
-        if shell == "noshell" || shell == "perl" || shell == "python" {
-            spaces = "";
-            bold_start = "";
-            bold_end = "";
-        }
+        let bold_module = bold(&shell, &module);
 
         let shell = &shell;
         if shell != "noshell" {
             echo("", shell);
         }
-        echo(&format!("{}Cannot continue because the module {}{}{} is loaded.",
-                      spaces,
-                      bold_start,
-                      module,
-                      bold_end),
-             shell);
+        echo(
+            &format!(
+                "{}Cannot continue because the module {} is loaded.",
+                spaces,
+                bold_module
+            ),
+            shell,
+        );
 
         if shell != "noshell" {
-            echo(&format!("{}You'll need to unload {}{}{} before you can continue:",
-                          spaces,
-                          bold_start,
-                          module,
-                          bold_end),
-                 shell);
+            echo(
+                &format!(
+                    "{}You'll need to unload {}before you can continue:",
+                    spaces,
+                    bold_module
+                ),
+                shell,
+            );
             echo("", shell);
-            echo(&format!("{}{}module unload {}{}",
-                          bold_start,
-                          spaces,
-                          module,
-                          bold_end),
-                 shell);
+            echo(&format!("{}module unload {}", spaces, bold_module), shell);
             echo("", shell);
         }
         CONFLICT.store(true, Ordering::Relaxed);
@@ -404,7 +399,10 @@ fn unload(module: String) {
 
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn description(desc: String) {
-    INFO_DESCRIPTION.lock().unwrap().push(desc.replace("\"", "\\\""));
+    INFO_DESCRIPTION
+        .lock()
+        .unwrap()
+        .push(desc.replace("\"", "\\\""));
 }
 
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
@@ -435,7 +433,6 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("description", description_dummy);
         engine.register_fn("set_alias", unset_alias);
         engine.register_fn("is_loaded", is_loaded_dummy);
-
     } else if action == "load" {
         engine.register_fn("setenv", setenv);
         engine.register_fn("unsetenv", unsetenv);
@@ -450,7 +447,6 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("description", description_dummy);
         engine.register_fn("set_alias", set_alias);
         engine.register_fn("is_loaded", is_loaded);
-
     } else if action == "info" {
         engine.register_fn("setenv", setenv_info);
         engine.register_fn("unsetenv", unsetenv_dummy);
@@ -465,7 +461,6 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("description", description);
         engine.register_fn("set_alias", set_alias_dummy);
         engine.register_fn("is_loaded", is_loaded);
-
     } else if action == "description" {
         engine.register_fn("setenv", setenv_dummy);
         engine.register_fn("unsetenv", unsetenv_dummy);
@@ -480,23 +475,21 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("description", description_cache);
         engine.register_fn("set_alias", set_alias);
         engine.register_fn("is_loaded", is_loaded);
-
     }
 
     match engine.eval_file::<String>(path.to_string_lossy().into_owned().as_ref()) {
         Ok(result) => println!("{}", result),
-        Err(e) => {
-            if e.to_string() != "Cast of output failed" {
-                show_warning!("modulescript error: {} ({})",
-                              e.to_string(),
-                              path.to_string_lossy().into_owned());
-            }
-        }
+        Err(e) => if e.to_string() != "Cast of output failed" {
+            show_warning!(
+                "modulescript error: {} ({})",
+                e.to_string(),
+                path.to_string_lossy().into_owned()
+            );
+        },
     }
 }
 
 pub fn get_description() -> Vec<String> {
-
     let mut output: Vec<String> = Vec::new();
 
 
@@ -512,17 +505,20 @@ pub fn get_description() -> Vec<String> {
 }
 
 pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<String> {
-
     if CONFLICT.load(Ordering::Relaxed) {
         return Vec::new();
     }
 
     if action == "unload" {
-        remove_path(super::ENV_LOADEDMODULES.to_string(),
-                    selected_module.to_string());
+        remove_path(
+            super::ENV_LOADEDMODULES.to_string(),
+            selected_module.to_string(),
+        );
     } else if action == "load" {
-        prepend_path(super::ENV_LOADEDMODULES.to_string(),
-                     selected_module.to_string());
+        prepend_path(
+            super::ENV_LOADEDMODULES.to_string(),
+            selected_module.to_string(),
+        );
     }
 
     // this part must be below the above part
@@ -557,25 +553,20 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     let mut output: Vec<String> = Vec::new();
     let mut got_output: bool = false;
 
-    let (bold_start, bold_end) = if shell == "tcsh" || shell == "csh" {
-        ("\\033[1m", "\\033[0m")
-    } else {
-        ("$(tput -T xterm bold)", "$(tput -T xterm sgr0)")
-    };
+    let tmp = format!("= {} =", module);
+    let title_bold_module = bold(shell, &tmp);
 
     //output.push(format!("echo \"{:=^1$}\"", module.to_string(), module.len()+5));
-    output.push(format!("echo \"{}{}{}\"",
-                        bold_start,
-                        "=".repeat(module.len() + 4),
-                        bold_end));
-    output.push(format!("echo \"{}= {} ={}\"",
-                        bold_start,
-                        module.to_string(),
-                        bold_end));
-    output.push(format!("echo \"{}{}{}\"",
-                        bold_start,
-                        "=".repeat(module.len() + 4),
-                        bold_end));
+    output.push(format!(
+        "echo \"{}\"",
+        bold(shell, &"=".repeat(module.len() + 4))
+    ));
+
+    output.push(format!("echo \"{}\"", title_bold_module.to_string()));
+    output.push(format!(
+        "echo \"{}\"",
+        bold(shell, &"=".repeat(module.len() + 4))
+    ));
     output.push(String::from("echo \"\""));
 
     if INFO_DESCRIPTION.lock().unwrap().iter().len() > 0 {
@@ -585,7 +576,10 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
         if shell == "bash" || shell == "zsh" {
             output.push(format!("echo $\"{}\"", line.to_string()));
         } else if shell == "csh" || shell == "tcsh" {
-            output.push(format!("echo \"{}\"", line.to_string().replace("\n", "\\n")));
+            output.push(format!(
+                "echo \"{}\"",
+                line.to_string().replace("\n", "\\n")
+            ));
         } else {
             output.push(format!("echo \"{}\"", line.to_string()));
         }
@@ -593,9 +587,10 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
 
     if INFO_GENERAL.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}Sets the following variables: {}\"",
-                            bold_start,
-                            bold_end));
+        output.push(format!(
+            "echo \"{}\"",
+            bold(shell, "Sets the following variables: ")
+        ));
         got_output = true;
     }
     for line in INFO_GENERAL.lock().unwrap().iter() {
@@ -606,9 +601,10 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
 
     if INFO_PATH.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}Executables can be found in: {}\"",
-                            bold_start,
-                            bold_end));
+        output.push(format!(
+            "echo \"{}\"",
+            bold(shell, "Executables can be found in: ")
+        ));
         got_output = true;
     }
     for line in INFO_PATH.lock().unwrap().iter() {
@@ -617,9 +613,10 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
 
     if INFO_LD_LIBRARY_PATH.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}Libraries can be found in: {}\"",
-                            bold_start,
-                            bold_end));
+        output.push(format!(
+            "echo \"{}\"",
+            bold(shell, "Libraries can be found in: ")
+        ));
         got_output = true;
     }
     for line in INFO_LD_LIBRARY_PATH.lock().unwrap().iter() {
@@ -628,7 +625,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
 
     if INFO_PYTHONPATH.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}\\$PYTHONPATH: {}\"", bold_start, bold_end));
+        output.push(format!("echo \"{}\"", bold(shell, "\\$PYTHONPATH: ")));
         got_output = true;
     }
     for line in INFO_PYTHONPATH.lock().unwrap().iter() {
@@ -637,7 +634,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
 
     if INFO_PERL5LIB.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}\\$PERL5LIB: {}\"", bold_start, bold_end));
+        output.push(format!("echo \"{}\"", bold(shell, "\\$PERL5LIB: ")));
         got_output = true;
     }
     for line in INFO_PERL5LIB.lock().unwrap().iter() {
@@ -646,7 +643,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
 
     if LOAD.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}Depends on: {}\"", bold_start, bold_end));
+        output.push(format!("echo \"{}\"", bold(shell, "Depends on: ")));
         got_output = true;
     }
     for line in LOAD.lock().unwrap().iter() {
@@ -655,7 +652,6 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
 
     let mut execs: Vec<String> = Vec::new();
     for line in INFO_PATH.lock().unwrap().iter() {
-
         if Path::new(line).is_dir() {
             let entries = match read_dir(line) {
                 Ok(entry) => entry,
@@ -663,7 +659,6 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
             };
 
             for entry in entries {
-
                 let path = match entry {
                     Ok(p) => p.path(),
                     Err(_) => continue,
@@ -673,7 +668,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
                     continue;
                 }
 
-				if path.is_executable() {
+                if path.is_executable() {
                     execs.push(format!("echo '{}'", strip_dir(path.to_str().unwrap())));
                     got_output = true;
                 }
@@ -684,13 +679,15 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     if !execs.is_empty() {
         output.push(String::from("echo ''"));
         if execs.len() > 1 {
-            output.push(format!("echo \"{}Try one of these commands to run the program: {}\"",
-                                bold_start,
-                                bold_end));
+            output.push(format!(
+                "echo \"{}\"",
+                bold(shell, "Try one of these commands to run the program: ")
+            ));
         } else {
-            output.push(format!("echo \"{}Try this command to run the program: {}\"",
-                                bold_start,
-                                bold_end));
+            output.push(format!(
+                "echo \"{}\"",
+                bold(shell, "Try this command to run the program: ")
+            ));
         }
     }
 
@@ -710,7 +707,11 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
 // thx uucore
 fn strip_dir(fullname: &str) -> String {
     // Remove all platform-specific path separators from the end
-    let mut path: String = fullname.chars().rev().skip_while(|&ch| is_separator(ch)).collect();
+    let mut path: String = fullname
+        .chars()
+        .rev()
+        .skip_while(|&ch| is_separator(ch))
+        .collect();
 
     // Undo reverse
     path = path.chars().rev().collect();

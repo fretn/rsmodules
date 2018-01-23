@@ -38,24 +38,27 @@ mod wizard;
 
 use rsmod::Rsmodule;
 
-extern crate rustc_serialize;
 extern crate bincode;
-extern crate walkdir;
+extern crate rustc_serialize;
 extern crate users;
+extern crate walkdir;
 
-extern crate shellexpand;
-extern crate regex;
+extern crate ansi_term;
 extern crate getopts;
-extern crate is_executable;
 extern crate gumdrop;
-#[macro_use] extern crate gumdrop_derive;
+#[macro_use]
+extern crate gumdrop_derive;
+extern crate is_executable;
+extern crate regex;
+extern crate shellexpand;
 
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::io::Write;
-use std::fs::{File, remove_file};
+use std::fs::{remove_file, File};
 use std::path::PathBuf;
 use std::env;
+use ansi_term::Style;
 
 lazy_static! {
     static ref TMPFILE_INITIALIZED: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
@@ -161,7 +164,6 @@ static LONG_HELP: &str = "
 ";
 
 fn is_shell_supported(shell: &str) -> bool {
-
     let mut shell_list = Vec::new();
 
     shell_list.push("tcsh");
@@ -213,8 +215,10 @@ fn usage(in_eval: bool) {
 
     println_stderr!("{}", &error_msg);
     if !in_eval {
-        println_stderr!("  Supported shells: bash, zsh, csh, tcsh, python, perl and \
-                         noshell");
+        println_stderr!(
+            "  Supported shells: bash, zsh, csh, tcsh, python, perl and \
+             noshell"
+        );
         println_stderr!("");
         println_stderr!("  When noshell is selected all output is printed to stdout,");
         println_stderr!("  module available will then print a nice list without gaps, which is");
@@ -241,8 +245,10 @@ fn run(args: &[String]) {
 
     if !is_shell_supported(&shell) {
         usage(false);
-        rsmod::crash(CRASH_UNSUPPORTED_SHELL,
-                     &format!("{} is not a supported shell", shell));
+        rsmod::crash(
+            CRASH_UNSUPPORTED_SHELL,
+            &format!("{} is not a supported shell", shell),
+        );
     }
 
     let modulepaths = rsmod::get_module_paths(false);
@@ -256,10 +262,7 @@ fn run(args: &[String]) {
 
     let mut tmpfile: File;
 
-    let rstr: String = rand::thread_rng()
-        .gen_ascii_chars()
-        .take(8)
-        .collect();
+    let rstr: String = rand::thread_rng().gen_ascii_chars().take(8).collect();
 
     let mut tmp_file_path: PathBuf;
 
@@ -267,8 +270,10 @@ fn run(args: &[String]) {
     match env::home_dir() {
         Some(path) => tmp_file_path = path,
         None => {
-            show_warning!("We were unable to find your home directory, checking if /tmp is an \
-                            option");
+            show_warning!(
+                "We were unable to find your home directory, checking if /tmp is an \
+                 option"
+            );
 
             // this is wrong, as we try to use temp again a bit later
             tmp_file_path = env::temp_dir();
@@ -299,8 +304,10 @@ fn run(args: &[String]) {
                     set_global_tmpfile(tmp_file_path.to_str().unwrap().to_string());
                 }
                 Err(e) => {
-                    rsmod::crash(CRASH_FAILED_TO_CREATE_TEMPORARY_FILE,
-                                 &format!("Failed to create temporary file: {}", e));
+                    rsmod::crash(
+                        CRASH_FAILED_TO_CREATE_TEMPORARY_FILE,
+                        &format!("Failed to create temporary file: {}", e),
+                    );
                     return;
                 }
             };
@@ -395,11 +402,15 @@ fn run(args: &[String]) {
 
             if command_hit == "load" || command_hit == "unload" {
                 // undo doesn't work for dependency loaded modules
-                let data = setenv("RSMODULES_UNDO",
-                                  &format!("{} {}", command_hit, modulename.to_string()),
-                                  &shell);
-                crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
-                              tmpfile.write_all(data.as_bytes()));
+                let data = setenv(
+                    "RSMODULES_UNDO",
+                    &format!("{} {}", command_hit, modulename.to_string()),
+                    &shell,
+                );
+                crash_if_err!(
+                    CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                    tmpfile.write_all(data.as_bytes())
+                );
             }
 
             if command_hit == "switch" && args.len() != 5 {
@@ -409,11 +420,15 @@ fn run(args: &[String]) {
 
             if command_hit == "switch" {
                 modulenames.reverse();
-                let data = setenv("RSMODULES_UNDO",
-                                  &format!("{} {}", command_hit, modulenames.join(" ")),
-                                  &shell);
-                crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
-                              tmpfile.write_all(data.as_bytes()));
+                let data = setenv(
+                    "RSMODULES_UNDO",
+                    &format!("{} {}", command_hit, modulenames.join(" ")),
+                    &shell,
+                );
+                crash_if_err!(
+                    CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                    tmpfile.write_all(data.as_bytes())
+                );
             }
 
             if command_hit == "purge" {
@@ -423,12 +438,15 @@ fn run(args: &[String]) {
                     args.push(argument);
                 }
                 let loadedmodules = args.join(" ");
-                let data = setenv("RSMODULES_UNDO",
-                                  &format!("unload {}", loadedmodules),
-                                  &shell);
-                crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
-                              tmpfile.write_all(data.as_bytes()));
-
+                let data = setenv(
+                    "RSMODULES_UNDO",
+                    &format!("unload {}", loadedmodules),
+                    &shell,
+                );
+                crash_if_err!(
+                    CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                    tmpfile.write_all(data.as_bytes())
+                );
             }
 
             let mut rsmod_command: Rsmodule = Rsmodule {
@@ -440,7 +458,6 @@ fn run(args: &[String]) {
                 shell_width: shell_width,
             };
             rsmod::command(&mut rsmod_command);
-
         }
 
         if !matches {
@@ -465,8 +482,10 @@ fn run(args: &[String]) {
         output_buffer.push(cmd);
 
         for line in output_buffer {
-            crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
-                          tmpfile.write_all(line.as_bytes()));
+            crash_if_err!(
+                CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                tmpfile.write_all(line.as_bytes())
+            );
         }
 
         // source tmpfile
@@ -491,6 +510,14 @@ pub fn setenv(var: &str, val: &str, shell: &str) -> String {
     data
 }
 
+fn bold<'a>(shell: &str, msg: &'a str) -> ansi_term::ANSIGenericString<'a, str> {
+    if shell == "noshell" || shell == "perl" || shell == "python" {
+        return Style::new().paint(msg);
+    }
+
+    Style::new().bold().paint(msg)
+}
+
 pub fn output(line: String) {
     let mut output_buffer = OUTPUT_BUFFER.lock().unwrap();
     let output_buffer = &mut (*output_buffer);
@@ -507,7 +534,6 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
 
     if args.len() == 1 {
-
         if !wizard::run(false) {
             usage(false);
         }
