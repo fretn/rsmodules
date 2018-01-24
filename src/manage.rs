@@ -164,23 +164,19 @@ pub fn create(rsmod: &Rsmodule) {
 
     if opts.help {
         print_help(&args);
+    } else if rsmod.arg == "" {
+        let filename = run_create_wizard(rsmod.shell, &mut output);
+        prepare_for_saving(&filename, &output);
+    } else if opts.filename == None {
+        print_help(&args);
+        println_stderr!("");
+        println_stderr!("Error:");
+        println_stderr!("");
+        println_stderr!("  --filename is required");
+        println_stderr!("");
     } else {
-        if rsmod.arg == "" {
-            let filename = run_create_wizard(rsmod.shell, &mut output);
-            prepare_for_saving(&filename, &output);
-        } else {
-            if opts.filename == None {
-                print_help(&args);
-                println_stderr!("");
-                println_stderr!("Error:");
-                println_stderr!("");
-                println_stderr!("  --filename is required");
-                println_stderr!("");
-            } else {
-                println_stderr!("{:#?}", opts);
-                prepare_for_saving(&opts.filename.unwrap(), &output);
-            }
-        }
+        println_stderr!("{:#?}", opts);
+        prepare_for_saving(&opts.filename.unwrap(), &output);
     }
 }
 /*
