@@ -511,7 +511,8 @@ pub fn setenv(var: &str, val: &str, shell: &str) -> String {
 }
 
 fn bold<'a>(shell: &str, msg: &'a str) -> ansi_term::ANSIGenericString<'a, str> {
-    if shell == "noshell" || shell == "perl" || shell == "python" {
+
+    if shell == "noshell" || shell == "perl" || shell == "python" || env::var("TERM") == Ok(String::from("")) {
         return Style::new().paint(msg);
     }
 
