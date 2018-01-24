@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cargo bloat --release --crates -n 25
+cargo bloat --release -n 25

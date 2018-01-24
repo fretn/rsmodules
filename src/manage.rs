@@ -172,6 +172,7 @@ pub fn create(rsmod: &Rsmodule) {
         println_stderr!("");
         println_stderr!("Error:");
         println_stderr!("");
+        // TODO: maybe we should just print to stdout when --filename is None
         println_stderr!("  --filename is required");
         println_stderr!("");
     } else {
