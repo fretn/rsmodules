@@ -1,3 +1,4 @@
 #!/bin/bash
 
-rustup run nightly cargo clippy
+#rustup run nightly cargo clippy
+cargo +nightly clippy

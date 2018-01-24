@@ -684,7 +684,6 @@ fn undo(rsmod: &mut Rsmodule) {
 }
 
 fn autoload_usage(shell: &str) {
-
     echo("", shell);
     echo(
         &format!(
@@ -702,19 +701,28 @@ fn autoload_usage(shell: &str) {
     echo("", shell);
     echo("  The following subcommands are available:", shell);
     echo("", shell);
-    echo(&format!("{}", bold(shell, "    * append [modulename(s)]")), shell);
+    echo(
+        &format!("{}", bold(shell, "    * append [modulename(s)]")),
+        shell,
+    );
     echo(
         "      Adds one or more module to the end of the list of autoloaded modules.",
         shell,
     );
     echo("", shell);
-    echo(&format!("{}", bold(shell, "    * prepend [modulename(s)]")), shell);
+    echo(
+        &format!("{}", bold(shell, "    * prepend [modulename(s)]")),
+        shell,
+    );
     echo(
         "      Adds one or more module to the beginning of the list of autoloaded modules.",
         shell,
     );
     echo("", shell);
-    echo(&format!("{}", bold(shell, "    * remove [modulename(s)]")), shell);
+    echo(
+        &format!("{}", bold(shell, "    * remove [modulename(s)]")),
+        shell,
+    );
     echo(
         "      Removes one or more module from the \
          list of autoloaded moules.",
