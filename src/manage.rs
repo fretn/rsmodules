@@ -165,14 +165,18 @@ struct CreateOptions {
     set_alias: Vec<String>,
 }
 
-fn print_help(args: &[String]) {
+fn print_help(args: &[String], shell: &str) {
     //let args: Vec<String> = args().collect();
 
     // Printing usage text for the `--help` option is handled explicitly
     // by the program.
     // However, `derive(Options)` does generate information about all
     // defined options.
-    println_stderr!("Usage: {} [OPTIONS] [ARGUMENTS]", args[0]);
+    if shell == "noshell" || shell == "python" || shell == "perl" {
+        println_stderr!("Usage: {} create [ARGUMENTS]", args[0]);
+    } else {
+        println_stderr!("Usage: module create [ARGUMENTS]");
+    }
     println_stderr!("");
     println_stderr!("{}", CreateOptions::usage());
 }
@@ -201,12 +205,12 @@ pub fn create(rsmod: &Rsmodule) {
     };
 
     if opts.help {
-        print_help(&args);
+        print_help(&args, rsmod.shell);
     } else if rsmod.arg == "" {
         let filename = run_create_wizard(rsmod.shell, &mut output);
         prepare_for_saving(&filename, &output);
     } else if opts.filename == None {
-        print_help(&args);
+        print_help(&args, rsmod.shell);
         println_stderr!("");
         println_stderr!("Error:");
         println_stderr!("");
@@ -432,6 +436,35 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
 
 pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
     println_stderr!("");
+
+    // select modulepath, if only one, skip this
+
+    // what's the name of the modulefile ($MODULESPATH/modulename/version) ?
+
+    // is there a root folder for your module ? (enter if none)
+
+    // type a absolue or relative path (depending on root folder), multiple paths on multiple lines
+    // an empty line finishes this step
+
+    // same for LD_LIBRARY_PATH
+
+    // want to set other variables, type VARNAME=VALUE, multiple lines for multiple variables
+    // an empty line finishes this step
+
+    // select dependencies, same as usual
+
+    // type a description
+
+    // do we want to make this the default module file ?
+
+
+
+
+
+
+
+
+
     // Where do you want to save this modulefile ?
     // for path in modulepath
     // 1.
