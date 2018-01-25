@@ -1,3 +1,26 @@
+/*
+MIT License
+
+Copyright (c) 2017 Frederik Delaere
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 use std::fs;
 use std::fs::create_dir_all;
 use std::fs::OpenOptions;
@@ -94,37 +117,52 @@ fn print_usage(opts: &Options) {
 struct CreateOptions {
     // Contains "free" arguments -- those that are not options.
     // If no `free` field is declared, free arguments will result in an error.
-    #[options(free)] free: Vec<String>,
+    #[options(free)]
+    free: Vec<String>,
 
     // Boolean options are treated as flags, taking no additional values.
     // The optional `help` attribute is displayed in `usage` text.
-    #[options(help = "Print this help message")] help: bool,
+    #[options(help = "Print this help message")]
+    help: bool,
 
-    #[options(no_short, help = "Output filename")] filename: Option<String>,
+    #[options(no_short, help = "Output filename")]
+    filename: Option<String>,
 
-    #[options(no_short, help = "Prepend a path to a variable")] prepend_path: Vec<(String, String)>,
+    #[options(no_short, help = "Prepend a path to a variable")]
+    prepend_path: Vec<(String, String)>,
 
-    #[options(no_short, help = "Append a path to a variable")] append_path: Vec<(String, String)>,
+    #[options(no_short, help = "Append a path to a variable")]
+    append_path: Vec<(String, String)>,
 
-    #[options(no_short, help = "Remove a path from a variable")] remove_path: Vec<(String, String)>,
+    #[options(no_short, help = "Remove a path from a variable")]
+    remove_path: Vec<(String, String)>,
 
-    #[options(no_short, help = "Set a variable")] setenv: Vec<(String, String)>,
+    #[options(no_short, help = "Set a variable")]
+    setenv: Vec<(String, String)>,
 
-    #[options(no_short, help = "Get a variable")] getenv: Vec<String>,
+    #[options(no_short, help = "Get a variable")]
+    getenv: Vec<String>,
 
-    #[options(no_short, help = "Unset a variable")] unsetenv: Vec<String>,
+    #[options(no_short, help = "Unset a variable")]
+    unsetenv: Vec<String>,
 
-    #[options(no_short, help = "A description for the module file")] description: Vec<String>,
+    #[options(no_short, help = "A description for the module file")]
+    description: Vec<String>,
 
-    #[options(no_short, help = "Load a module")] load: Vec<String>,
+    #[options(no_short, help = "Load a module")]
+    load: Vec<String>,
 
-    #[options(no_short, help = "Unload a module")] unload: Vec<String>,
+    #[options(no_short, help = "Unload a module")]
+    unload: Vec<String>,
 
-    #[options(no_short, help = "Conflict with a module")] conflict: Vec<String>,
+    #[options(no_short, help = "Conflict with a module")]
+    conflict: Vec<String>,
 
-    #[options(no_short, help = "Run a system command")] system: Vec<String>,
+    #[options(no_short, help = "Run a system command")]
+    system: Vec<String>,
 
-    #[options(no_short, help = "Create an alias")] set_alias: Vec<String>,
+    #[options(no_short, help = "Create an alias")]
+    set_alias: Vec<String>,
 }
 
 fn print_help(args: &[String]) {

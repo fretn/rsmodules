@@ -163,9 +163,7 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
                     }
                     Err(msg) => println!(
                         "    - Could not create symlink {} -> {} ({})",
-                        current_path_sh,
-                        path_sh,
-                        msg
+                        current_path_sh, path_sh, msg
                     ),
                 }
 
@@ -176,9 +174,7 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
                     }
                     Err(msg) => println!(
                         "    - Could not create symlink {} => {} ({})",
-                        current_path_csh,
-                        path_csh,
-                        msg
+                        current_path_csh, path_csh, msg
                     ),
                 }
 
@@ -193,7 +189,6 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
     } else {
         let path_sh: &str = &shellexpand::tilde("~/.rsmodules.sh");
         let path_csh: &str = &shellexpand::tilde("~/.rsmodules.csh");
-
 
         if !Path::new(path_sh).exists() || !Path::new(path_csh).exists()
             || !detect_line("source ~/.rsmodules.sh", &shellexpand::tilde("~/.bashrc"))
@@ -218,9 +213,7 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
                     Ok(_) => println!("    - Created symlink {} => {}", current_path_sh, path_sh),
                     Err(msg) => println!(
                         "    - Could not create symlink {} => {} ({})",
-                        current_path_sh,
-                        path_sh,
-                        msg
+                        current_path_sh, path_sh, msg
                     ),
                 }
 
@@ -228,9 +221,7 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
                     Ok(_) => println!("    - Created symlink {} => {}", current_path_csh, path_csh),
                     Err(msg) => println!(
                         "    - Could not create symlink {} => {} ({})",
-                        current_path_csh,
-                        path_csh,
-                        msg
+                        current_path_csh, path_csh, msg
                     ),
                 }
 
@@ -239,7 +230,6 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
 
                 let detected_sh: bool = detect_line("source ~/.rsmodules.sh", &shellexpand::tilde("~/.bashrc"));
                 let detected_csh: bool = detect_line("source ~/.rsmodules.csh", &shellexpand::tilde("~/.cshrc"));
-
 
                 if !detected_sh || !detected_csh {
                     println!();
@@ -419,28 +409,18 @@ fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
             if !value.is_empty() && !(value.len() == 1 && value[0] == "") {
                 output = format!(
                     r#"{} {}{}"{}:{}""#,
-                    &cap["export"],
-                    variable,
-                    &cap["equals"],
-                    &cap["value"],
-                    path
+                    &cap["export"], variable, &cap["equals"], &cap["value"], path
                 );
             } else {
                 output = format!(
                     r#"{} {}{}"{}""#,
-                    &cap["export"],
-                    variable,
-                    &cap["equals"],
-                    path
+                    &cap["export"], variable, &cap["equals"], path
                 );
             }
         } else {
             output = format!(
                 r#"{} {}{}"{}""#,
-                &cap["export"],
-                variable,
-                &cap["equals"],
-                path
+                &cap["export"], variable, &cap["equals"], path
             );
         }
     }
@@ -478,7 +458,6 @@ pub fn run(recursive: bool) -> bool {
         // TODO: ask if we have to copy rsmodules to a different folder
         // before we continue
         // "it looks like rsmodules isn't setup yet, blabla, do you want to"
-
 
         println!();
 

@@ -99,7 +99,8 @@ fn add_to_load(data: String) {
 }
 
 // functions for load and unload
-fn getenv(var: &str) -> String {
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+fn getenv(var: String) -> String {
     match env::var(&var) {
         Ok(res) => res,
         Err(_) => {
@@ -107,6 +108,11 @@ fn getenv(var: &str) -> String {
             String::from("")
         }
     }
+}
+
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+fn print(msg: String) {
+    println_stderr!("{}", msg);
 }
 
 // dummy functions for unloading
@@ -136,6 +142,8 @@ fn description_dummy(desc: String) {}
 fn getenv_dummy(var: String) -> String {
     String::new()
 }
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+fn print_dummy(_msg: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn prepend_path_dummy(var: String, val: String) {}
@@ -358,8 +366,7 @@ fn conflict(module: String) {
         echo(
             &format!(
                 "{}Cannot continue because the module {} is loaded.",
-                spaces,
-                bold_module
+                spaces, bold_module
             ),
             shell,
         );
@@ -368,8 +375,7 @@ fn conflict(module: String) {
             echo(
                 &format!(
                     "{}You'll need to unload {}before you can continue:",
-                    spaces,
-                    bold_module
+                    spaces, bold_module
                 ),
                 shell,
             );
@@ -433,6 +439,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("description", description_dummy);
         engine.register_fn("set_alias", unset_alias);
         engine.register_fn("is_loaded", is_loaded_dummy);
+        engine.register_fn("print", print_dummy);
     } else if action == "load" {
         engine.register_fn("setenv", setenv);
         engine.register_fn("unsetenv", unsetenv);
@@ -447,6 +454,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("description", description_dummy);
         engine.register_fn("set_alias", set_alias);
         engine.register_fn("is_loaded", is_loaded);
+        engine.register_fn("print", print);
     } else if action == "info" {
         engine.register_fn("setenv", setenv_info);
         engine.register_fn("unsetenv", unsetenv_dummy);
@@ -461,6 +469,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("description", description);
         engine.register_fn("set_alias", set_alias_dummy);
         engine.register_fn("is_loaded", is_loaded);
+        engine.register_fn("print", print_dummy);
     } else if action == "description" {
         engine.register_fn("setenv", setenv_dummy);
         engine.register_fn("unsetenv", unsetenv_dummy);
@@ -475,6 +484,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("description", description_cache);
         engine.register_fn("set_alias", set_alias);
         engine.register_fn("is_loaded", is_loaded);
+        engine.register_fn("print", print_dummy);
     }
 
     match engine.eval_file::<String>(path.to_string_lossy().into_owned().as_ref()) {
@@ -491,7 +501,6 @@ pub fn run(path: &PathBuf, action: &str) {
 
 pub fn get_description() -> Vec<String> {
     let mut output: Vec<String> = Vec::new();
-
 
     // there can be multiple description calls, but
     // only store the first line of the description in
@@ -699,7 +708,6 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     if got_output {
         output.push(String::from("echo ''"));
     }
-
 
     output
 }

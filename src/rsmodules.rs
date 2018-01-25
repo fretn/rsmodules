@@ -67,7 +67,6 @@ pub fn crash(signal: i32, message: &str) {
     crash!(signal, "{}", message);
 }
 
-
 pub fn get_module_paths(silent: bool) -> Vec<String> {
     let mut modulepath: String = String::from(DEFAULT_MODULE_PATH);
     let mut modulepaths: Vec<String> = Vec::new();
@@ -267,7 +266,6 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         super::usage(true);
         return;
     }
-
 
     //let mut selected_module = rsmod.arg;
     let mut modulefile: PathBuf = PathBuf::new();
@@ -646,7 +644,6 @@ fn undo(rsmod: &mut Rsmodule) {
     };
     let mut args: Vec<&str> = args.split_whitespace().collect();
 
-
     let mut cmd: &str;
 
     if args.is_empty() {
@@ -739,7 +736,6 @@ fn autoload_usage(shell: &str) {
 
 fn autoload(rsmod: &mut Rsmodule) {
     let mut args: Vec<&str> = rsmod.arg.split_whitespace().collect();
-
 
     if args.is_empty() {
         autoload_usage(rsmod.shell);

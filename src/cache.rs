@@ -78,7 +78,6 @@ fn add_module(name: String, description: String, flags: i64, modules: &mut Vec<M
     modules.push(module);
 }
 
-
 fn get_default_version(modulepath: &str, modulename: &str) -> bool {
     let parts: Vec<&str> = modulename.split('/').collect();
     let groupname = if parts.len() >= 1 { parts[0] } else { "" };
@@ -349,7 +348,6 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                 width = longest_name
             );
         }
-
 
         if arg != "" {
             let avmodule_lc: String = module.name.to_lowercase();

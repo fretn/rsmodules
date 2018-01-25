@@ -66,7 +66,6 @@ lazy_static! {
     static ref OUTPUT_BUFFER: Mutex<Vec<String>> = Mutex::new(vec![]);
 }
 
-
 static CRASH_UNSUPPORTED_SHELL: i32 = 1;
 static CRASH_FAILED_TO_CREATE_TEMPORARY_FILE: i32 = 2;
 static CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE: i32 = 3;
@@ -265,7 +264,6 @@ fn run(args: &[String]) {
     let rstr: String = rand::thread_rng().gen_ascii_chars().take(8).collect();
 
     let mut tmp_file_path: PathBuf;
-
 
     match env::home_dir() {
         Some(path) => tmp_file_path = path,
@@ -474,7 +472,6 @@ fn run(args: &[String]) {
         // so it must delete itself at the end of the run
         // if it crashes we still need to delete the file
 
-
         let cmd = format!("\\rm -f {}\n", tmp_file_path.display());
 
         let mut output_buffer = OUTPUT_BUFFER.lock().unwrap();
@@ -551,7 +548,6 @@ fn main() {
 
     run(&args);
 }
-
 
 #[cfg(test)]
 mod tests {
