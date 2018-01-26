@@ -331,13 +331,18 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         if simple_list {
             tmp = module.name.clone();
         } else if is_module_loaded(module.name.as_ref(), true) {
+            let mut tmpwidth = 0;
+
+            if module.name.len() < longest_name {
+                tmpwidth = longest_name - module.name.len();
+            }
             tmp = format!(
                 "{} {}{:width$} | {}",
                 default,
                 bold(shell, &module.name),
                 " ",
                 description,
-                width = longest_name - module.name.len()
+                width = tmpwidth
             );
         } else {
             tmp = format!(
