@@ -434,8 +434,23 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
     }
 }
 
+fn select_modulepath() -> String {
+    let modulepaths = super::get_module_paths(true);
+
+    println_stderr!("{}", modulepaths.len());
+    if modulepaths.len() == 1 {
+        return modulepaths.get(0).unwrap().to_string();
+    }
+
+    String::from("")
+}
+
 pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
     println_stderr!("");
+
+    let folder = select_modulepath();
+    println_stderr!("selected path: {}", folder);
+    return String::from("");
 
     // select modulepath, if only one, skip this
 

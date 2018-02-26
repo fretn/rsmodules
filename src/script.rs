@@ -421,6 +421,9 @@ pub fn run(path: &PathBuf, action: &str) {
 
     init_vars_and_commands();
 
+    // TODO: add a function: source
+    // source("bash", "/path/to/blah/source.sh");
+    // source("tcsh", "/path/to/blah/source.tcsh");
     if action == "unload" {
         // for unloading, we swap some functions
         // prepand_path and append_path are just remove_path
