@@ -97,6 +97,7 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
         };
 
         let file = BufReader::new(file);
+        // if there are multiple entries in .version, the last one counts
         for (_, line) in file.lines().enumerate() {
             buffer = line.unwrap();
         }
