@@ -652,7 +652,7 @@ fn undo(rsmod: &mut Rsmodule) {
         }
         args.retain(|&i| (i != "load" && i != "unload" && i != "switch"));
         let mut rsmod_command: Rsmodule = Rsmodule {
-            cmd: cmd,
+            cmd,
             typed_command: cmd,
             arg: &args.join(" "),
             search_path: rsmod.search_path,

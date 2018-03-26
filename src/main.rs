@@ -437,7 +437,8 @@ fn run(args: &[String]) {
                 arg: modulename,
                 search_path: &modulepaths,
                 shell: &shell,
-                shell_width: shell_width,
+                //shell_width: shell_width,
+                shell_width,
             };
             rsmod::command(&mut rsmod_command);
         }

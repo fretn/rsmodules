@@ -388,7 +388,7 @@ fn unload(module: String) {
         typed_command: "unload",
         arg: &module,
         search_path: &modulepaths,
-        shell: shell,
+        shell,
         shell_width: 80,
     };
     super::command(&mut rsmod_command);

@@ -322,24 +322,26 @@ fn get_modulename(arg: &str) -> String {
 
 fn save(filename: &str, output: &[String]) -> io::Result<()> {
     if !Path::new(&filename).is_file() {
-        let mut path = Path::new(&filename);
-        path = path.parent().unwrap();
-        create_dir_all(path)?;
+        let path = Path::new(&filename);
 
-        let mut file: File = match OpenOptions::new().write(true).create(true).truncate(true).open(&filename) {
-            Ok(fileresult) => fileresult,
-            Err(_) => return Err(io::Error::last_os_error()),
-        };
+        if path.parent() != None {
+            create_dir_all(path.parent().unwrap())?;
 
-        for line in output {
-            if writeln!(file, "{}", line).is_err() {
-                return Err(io::Error::last_os_error());
+            let mut file: File = match OpenOptions::new().write(true).create(true).truncate(true).open(&filename) {
+                Ok(fileresult) => fileresult,
+                Err(_) => return Err(io::Error::last_os_error()),
+            };
+
+            for line in output {
+                if writeln!(file, "{}", line).is_err() {
+                    return Err(io::Error::last_os_error());
+                }
             }
+            println_stderr!(
+                "\nThe creation of modulefile {} was succesful. Don't forget to update the module cache.",
+                filename
+            );
         }
-        println_stderr!(
-            "\nThe creation of modulefile {} was succesful. Don't forget to update the module cache.",
-            filename
-        );
     } else {
         println_stderr!("The file {} already exists, aborting.", filename);
         ::std::process::exit(super::super::CRASH_CREATE_ERROR);
@@ -427,7 +429,7 @@ fn select_modulepath(shell: &str) -> String {
 
     //println_stderr!("{}", modulepaths.len());
     if modulepaths.len() == 1 {
-        return modulepaths.get(0).unwrap().to_string();
+        modulepaths.get(0).unwrap().to_string()
     } else if modulepaths.is_empty() {
         let modulepath = read_input_shell(" * Enter the path where you want to install this module: ", shell)
             .trim_right_matches('\n')
@@ -439,7 +441,7 @@ fn select_modulepath(shell: &str) -> String {
             )) {
                 match fs::create_dir(&modulepath) {
                     Ok(_o) => (),
-                    Err(e) => crash!(super::super::CRASH_CREATE_ERROR, "Cannot create: {}", modulepath),
+                    Err(_e) => crash!(super::super::CRASH_CREATE_ERROR, "Cannot create: {}", modulepath),
                 }
             } else {
                 crash!(
@@ -448,7 +450,7 @@ fn select_modulepath(shell: &str) -> String {
                 );
             }
         }
-        return modulepath;
+        modulepath
     } else {
         let mut counter = 1;
         println_stderr!("Available modulepaths (found in $MODULEPATH): \n");
@@ -466,13 +468,13 @@ fn select_modulepath(shell: &str) -> String {
         };
 
         if modulepath_num <= modulepaths.len() && modulepath_num > 0 {
-            return modulepaths.get(modulepath_num - 1).unwrap().to_string();
+            modulepaths.get(modulepath_num - 1).unwrap().to_string()
         } else {
-            return select_modulepath(shell);
+            select_modulepath(shell)
         }
     }
 
-    String::from("")
+    //String::from("")
 }
 
 pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
