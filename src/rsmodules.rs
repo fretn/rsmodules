@@ -81,6 +81,10 @@ pub fn get_module_paths(silent: bool) -> Vec<String> {
         }
     };
 
+    if modulepath.is_empty() {
+        return modulepaths;
+    }
+
     let modulepath: Vec<&str> = modulepath.split(':').collect();
     for path in modulepath {
         modulepaths.push(path.to_string());
