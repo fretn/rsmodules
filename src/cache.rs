@@ -126,11 +126,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
             for mut modulename in part {
                 if modulename != "" {
                     let first = modulename.chars().next().unwrap();
-                    let second = if modulename.len() >= 2 {
-                        &modulename[1..2]
-                    } else {
-                        ""
-                    };
+                    let second = if modulename.len() >= 2 { &modulename[1..2] } else { "" };
 
                     if modulename == MODULESINDEX {
                         continue;
@@ -260,11 +256,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
             Ok(file) => file,
             Err(_) => {
                 echo(
-                    &format!(
-                        "  {}: {} doesn't contain an index.",
-                        bold(shell, "WARNING"),
-                        modulepath
-                    ),
+                    &format!("  {}: {} doesn't contain an index.", bold(shell, "WARNING"), modulepath),
                     shell,
                 );
                 if update(&modulepath, shell) {
@@ -332,11 +324,12 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         if simple_list {
             tmp = module.name.clone();
         } else if is_module_loaded(module.name.as_ref(), true) {
-            let mut tmpwidth = 0;
+            let tmpwidth = if module.name.len() < longest_name {
+                longest_name - module.name.len()
+            } else {
+                0
+            };
 
-            if module.name.len() < longest_name {
-                tmpwidth = longest_name - module.name.len();
-            }
             tmp = format!(
                 "{} {}{:width$} | {}",
                 default,
@@ -346,13 +339,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                 width = tmpwidth
             );
         } else {
-            tmp = format!(
-                "{} {:width$} | {}",
-                default,
-                module.name,
-                description,
-                width = longest_name
-            );
+            tmp = format!("{} {:width$} | {}", default, module.name, description, width = longest_name);
         }
 
         if arg != "" {
@@ -367,11 +354,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                 if first_char != previous_first_char && !simple_list {
                     // add a newline
                     if cnt == 1 {
-                        let width = if longest_name > 12 {
-                            longest_name - 12
-                        } else {
-                            longest_name
-                        };
+                        let width = if longest_name > 12 { longest_name - 12 } else { longest_name };
                         echo("", shell);
                         echo(
                             &format!(
@@ -401,11 +384,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
             if first_char != previous_first_char && !simple_list {
                 // add a newline
                 if cnt == 1 {
-                    let width = if longest_name > 12 {
-                        longest_name - 12
-                    } else {
-                        longest_name
-                    };
+                    let width = if longest_name > 12 { longest_name - 12 } else { longest_name };
                     echo("", shell);
                     echo(
                         &format!(
@@ -456,10 +435,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
 
         echo("", shell);
         echo(
-            &format!(
-                "  {} D means that the module is set as the default module.",
-                bold(shell, "*")
-            ),
+            &format!("  {} D means that the module is set as the default module.", bold(shell, "*")),
             shell,
         );
         echo(
