@@ -48,10 +48,7 @@ pub fn read_input_shell(msg: &str, shell: &str) -> String {
     io::stdout().flush().unwrap();
     let mut line = String::new();
     let stdin = io::stdin();
-    stdin
-        .lock()
-        .read_line(&mut line)
-        .expect("Could not read line");
+    stdin.lock().read_line(&mut line).expect("Could not read line");
     line
 }
 
@@ -161,10 +158,7 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
                         println!("    - Created symlink {} -> {}", current_path_sh, path_sh);
                         bash_success = true;
                     }
-                    Err(msg) => println!(
-                        "    - Could not create symlink {} -> {} ({})",
-                        current_path_sh, path_sh, msg
-                    ),
+                    Err(msg) => println!("    - Could not create symlink {} -> {} ({})", current_path_sh, path_sh, msg),
                 }
 
                 match symlink(current_path_csh, path_csh) {
@@ -211,10 +205,7 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
 
                 match symlink(current_path_sh, path_sh) {
                     Ok(_) => println!("    - Created symlink {} => {}", current_path_sh, path_sh),
-                    Err(msg) => println!(
-                        "    - Could not create symlink {} => {} ({})",
-                        current_path_sh, path_sh, msg
-                    ),
+                    Err(msg) => println!("    - Could not create symlink {} => {} ({})", current_path_sh, path_sh, msg),
                 }
 
                 match symlink(current_path_csh, path_csh) {
@@ -236,21 +227,11 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
                 }
 
                 if !detected_sh {
-                    bash_updated = append_line(
-                        "source ~/.rsmodules.sh",
-                        &shellexpand::tilde("~/.bashrc"),
-                        true,
-                        false,
-                    );
+                    bash_updated = append_line("source ~/.rsmodules.sh", &shellexpand::tilde("~/.bashrc"), true, false);
                 }
 
                 if !detected_csh {
-                    csh_updated = append_line(
-                        "source ~/.rsmodules.csh",
-                        &shellexpand::tilde("~/.cshrc"),
-                        true,
-                        false,
-                    );
+                    csh_updated = append_line("source ~/.rsmodules.csh", &shellexpand::tilde("~/.cshrc"), true, false);
                 }
 
                 if bash_updated || csh_updated {
@@ -286,12 +267,7 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
 }
 
 pub fn append_line(line: &str, filename: &str, verbose: bool, stderr: bool) -> bool {
-    let mut file: File = match OpenOptions::new()
-        .write(true)
-        .append(true)
-        .create(true)
-        .open(filename)
-    {
+    let mut file: File = match OpenOptions::new().write(true).append(true).create(true).open(filename) {
         Ok(fileresult) => fileresult,
         Err(e) => {
             if stderr {
@@ -412,16 +388,10 @@ fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
                     &cap["export"], variable, &cap["equals"], &cap["value"], path
                 );
             } else {
-                output = format!(
-                    r#"{} {}{}"{}""#,
-                    &cap["export"], variable, &cap["equals"], path
-                );
+                output = format!(r#"{} {}{}"{}""#, &cap["export"], variable, &cap["equals"], path);
             }
         } else {
-            output = format!(
-                r#"{} {}{}"{}""#,
-                &cap["export"], variable, &cap["equals"], path
-            );
+            output = format!(r#"{} {}{}"{}""#, &cap["export"], variable, &cap["equals"], path);
         }
     }
 
@@ -503,10 +473,7 @@ pub fn run(recursive: bool) -> bool {
                     return run(true);
                 }
             } else if Path::new(path).is_file() {
-                crash(
-                    super::CRASH_MODULEPATH_IS_FILE,
-                    "Modulepath cannot be a file",
-                );
+                crash(super::CRASH_MODULEPATH_IS_FILE, "Modulepath cannot be a file");
                 return false;
             } else if is_yes(&read_input(
                 format!(

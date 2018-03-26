@@ -110,11 +110,7 @@ pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
             found_cachefile = true;
         } else {
             echo(
-                &format!(
-                    "  {}: {} doesn't contain an index.",
-                    bold(shell, "WARNING"),
-                    path
-                ),
+                &format!("  {}: {} doesn't contain an index.", bold(shell, "WARNING"), path),
                 shell,
             );
             if cache::update(&path, shell) {
@@ -188,12 +184,7 @@ pub fn command(rsmod: &mut Rsmodule) {
         rsmod.arg = load;
         module_action(rsmod, "load");
     } else if rsmod.cmd == "available" {
-        cache::get_module_list(
-            rsmod.arg,
-            rsmod.typed_command,
-            rsmod.shell,
-            rsmod.shell_width,
-        );
+        cache::get_module_list(rsmod.arg, rsmod.typed_command, rsmod.shell, rsmod.shell_width);
     } else if rsmod.cmd == "list" {
         list(rsmod);
     } else if rsmod.cmd == "purge" {
@@ -559,10 +550,7 @@ fn list(rsmod: &mut Rsmodule) {
         };
 
         echo("", rsmod.shell);
-        echo(
-            &format!("{}There are no modules loaded.", spaces),
-            rsmod.shell,
-        );
+        echo(&format!("{}There are no modules loaded.", spaces), rsmod.shell);
     }
     for module in loadedmodules {
         if module != "" {
@@ -687,43 +675,28 @@ fn undo(rsmod: &mut Rsmodule) {
 fn autoload_usage(shell: &str) {
     echo("", shell);
     echo(
-        &format!(
-            "  {}: module autoload [subcommand] [modulename(s)]",
-            bold(shell, "Usage")
-        ),
+        &format!("  {}: module autoload [subcommand] [modulename(s)]", bold(shell, "Usage")),
         shell,
     );
     echo("", shell);
-    echo(
-        "  The module autoload command manages which modules that",
-        shell,
-    );
+    echo("  The module autoload command manages which modules that", shell);
     echo("  are autoloaded in your environment.", shell);
     echo("", shell);
     echo("  The following subcommands are available:", shell);
     echo("", shell);
-    echo(
-        &format!("{}", bold(shell, "    * append [modulename(s)]")),
-        shell,
-    );
+    echo(&format!("{}", bold(shell, "    * append [modulename(s)]")), shell);
     echo(
         "      Adds one or more module to the end of the list of autoloaded modules.",
         shell,
     );
     echo("", shell);
-    echo(
-        &format!("{}", bold(shell, "    * prepend [modulename(s)]")),
-        shell,
-    );
+    echo(&format!("{}", bold(shell, "    * prepend [modulename(s)]")), shell);
     echo(
         "      Adds one or more module to the beginning of the list of autoloaded modules.",
         shell,
     );
     echo("", shell);
-    echo(
-        &format!("{}", bold(shell, "    * remove [modulename(s)]")),
-        shell,
-    );
+    echo(&format!("{}", bold(shell, "    * remove [modulename(s)]")), shell);
     echo(
         "      Removes one or more module from the \
          list of autoloaded moules.",
@@ -777,14 +750,8 @@ mod tests {
     #[test]
     fn _get_other_version_of_module_loaded() {
         env::set_var("LOADEDMODULES", "blast/12.3:blast/11.1");
-        assert_eq!(
-            "blast/12.3",
-            get_other_version_of_loaded_module("blast/11.1")
-        );
-        assert_eq!(
-            "blast/12.3",
-            get_other_version_of_loaded_module("blast/x86_64/11.1")
-        );
+        assert_eq!("blast/12.3", get_other_version_of_loaded_module("blast/11.1"));
+        assert_eq!("blast/12.3", get_other_version_of_loaded_module("blast/x86_64/11.1"));
         assert_eq!("", get_other_version_of_loaded_module("perl"));
         assert_eq!("", get_other_version_of_loaded_module(""));
     }

@@ -126,11 +126,7 @@ fn is_module_autoloaded(module: &str, existing: &str) -> bool {
 fn create_autoload_file() {
     let filename: &str = &shellexpand::tilde(AUTOLOAD_FILE);
     if !Path::new(filename).is_file() {
-        match OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(filename)
-        {
+        match OpenOptions::new().write(true).create_new(true).open(filename) {
             Ok(fileresult) => fileresult,
             Err(e) => {
                 println_stderr!("Cannot create  file {} ({})", filename, e);
@@ -188,12 +184,7 @@ pub fn run(subcommand: &str, args: &mut Vec<&str>, shell: &str) {
         }
     }
 
-    parse_file(
-        subcommand,
-        args,
-        &shellexpand::tilde(AUTOLOAD_FILE),
-        &mut al_modules,
-    );
+    parse_file(subcommand, args, &shellexpand::tilde(AUTOLOAD_FILE), &mut al_modules);
 
     if subcommand == "refurbish" {
         for al_module in &al_modules {
@@ -357,12 +348,7 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
     if (subcommand == "append" || subcommand == "add" || subcommand == "prepend" || subcommand == "remove"
         || subcommand == "purge") && initfile == shellexpand::tilde(AUTOLOAD_FILE)
     {
-        let mut file: File = match OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(initfile)
-        {
+        let mut file: File = match OpenOptions::new().write(true).create(true).truncate(true).open(initfile) {
             Ok(fileresult) => fileresult,
             Err(e) => {
                 println_stderr!("Cannot write to file {} ({})", initfile, e);

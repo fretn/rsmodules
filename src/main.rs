@@ -244,10 +244,7 @@ fn run(args: &[String]) {
 
     if !is_shell_supported(&shell) {
         usage(false);
-        rsmod::crash(
-            CRASH_UNSUPPORTED_SHELL,
-            &format!("{} is not a supported shell", shell),
-        );
+        rsmod::crash(CRASH_UNSUPPORTED_SHELL, &format!("{} is not a supported shell", shell));
     }
 
     let modulepaths = rsmod::get_module_paths(false);
@@ -405,10 +402,7 @@ fn run(args: &[String]) {
                     &format!("{} {}", command_hit, modulename.to_string()),
                     &shell,
                 );
-                crash_if_err!(
-                    CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
-                    tmpfile.write_all(data.as_bytes())
-                );
+                crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(data.as_bytes()));
             }
 
             if command_hit == "switch" && args.len() != 5 {
@@ -423,10 +417,7 @@ fn run(args: &[String]) {
                     &format!("{} {}", command_hit, modulenames.join(" ")),
                     &shell,
                 );
-                crash_if_err!(
-                    CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
-                    tmpfile.write_all(data.as_bytes())
-                );
+                crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(data.as_bytes()));
             }
 
             if command_hit == "purge" {
@@ -436,15 +427,8 @@ fn run(args: &[String]) {
                     args.push(argument);
                 }
                 let loadedmodules = args.join(" ");
-                let data = setenv(
-                    "RSMODULES_UNDO",
-                    &format!("unload {}", loadedmodules),
-                    &shell,
-                );
-                crash_if_err!(
-                    CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
-                    tmpfile.write_all(data.as_bytes())
-                );
+                let data = setenv("RSMODULES_UNDO", &format!("unload {}", loadedmodules), &shell);
+                crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(data.as_bytes()));
             }
 
             let mut rsmod_command: Rsmodule = Rsmodule {
@@ -479,10 +463,7 @@ fn run(args: &[String]) {
         output_buffer.push(cmd);
 
         for line in output_buffer {
-            crash_if_err!(
-                CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
-                tmpfile.write_all(line.as_bytes())
-            );
+            crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(line.as_bytes()));
         }
 
         // source tmpfile

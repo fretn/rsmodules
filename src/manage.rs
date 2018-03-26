@@ -33,6 +33,7 @@ use rsmod::{get_module_paths, Rsmodule};
 use wizard::{is_yes, read_input_shell};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use super::bold;
 
 //use getopts::{Options, Matches};
 
@@ -64,10 +65,7 @@ pub fn delete(rsmod: &Rsmodule) {
             if Path::new(filename).is_file() {
                 if interactive {
                     if is_yes(&read_input_shell(
-                        &format!(
-                            "Are you sure you want to delete the modulefile {} ? [Y/n]: ",
-                            filename
-                        ),
+                        &format!("Are you sure you want to delete the modulefile {} ? [Y/n]: ", filename),
                         rsmod.shell,
                     )) {
                         remove_file(filename);
@@ -328,12 +326,7 @@ fn save(filename: &str, output: &[String]) -> io::Result<()> {
         path = path.parent().unwrap();
         create_dir_all(path)?;
 
-        let mut file: File = match OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(&filename)
-        {
+        let mut file: File = match OpenOptions::new().write(true).create(true).truncate(true).open(&filename) {
             Ok(fileresult) => fileresult,
             Err(_) => return Err(io::Error::last_os_error()),
         };
@@ -377,10 +370,8 @@ fn parse_opt(matches: &Matches, output: &mut Vec<String>, opt: &str, command: &s
 
 pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, modulename: &str) {
     if !skip {
-        let desc = read_input_shell(
-            &format!(" * Enter a description for the module {}: ", modulename),
-            shell,
-        ).trim_right_matches('\n')
+        let desc = read_input_shell(&format!(" * Enter a description for the module {}: ", modulename), shell)
+            .trim_right_matches('\n')
             .to_string();
         output.push(format!("description(\"{}\");", desc));
     }
@@ -400,20 +391,16 @@ pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, mo
 
 pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
     if !skip {
-        let val = read_input_shell(
-            "   Enter the path where the executables can be found: ",
-            shell,
-        ).trim_right_matches('\n')
+        let val = read_input_shell("   Enter the path where the executables can be found: ", shell)
+            .trim_right_matches('\n')
             .to_string();
         output.push(format!("prepend_path(\"PATH\",\"{}\");", val));
         if is_yes(&read_input_shell(
             " * Do you want to set the LD_LIBRARY_PATH variable? [Y/n]: ",
             shell,
         )) {
-            let val = read_input_shell(
-                "   Enter the path where the libraries can be found: ",
-                shell,
-            ).trim_right_matches('\n')
+            let val = read_input_shell("   Enter the path where the libraries can be found: ", shell)
+                .trim_right_matches('\n')
                 .to_string();
             output.push(format!("prepend_path(\"LD_LIBRARY_PATH\",\"{}\");", val));
         }
@@ -434,12 +421,55 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
     }
 }
 
-fn select_modulepath() -> String {
+// todo return Result instead of String
+fn select_modulepath(shell: &str) -> String {
     let modulepaths = super::get_module_paths(true);
 
-    println_stderr!("{}", modulepaths.len());
+    //println_stderr!("{}", modulepaths.len());
     if modulepaths.len() == 1 {
         return modulepaths.get(0).unwrap().to_string();
+    } else if modulepaths.is_empty() {
+        let modulepath = read_input_shell(" * Enter the path where you want to install this module: ", shell)
+            .trim_right_matches('\n')
+            .to_string();
+        if !Path::new(&modulepath).is_dir() {
+            if is_yes(&read_input_shell(
+                &format!("\n{} doesn't exist.\n * Do you want to create it ? [Y/n]: ", modulepath),
+                shell,
+            )) {
+                match fs::create_dir(&modulepath) {
+                    Ok(_o) => (),
+                    Err(e) => crash!(super::super::CRASH_CREATE_ERROR, "Cannot create: {}", modulepath),
+                }
+            } else {
+                crash!(
+                    super::super::CRASH_CREATE_ERROR,
+                    "You need a folder where you can save the modulefile."
+                );
+            }
+        }
+        return modulepath;
+    } else {
+        let mut counter = 1;
+        println_stderr!("Available modulepaths (found in $MODULEPATH): \n");
+        for path in &modulepaths {
+            println_stderr!(" {}. {}", bold(shell, &counter.to_string()), path);
+            counter += 1;
+        }
+        let modulepath_num = read_input_shell("\n * Select the modulepath where you want to install this module: ", shell)
+            .trim_right_matches('\n')
+            .to_string();
+
+        let modulepath_num = match modulepath_num.parse::<usize>() {
+            Ok(str) => str,
+            Err(_e) => return select_modulepath(shell),
+        };
+
+        if modulepath_num <= modulepaths.len() && modulepath_num > 0 {
+            return modulepaths.get(modulepath_num - 1).unwrap().to_string();
+        } else {
+            return select_modulepath(shell);
+        }
     }
 
     String::from("")
@@ -448,7 +478,7 @@ fn select_modulepath() -> String {
 pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
     println_stderr!("");
 
-    let folder = select_modulepath();
+    let folder = select_modulepath(shell);
     println_stderr!("selected path: {}", folder);
     return String::from("");
 
@@ -472,14 +502,6 @@ pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
 
     // do we want to make this the default module file ?
 
-
-
-
-
-
-
-
-
     // Where do you want to save this modulefile ?
     // for path in modulepath
     // 1.
@@ -494,10 +516,8 @@ pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
 
     // todo: tabcompletion
     // https://github.com/shaleh/rust-readline/blob/master/examples/fileman.rs
-    let folder = read_input_shell(
-        " * Enter the folder where the modulefile will be saved: ",
-        shell,
-    ).trim_right_matches('\n')
+    let folder = read_input_shell(" * Enter the folder where the modulefile will be saved: ", shell)
+        .trim_right_matches('\n')
         .to_string();
 
     let modulename = read_input_shell(" * Enter the name of the module: ", shell)

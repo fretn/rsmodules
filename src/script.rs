@@ -64,10 +64,7 @@ fn init_vars_and_commands() {
 }
 
 fn add_to_env_vars(variable: &str, value: &str) {
-    ENV_VARS
-        .lock()
-        .unwrap()
-        .push((variable.to_string(), value.to_string()));
+    ENV_VARS.lock().unwrap().push((variable.to_string(), value.to_string()));
 }
 
 fn add_to_commands(data: &str) {
@@ -364,19 +361,13 @@ fn conflict(module: String) {
             echo("", shell);
         }
         echo(
-            &format!(
-                "{}Cannot continue because the module {} is loaded.",
-                spaces, bold_module
-            ),
+            &format!("{}Cannot continue because the module {} is loaded.", spaces, bold_module),
             shell,
         );
 
         if shell != "noshell" {
             echo(
-                &format!(
-                    "{}You'll need to unload {}before you can continue:",
-                    spaces, bold_module
-                ),
+                &format!("{}You'll need to unload {}before you can continue:", spaces, bold_module),
                 shell,
             );
             echo("", shell);
@@ -405,10 +396,7 @@ fn unload(module: String) {
 
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn description(desc: String) {
-    INFO_DESCRIPTION
-        .lock()
-        .unwrap()
-        .push(desc.replace("\"", "\\\""));
+    INFO_DESCRIPTION.lock().unwrap().push(desc.replace("\"", "\\\""));
 }
 
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
@@ -522,15 +510,9 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
     }
 
     if action == "unload" {
-        remove_path(
-            super::ENV_LOADEDMODULES.to_string(),
-            selected_module.to_string(),
-        );
+        remove_path(super::ENV_LOADEDMODULES.to_string(), selected_module.to_string());
     } else if action == "load" {
-        prepend_path(
-            super::ENV_LOADEDMODULES.to_string(),
-            selected_module.to_string(),
-        );
+        prepend_path(super::ENV_LOADEDMODULES.to_string(), selected_module.to_string());
     }
 
     // this part must be below the above part
@@ -569,16 +551,10 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     let title_bold_module = bold(shell, &tmp);
 
     //output.push(format!("echo \"{:=^1$}\"", module.to_string(), module.len()+5));
-    output.push(format!(
-        "echo \"{}\"",
-        bold(shell, &"=".repeat(module.len() + 4))
-    ));
+    output.push(format!("echo \"{}\"", bold(shell, &"=".repeat(module.len() + 4))));
 
     output.push(format!("echo \"{}\"", title_bold_module.to_string()));
-    output.push(format!(
-        "echo \"{}\"",
-        bold(shell, &"=".repeat(module.len() + 4))
-    ));
+    output.push(format!("echo \"{}\"", bold(shell, &"=".repeat(module.len() + 4))));
     output.push(String::from("echo \"\""));
 
     if INFO_DESCRIPTION.lock().unwrap().iter().len() > 0 {
@@ -588,10 +564,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
         if shell == "bash" || shell == "zsh" {
             output.push(format!("echo $\"{}\"", line.to_string()));
         } else if shell == "csh" || shell == "tcsh" {
-            output.push(format!(
-                "echo \"{}\"",
-                line.to_string().replace("\n", "\\n")
-            ));
+            output.push(format!("echo \"{}\"", line.to_string().replace("\n", "\\n")));
         } else {
             output.push(format!("echo \"{}\"", line.to_string()));
         }
@@ -599,10 +572,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
 
     if INFO_GENERAL.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
-        output.push(format!(
-            "echo \"{}\"",
-            bold(shell, "Sets the following variables: ")
-        ));
+        output.push(format!("echo \"{}\"", bold(shell, "Sets the following variables: ")));
         got_output = true;
     }
     for line in INFO_GENERAL.lock().unwrap().iter() {
@@ -613,10 +583,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
 
     if INFO_PATH.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
-        output.push(format!(
-            "echo \"{}\"",
-            bold(shell, "Executables can be found in: ")
-        ));
+        output.push(format!("echo \"{}\"", bold(shell, "Executables can be found in: ")));
         got_output = true;
     }
     for line in INFO_PATH.lock().unwrap().iter() {
@@ -625,10 +592,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
 
     if INFO_LD_LIBRARY_PATH.lock().unwrap().iter().len() > 0 {
         output.push("echo \"\"".to_string());
-        output.push(format!(
-            "echo \"{}\"",
-            bold(shell, "Libraries can be found in: ")
-        ));
+        output.push(format!("echo \"{}\"", bold(shell, "Libraries can be found in: ")));
         got_output = true;
     }
     for line in INFO_LD_LIBRARY_PATH.lock().unwrap().iter() {
@@ -696,10 +660,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
                 bold(shell, "Try one of these commands to run the program: ")
             ));
         } else {
-            output.push(format!(
-                "echo \"{}\"",
-                bold(shell, "Try this command to run the program: ")
-            ));
+            output.push(format!("echo \"{}\"", bold(shell, "Try this command to run the program: ")));
         }
     }
 
@@ -718,11 +679,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
 // thx uucore
 fn strip_dir(fullname: &str) -> String {
     // Remove all platform-specific path separators from the end
-    let mut path: String = fullname
-        .chars()
-        .rev()
-        .skip_while(|&ch| is_separator(ch))
-        .collect();
+    let mut path: String = fullname.chars().rev().skip_while(|&ch| is_separator(ch)).collect();
 
     // Undo reverse
     path = path.chars().rev().collect();
