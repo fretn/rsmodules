@@ -1,6 +1,7 @@
 #!/bin/bash
 
 if [ "$(uname)" == "Darwin" ]; then
+	echo "Building a release build, building a static build is currently not available on macos"
 	cargo build --release
 	strip target/release/rsmodules
 	cp target/release/rsmodules .
