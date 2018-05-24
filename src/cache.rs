@@ -324,7 +324,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         let tmp: String;
 
         let mut description = module.description.clone();
-		let position = shell_width - longest_name - 5;
+		let position = shell_width - longest_name - 6;
 		let position = match find_boundary(&description, position) {
             Some(p) => p,
             None => 0,
