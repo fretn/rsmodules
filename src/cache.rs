@@ -246,7 +246,7 @@ fn find_boundary(s: &str, i: usize) -> Option<usize> {
 		return Some(i);
 	}
 
-    let mut end = i+1;
+    let mut end = i;
     while !s.is_char_boundary(end) {
         end += 1;
     }
@@ -324,7 +324,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         let tmp: String;
 
         let mut description = module.description.clone();
-		let position = shell_width - longest_name - 6;
+		let position = shell_width - longest_name - 5;
 		let position = match find_boundary(&description, position) {
             Some(p) => p,
             None => 0,
