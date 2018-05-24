@@ -241,6 +241,18 @@ pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i
     }
 }
 
+fn find_boundary(s: &str, i: usize) -> Option<usize> {
+	if i > s.len() {
+		return Some(i);
+	}
+
+    let mut end = i+1;
+    while !s.is_char_boundary(end) {
+        end += 1;
+    }
+    Some(end)
+}
+
 pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width: usize) {
     let modulepaths = get_module_paths(false);
 
@@ -312,7 +324,14 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         let tmp: String;
 
         let mut description = module.description.clone();
-        description.truncate(shell_width - longest_name - 5);
+		let position = shell_width - longest_name - 5;
+		let position = match find_boundary(&description, position) {
+            Some(p) => p,
+            None => 0,
+        };
+
+        //description.truncate(shell_width - longest_name - 5);
+        description.truncate(position);
 
         if module.description == previous_description {
             description = String::new();
