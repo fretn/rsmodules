@@ -241,7 +241,7 @@ pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i
     }
 }
 
-fn find_boundary(s: &str, i: usize) -> Option<usize> {
+fn find_char_boundary(s: &str, i: usize) -> Option<usize> {
 	if i > s.len() {
 		return Some(i);
 	}
@@ -325,7 +325,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
 
         let mut description = module.description.clone();
 		let position = shell_width - longest_name - 5;
-		let position = match find_boundary(&description, position) {
+		let position = match find_char_boundary(&description, position) {
             Some(p) => p,
             None => 0,
         };
@@ -439,7 +439,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
             } else {
                 arg.to_string()
             };
-            let msg = format!("module {} {}| more", typed_command, module);
+            let msg = format!("module {} {} | more", typed_command.trim(), module.trim());
             echo(
                 &format!(
                     "  Hint: use the command '{}' to run the output through a \
