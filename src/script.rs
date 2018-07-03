@@ -40,6 +40,7 @@ lazy_static! {
     static ref ENV_VARS: Mutex<Vec<(String, String)>> = Mutex::new(vec![]);
     static ref COMMANDS: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref CONFLICT: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+    static ref README_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_DESCRIPTION: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_GENERAL: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
@@ -52,6 +53,7 @@ lazy_static! {
 fn init_vars_and_commands() {
     ENV_VARS.lock().unwrap().clear();
     COMMANDS.lock().unwrap().clear();
+    README_PATH.lock().unwrap().clear();
     INFO_DESCRIPTION.lock().unwrap().clear();
     INFO_GENERAL.lock().unwrap().clear();
     INFO_PATH.lock().unwrap().clear();
@@ -69,6 +71,10 @@ fn add_to_env_vars(variable: &str, value: &str) {
 
 fn add_to_commands(data: &str) {
     COMMANDS.lock().unwrap().push(data.to_string());
+}
+
+fn add_to_readme_path(data: &str) {
+    README_PATH.lock().unwrap().push(data.to_string());
 }
 
 fn add_to_info_general(data: &str) {
@@ -165,6 +171,14 @@ fn is_loaded_dummy(var: String) -> bool {
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn setenv_unload(var: String, val: String) {
     unsetenv(var);
+}
+
+// readme functions
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+fn readme_path(var: String, val: String) {
+    if var == "PATH" {
+        add_to_readme_path(&val);
+    }
 }
 
 // info functions
@@ -476,6 +490,21 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("set_alias", set_alias);
         engine.register_fn("is_loaded", is_loaded);
         engine.register_fn("print", print_dummy);
+    } else if action == "readme" {
+        engine.register_fn("setenv", setenv_dummy);
+        engine.register_fn("unsetenv", unsetenv_dummy);
+        engine.register_fn("prepend_path", readme_path);
+        engine.register_fn("append_path", readme_path);
+        engine.register_fn("remove_path", remove_path_dummy);
+        engine.register_fn("system", system_dummy);
+        engine.register_fn("load", load_dummy);
+        engine.register_fn("conflict", conflict_dummy);
+        engine.register_fn("unload", unload_dummy);
+        engine.register_fn("getenv", getenv_dummy);
+        engine.register_fn("description", description_dummy);
+        engine.register_fn("set_alias", set_alias);
+        engine.register_fn("is_loaded", is_loaded);
+        engine.register_fn("print", print_dummy);
     }
 
     match engine.eval_file::<String>(path.to_string_lossy().into_owned().as_ref()) {
@@ -488,6 +517,13 @@ pub fn run(path: &PathBuf, action: &str) {
             );
         },
     }
+}
+
+pub fn get_readme_paths() -> Vec<String> {
+
+    let paths: Vec<String> = README_PATH.lock().unwrap().to_vec();
+
+    paths
 }
 
 pub fn get_description() -> Vec<String> {

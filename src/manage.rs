@@ -526,6 +526,14 @@ pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
         .trim_right_matches('\n')
         .to_string();
 
+    // set root installation dir
+    // this might be used for a future feature:
+    // module readme <modulename>
+    // this scans the root installation dir for
+    // readme files
+
+    //set_root();
+
     add_description(shell, &mut output, false, &modulename);
     add_path(shell, &mut output, false);
     for line in output {

@@ -45,6 +45,7 @@ extern crate walkdir;
 
 extern crate ansi_term;
 extern crate getopts;
+extern crate glob;
 extern crate gumdrop;
 #[macro_use]
 extern crate gumdrop_derive;
@@ -160,6 +161,10 @@ static LONG_HELP: &str = "
 
     * autoload append|prepend|remove|list|purge [module name(s)]
       Manages the autoloading of modules when opening a new terminal.
+
+    * readme [modulename]
+      Looks for a README file in the module installation folder and
+      displays the contents of this file.
 ";
 
 fn is_shell_supported(shell: &str) -> bool {
@@ -204,11 +209,11 @@ fn usage(in_eval: bool) {
 
     if in_eval {
         error_msg = "  Usage: module \
-                     <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload> [module \
+                     <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload|readme> [module \
                      name]";
     } else {
         error_msg = "  Usage: rsmodules <shell> \
-                     <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload> [module \
+                     <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload|readme> [module \
                      name]";
     }
 
@@ -347,6 +352,7 @@ fn run(args: &[String]) {
         command_list.push("help");
         command_list.push("undo");
         command_list.push("autoload");
+        command_list.push("readme");
         command_list.push("delete");
         command_list.push("create");
         command_list.push("--help");

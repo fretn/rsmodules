@@ -54,6 +54,11 @@ version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "glob"
+version = "0.2.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "gumdrop"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -161,6 +166,7 @@ dependencies = [
  "ansi_term 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bincode 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "getopts 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "glob 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "gumdrop 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gumdrop_derive 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "is_executable 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -277,6 +283,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum fuchsia-zircon 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f6c0581a4e363262e52b87f59ee2afe3415361c6ec35e665924eb08afe8ff159"
 "checksum fuchsia-zircon-sys 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "43f3795b4bae048dc6123a6b972cadde2e676f9ded08aef6bb77f5f157684a82"
 "checksum getopts 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)" = "65922871abd2f101a2eb0eaebadc66668e54a87ad9c3dd82520b5f86ede5eff9"
+"checksum glob 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)" = "8be18de09a56b60ed0edf84bc9df007e30040691af7acd1c41874faac5895bfb"
 "checksum gumdrop 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b776c41038e3c3b6b2fb188cfda9282b3caed6b964749836ce1a763a8e0b9449"
 "checksum gumdrop_derive 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "924de3a4128ae775953028388ed49236c2586ff17603254e5bf89cc05914547b"
 "checksum is_executable 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c16560f5b427baa1c46e9c112b76c0ededfa051ae23ab2e741a930ef3223e5a8"

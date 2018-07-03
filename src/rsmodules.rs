@@ -29,6 +29,8 @@ use std::env;
 use std::str::FromStr;
 use super::output;
 use super::bold;
+use glob::glob_with;
+use glob::MatchOptions;
 
 #[path = "script.rs"]
 mod script;
@@ -210,6 +212,8 @@ pub fn command(rsmod: &mut Rsmodule) {
         manage::create(rsmod);
     } else if rsmod.cmd == "autoload" {
         autoload(rsmod);
+    } else if rsmod.cmd == "readme" {
+        module_action(rsmod, "readme");
     }
 }
 
@@ -219,11 +223,112 @@ pub fn get_module_description(path: &PathBuf, action: &str) -> Vec<String> {
     script::get_description()
 }
 
+fn find_root(path: String, previous_path: String, selected_module: &str) -> String {
+    let parts: Vec<&str> = selected_module.split('/').collect();
+
+    let mut counter: usize = 0;
+
+    for part in parts.iter() {
+        if path.find(part) != None {
+            counter += 1;
+        }
+    }
+
+    if counter == parts.len() {
+        let mut parent = PathBuf::from(&path);
+        parent.pop();
+        return find_root(String::from(parent.to_str().unwrap()), path.clone(), selected_module);
+    } else {
+        return previous_path;
+    }
+
+    previous_path
+}
+
+fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
+
+
+    let paths = script::get_readme_paths();
+    //println_stderr!("{:?}", script::get_readme_paths());
+    //println_stderr!("readme: {}", selected_module);
+
+    let mut readme_paths: Vec<String> = Vec::new();
+
+    for path in paths.iter() {
+        let mut tmp = find_root(path.clone(), path.clone(), selected_module);
+        if !tmp.ends_with('/') {
+            tmp.push('/');
+        }
+        readme_paths.push(tmp);
+    }
+
+    //readme_paths.sort();
+    readme_paths.sort_by(|a, b| a.len().cmp(&b.len()));
+    readme_paths.dedup();
+
+    let options = MatchOptions {
+        case_sensitive: false,
+        require_literal_separator: false,
+        require_literal_leading_dot: false,
+    };
+
+    let mut readmes: Vec<String> = Vec::new();
+
+//    println_stderr!("{:?}", readme_paths);
+    for path in readme_paths.iter() {
+        for entry in glob_with(&format!("{}/**/*read*me*", path), &options).expect("Failed to read readme glob pattern") {
+            match entry {
+                Ok(path) => readmes.push(String::from(path.to_str().unwrap())),
+                Err(_e) => {},
+            }
+        }
+    }
+
+    //readmes.sort();
+    readmes.sort_by(|a, b| a.len().cmp(&b.len()));
+    //println_stderr!("{:?}", readmes);
+
+    let mut lines: Vec<String> = Vec::new();
+    let mut counter = 0;
+    for readme in readmes.iter() {
+
+        if counter == 0 {
+            lines.push(format!("echo '\n  {}{}\n'", bold(&shell, "Showing readme file: "), readme));
+            lines.push(format!("cat {}", readme));
+            if readmes.len() > 1 {
+                lines.push(format!("echo '\n  {}\n'", bold(shell, "Other possible readme files: ")));
+            }
+        } else {
+            lines.push(format!("echo '  - {}'", readme));
+        }
+        counter += 1;
+    }
+
+    if counter == 0 {
+        lines.push(format!("echo '\n  {}'", bold(shell,"No readme found.")));
+        let mut str_path = "path";
+        if readme_paths.len() > 1 {
+            str_path = "paths";
+        }
+        lines.push(format!("echo '\n  This script is not perfect, you can try searching in the following {}:\n'", str_path));
+        for path in readme_paths.iter() {
+            lines.push(format!("echo '  - {}'", path));
+        }
+    }
+
+    lines.push(String::from("echo ''"));
+
+    lines
+
+}
+
 fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, action: &str) {
     script::run(path, action);
 
     let data = if action == "info" {
         script::get_info(rsmod.shell, selected_module)
+    } else if action == "readme" {
+        get_readme(selected_module, rsmod.shell)
     } else {
         script::get_output(selected_module, action, rsmod.shell)
     };

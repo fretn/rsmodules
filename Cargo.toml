@@ -20,6 +20,7 @@ is_executable = "0.1.0"
 gumdrop = "0.4.0"
 gumdrop_derive = "0.4.0"
 ansi_term = "0.9"
+glob = "0.2"
 
 [[bin]]
 name = "rsmodules"
