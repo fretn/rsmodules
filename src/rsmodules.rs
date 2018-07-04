@@ -282,6 +282,7 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
 
     let mut mans: Vec<String> = Vec::new();
 
+    // search filesystem with a glob
     mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name), &manpaths));
 	mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name.to_lowercase()), &manpaths));
 	mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name.to_uppercase()), &manpaths));
@@ -297,11 +298,10 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
         return lines;
     }
 
-    // now check for readmes
+    // no manpages
+    // so check for readmes
 
     let paths = script::get_readme_paths();
-    //println_stderr!("{:?}", script::get_readme_paths());
-    //println_stderr!("readme: {}", selected_module);
 
     let mut readme_paths: Vec<String> = Vec::new();
 
@@ -319,6 +319,7 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
 
     let mut readmes: Vec<String> = Vec::new();
 
+    // search filesystem with a glob
 	readmes.extend_from_slice(&glob_path("*read*me*", &readme_paths));
 	readmes.extend_from_slice(&glob_path("*/*read*me*", &readme_paths));
 	readmes.extend_from_slice(&glob_path("doc*/*read*me*", &readme_paths));
@@ -326,7 +327,6 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
 
     //readmes.sort();
     readmes.sort_by(|a, b| a.len().cmp(&b.len()));
-    //println_stderr!("{:?}", readmes);
 
     let mut lines: Vec<String> = Vec::new();
     let mut counter = 0;
@@ -346,12 +346,9 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
 
     if counter == 0 {
         lines.push(format!("echo '\n  {}'", bold(shell,"No readme found.")));
+
 		let str_path = if readme_paths.len() > 1 { "paths" } else { "path" };
-        /*let mut str_path = "path";
-        if readme_paths.len() > 1 {
-            str_path = "paths";
-        }
-*/
+
         lines.push(format!("echo '\n  This script is not perfect, you can try searching in the following {}:\n'", str_path));
         for path in &readme_paths{
             lines.push(format!("echo '  - {}'", path));
