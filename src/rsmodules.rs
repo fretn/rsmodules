@@ -223,7 +223,7 @@ pub fn get_module_description(path: &PathBuf, action: &str) -> Vec<String> {
     script::get_description()
 }
 
-fn find_root(path: String, previous_path: String, selected_module: &str) -> String {
+fn find_root(path: &str, previous_path: &str, selected_module: &str) -> String {
     let parts: Vec<&str> = selected_module.split('/').collect();
 
     let mut counter: usize = 0;
@@ -237,16 +237,67 @@ fn find_root(path: String, previous_path: String, selected_module: &str) -> Stri
     if counter == parts.len() {
         let mut parent = PathBuf::from(&path);
         parent.pop();
-        return find_root(String::from(parent.to_str().unwrap()), path.clone(), selected_module);
+        return find_root(parent.to_str().unwrap(), path, selected_module);
     } else {
-        return previous_path;
+        return String::from(previous_path);
     }
 
-    previous_path
+    String::from(previous_path)
+}
+
+fn glob_path(glob: &str, paths: &[String]) -> Vec<String> {
+
+    let mut result: Vec<String> = Vec::new();
+
+    let options = MatchOptions {
+        case_sensitive: false,
+        require_literal_separator: false,
+        require_literal_leading_dot: false,
+    };
+
+	for path in paths.iter() {
+		for entry in glob_with(&format!("{}/{}", path, glob), &options).expect("Failed to read man glob pattern") {
+			match entry {
+				Ok(path) => result.push(String::from(path.to_str().unwrap())),
+				Err(_e) => {},
+			}
+		}
+    }
+
+    result
 }
 
 fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
 
+    // first check if there are manfiles
+    let manpaths = script::get_readme_manpaths();
+
+    let parts: Vec<&str> = selected_module.split('/').collect();
+
+    let name = if !parts.is_empty() {
+        parts[0]
+    } else {
+        ""
+    };
+
+    let mut mans: Vec<String> = Vec::new();
+
+    mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name), &manpaths));
+	mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name.to_lowercase()), &manpaths));
+	mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name.to_uppercase()), &manpaths));
+	mans.extend_from_slice(&glob_path(&format!("/{}.1", name), &manpaths));
+	mans.extend_from_slice(&glob_path(&format!("/{}.1", name.to_lowercase()), &manpaths));
+	mans.extend_from_slice(&glob_path(&format!("/{}.1", name.to_uppercase()), &manpaths));
+
+    if !mans.is_empty() {
+        let mut lines: Vec<String> = Vec::new();
+
+        lines.push(format!("man -P cat {}", mans[0]));
+
+        return lines;
+    }
+
+    // now check for readmes
 
     let paths = script::get_readme_paths();
     //println_stderr!("{:?}", script::get_readme_paths());
@@ -254,8 +305,8 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
 
     let mut readme_paths: Vec<String> = Vec::new();
 
-    for path in paths.iter() {
-        let mut tmp = find_root(path.clone(), path.clone(), selected_module);
+    for path in &paths {
+        let mut tmp = find_root(path, path, selected_module);
         if !tmp.ends_with('/') {
             tmp.push('/');
         }
@@ -266,23 +317,12 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
     readme_paths.sort_by(|a, b| a.len().cmp(&b.len()));
     readme_paths.dedup();
 
-    let options = MatchOptions {
-        case_sensitive: false,
-        require_literal_separator: false,
-        require_literal_leading_dot: false,
-    };
-
     let mut readmes: Vec<String> = Vec::new();
 
-//    println_stderr!("{:?}", readme_paths);
-    for path in readme_paths.iter() {
-        for entry in glob_with(&format!("{}/**/*read*me*", path), &options).expect("Failed to read readme glob pattern") {
-            match entry {
-                Ok(path) => readmes.push(String::from(path.to_str().unwrap())),
-                Err(_e) => {},
-            }
-        }
-    }
+	readmes.extend_from_slice(&glob_path("*read*me*", &readme_paths));
+	readmes.extend_from_slice(&glob_path("*/*read*me*", &readme_paths));
+	readmes.extend_from_slice(&glob_path("doc*/*read*me*", &readme_paths));
+	readmes.extend_from_slice(&glob_path("*/doc*/*read*me*", &readme_paths));
 
     //readmes.sort();
     readmes.sort_by(|a, b| a.len().cmp(&b.len()));
@@ -290,10 +330,10 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
 
     let mut lines: Vec<String> = Vec::new();
     let mut counter = 0;
-    for readme in readmes.iter() {
+    for readme in &readmes {
 
         if counter == 0 {
-            lines.push(format!("echo '\n  {}{}\n'", bold(&shell, "Showing readme file: "), readme));
+            lines.push(format!("echo '\n  {}{}\n'", bold(shell, "Showing readme file: "), readme));
             lines.push(format!("cat {}", readme));
             if readmes.len() > 1 {
                 lines.push(format!("echo '\n  {}\n'", bold(shell, "Other possible readme files: ")));
@@ -306,12 +346,14 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
 
     if counter == 0 {
         lines.push(format!("echo '\n  {}'", bold(shell,"No readme found.")));
-        let mut str_path = "path";
+		let str_path = if readme_paths.len() > 1 { "paths" } else { "path" };
+        /*let mut str_path = "path";
         if readme_paths.len() > 1 {
             str_path = "paths";
         }
+*/
         lines.push(format!("echo '\n  This script is not perfect, you can try searching in the following {}:\n'", str_path));
-        for path in readme_paths.iter() {
+        for path in &readme_paths{
             lines.push(format!("echo '  - {}'", path));
         }
     }

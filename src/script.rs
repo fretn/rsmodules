@@ -41,6 +41,7 @@ lazy_static! {
     static ref COMMANDS: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref CONFLICT: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
     static ref README_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
+    static ref README_MANPATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_DESCRIPTION: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_GENERAL: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
@@ -54,6 +55,7 @@ fn init_vars_and_commands() {
     ENV_VARS.lock().unwrap().clear();
     COMMANDS.lock().unwrap().clear();
     README_PATH.lock().unwrap().clear();
+    README_MANPATH.lock().unwrap().clear();
     INFO_DESCRIPTION.lock().unwrap().clear();
     INFO_GENERAL.lock().unwrap().clear();
     INFO_PATH.lock().unwrap().clear();
@@ -71,6 +73,10 @@ fn add_to_env_vars(variable: &str, value: &str) {
 
 fn add_to_commands(data: &str) {
     COMMANDS.lock().unwrap().push(data.to_string());
+}
+
+fn add_to_readme_manpath(data: &str) {
+    README_MANPATH.lock().unwrap().push(data.to_string());
 }
 
 fn add_to_readme_path(data: &str) {
@@ -177,6 +183,17 @@ fn setenv_unload(var: String, val: String) {
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn readme_path(var: String, val: String) {
     if var == "PATH" {
+        add_to_readme_path(&val);
+    } else if var == "MANPATH" {
+        add_to_readme_manpath(&val);
+    }
+}
+
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+fn setenv_readme(var: String, val: String) {
+    if var == "MANPATH" {
+        add_to_readme_manpath(&val);
+    } else if var == "PATH" {
         add_to_readme_path(&val);
     }
 }
@@ -491,7 +508,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("is_loaded", is_loaded);
         engine.register_fn("print", print_dummy);
     } else if action == "readme" {
-        engine.register_fn("setenv", setenv_dummy);
+        engine.register_fn("setenv", setenv_readme);
         engine.register_fn("unsetenv", unsetenv_dummy);
         engine.register_fn("prepend_path", readme_path);
         engine.register_fn("append_path", readme_path);
@@ -522,6 +539,13 @@ pub fn run(path: &PathBuf, action: &str) {
 pub fn get_readme_paths() -> Vec<String> {
 
     let paths: Vec<String> = README_PATH.lock().unwrap().to_vec();
+
+    paths
+}
+
+pub fn get_readme_manpaths() -> Vec<String> {
+
+    let paths: Vec<String> = README_MANPATH.lock().unwrap().to_vec();
 
     paths
 }
