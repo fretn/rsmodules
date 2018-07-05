@@ -87,16 +87,16 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 
 		cmds="available \
 			list load purge info \
-			unload makecache add rm \
+			unload readme makecache add rm \
 			autoload refurbish undo refresh delete create"
 
 		opts="-h --help"
 
 		case "$prev" in
-		info|load)    COMPREPLY=( $(compgen -W "$(_module_not_yet_loaded)" -- "$cur") );;
+		load)    COMPREPLY=( $(compgen -W "$(_module_not_yet_loaded)" -- "$cur") );;
 		unload)
 				COMPREPLY=( $(IFS=: compgen -W "${LOADEDMODULES}" -- "$cur") );;
-		delete)
+		delete|readme|info)
 				      COMPREPLY=( $(compgen -W "$(_module_avail)" -- "$cur") );;
 		autoload)
 				COMPREPLY=( $(IFS=: compgen -W "append:prepend:list:purge:remove" -- "$cur") );;
