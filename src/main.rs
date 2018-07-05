@@ -96,8 +96,8 @@ static LONG_HELP: &str = "
 
   Modulefiles can be shared by many users or can be used by individuals
   by setting up paths in the MODULEPATH environment variable. Once
-  a modulepath is added, the cache needs to be updated by invoking
-  the command: module makecache.
+  a new modulepath is created and added to MODULEPATH,
+  the cache needs to be updated by invoking the command: module makecache.
 
   Modulefiles can be loaded and unloaded by the user whenever the
   module command is available.
