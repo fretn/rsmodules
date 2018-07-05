@@ -228,7 +228,8 @@ fn find_root(path: &str, previous_path: &str, selected_module: &str) -> String {
 
     let mut counter: usize = 0;
 
-    for part in parts.iter() {
+    //for part in parts.iter() {
+    for part in &parts {
         if path.find(part) != None {
             counter += 1;
         }
@@ -321,9 +322,12 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
 
     // search filesystem with a glob
 	readmes.extend_from_slice(&glob_path("*read*me*", &readme_paths));
-	readmes.extend_from_slice(&glob_path("*/*read*me*", &readme_paths));
 	readmes.extend_from_slice(&glob_path("doc*/*read*me*", &readme_paths));
 	readmes.extend_from_slice(&glob_path("*/doc*/*read*me*", &readme_paths));
+	readmes.extend_from_slice(&glob_path("*/src*/*read*me*", &readme_paths));
+	readmes.extend_from_slice(&glob_path("src*/*read*me*", &readme_paths));
+	readmes.extend_from_slice(&glob_path("*/source*/*read*me*", &readme_paths));
+	readmes.extend_from_slice(&glob_path("source*/*read*me*", &readme_paths));
 
     //readmes.sort();
     readmes.sort_by(|a, b| a.len().cmp(&b.len()));
