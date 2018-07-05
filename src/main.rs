@@ -163,8 +163,8 @@ static LONG_HELP: &str = "
       Manages the autoloading of modules when opening a new terminal.
 
     * readme [modulename]
-      Looks for a README file in the module installation folder and
-      displays the contents of this file.
+      Looks for a manpage or a README file in the module installation
+      folder and displays the contents of this file.
 ";
 
 fn is_shell_supported(shell: &str) -> bool {
