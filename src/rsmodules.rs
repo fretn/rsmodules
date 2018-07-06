@@ -247,7 +247,6 @@ fn find_root(path: &str, previous_path: &str, selected_module: &str) -> String {
 }
 
 fn glob_path(glob: &str, paths: &[String]) -> Vec<String> {
-
     let mut result: Vec<String> = Vec::new();
 
     let options = MatchOptions {
@@ -256,40 +255,35 @@ fn glob_path(glob: &str, paths: &[String]) -> Vec<String> {
         require_literal_leading_dot: false,
     };
 
-	for path in paths.iter() {
-		for entry in glob_with(&format!("{}/{}", path, glob), &options).expect("Failed to read man glob pattern") {
-			match entry {
-				Ok(path) => result.push(String::from(path.to_str().unwrap())),
-				Err(_e) => {},
-			}
-		}
+    for path in paths.iter() {
+        for entry in glob_with(&format!("{}/{}", path, glob), &options).expect("Failed to read man glob pattern") {
+            match entry {
+                Ok(path) => result.push(String::from(path.to_str().unwrap())),
+                Err(_e) => {}
+            }
+        }
     }
 
     result
 }
 
 fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
-
     // first check if there are manfiles
     let manpaths = script::get_readme_manpaths();
 
     let parts: Vec<&str> = selected_module.split('/').collect();
 
-    let name = if !parts.is_empty() {
-        parts[0]
-    } else {
-        ""
-    };
+    let name = if !parts.is_empty() { parts[0] } else { "" };
 
     let mut mans: Vec<String> = Vec::new();
 
     // search filesystem with a glob
     mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name), &manpaths));
-	mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name.to_lowercase()), &manpaths));
-	mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name.to_uppercase()), &manpaths));
-	mans.extend_from_slice(&glob_path(&format!("/{}.1", name), &manpaths));
-	mans.extend_from_slice(&glob_path(&format!("/{}.1", name.to_lowercase()), &manpaths));
-	mans.extend_from_slice(&glob_path(&format!("/{}.1", name.to_uppercase()), &manpaths));
+    mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name.to_lowercase()), &manpaths));
+    mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name.to_uppercase()), &manpaths));
+    mans.extend_from_slice(&glob_path(&format!("/{}.1", name), &manpaths));
+    mans.extend_from_slice(&glob_path(&format!("/{}.1", name.to_lowercase()), &manpaths));
+    mans.extend_from_slice(&glob_path(&format!("/{}.1", name.to_uppercase()), &manpaths));
 
     if !mans.is_empty() {
         let mut lines: Vec<String> = Vec::new();
@@ -321,13 +315,13 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
     let mut readmes: Vec<String> = Vec::new();
 
     // search filesystem with a glob
-	readmes.extend_from_slice(&glob_path("*read*me*", &readme_paths));
-	readmes.extend_from_slice(&glob_path("doc*/*read*me*", &readme_paths));
-	readmes.extend_from_slice(&glob_path("*/doc*/*read*me*", &readme_paths));
-	readmes.extend_from_slice(&glob_path("*/src*/*read*me*", &readme_paths));
-	readmes.extend_from_slice(&glob_path("src*/*read*me*", &readme_paths));
-	readmes.extend_from_slice(&glob_path("*/source*/*read*me*", &readme_paths));
-	readmes.extend_from_slice(&glob_path("source*/*read*me*", &readme_paths));
+    readmes.extend_from_slice(&glob_path("*read*me*", &readme_paths));
+    readmes.extend_from_slice(&glob_path("doc*/*read*me*", &readme_paths));
+    readmes.extend_from_slice(&glob_path("*/doc*/*read*me*", &readme_paths));
+    readmes.extend_from_slice(&glob_path("*/src*/*read*me*", &readme_paths));
+    readmes.extend_from_slice(&glob_path("src*/*read*me*", &readme_paths));
+    readmes.extend_from_slice(&glob_path("*/source*/*read*me*", &readme_paths));
+    readmes.extend_from_slice(&glob_path("source*/*read*me*", &readme_paths));
 
     //readmes.sort();
     readmes.sort_by(|a, b| a.len().cmp(&b.len()));
@@ -335,7 +329,6 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
     let mut lines: Vec<String> = Vec::new();
     let mut counter = 0;
     for readme in &readmes {
-
         if counter == 0 {
             lines.push(format!("echo '\n  {}{}\n'", bold(shell, "Showing readme file: "), readme));
             lines.push(format!("cat {}", readme));
@@ -349,12 +342,15 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
     }
 
     if counter == 0 {
-        lines.push(format!("echo '\n  {}'", bold(shell,"No readme found.")));
+        lines.push(format!("echo '\n  {}'", bold(shell, "No readme found.")));
 
-		let str_path = if readme_paths.len() > 1 { "paths" } else { "path" };
+        let str_path = if readme_paths.len() > 1 { "paths" } else { "path" };
 
-        lines.push(format!("echo '\n  This script is not perfect, you can try searching in the following {}:\n'", str_path));
-        for path in &readme_paths{
+        lines.push(format!(
+            "echo '\n  This script is not perfect, you can try searching in the following {}:\n'",
+            str_path
+        ));
+        for path in &readme_paths {
             lines.push(format!("echo '  - {}'", path));
         }
     }
@@ -362,7 +358,6 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
     lines.push(String::from("echo ''"));
 
     lines
-
 }
 
 fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, action: &str) {

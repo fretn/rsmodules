@@ -537,14 +537,12 @@ pub fn run(path: &PathBuf, action: &str) {
 }
 
 pub fn get_readme_paths() -> Vec<String> {
-
     let paths: Vec<String> = README_PATH.lock().unwrap().to_vec();
 
     paths
 }
 
 pub fn get_readme_manpaths() -> Vec<String> {
-
     let paths: Vec<String> = README_MANPATH.lock().unwrap().to_vec();
 
     paths

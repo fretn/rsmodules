@@ -208,13 +208,15 @@ fn usage(in_eval: bool) {
     println_stderr!("");
 
     if in_eval {
-        error_msg = "  Usage: module \
-                     <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload|readme> [module \
-                     name]";
+        error_msg =
+            "  Usage: module \
+             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload|readme> [module \
+             name]";
     } else {
-        error_msg = "  Usage: rsmodules <shell> \
-                     <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload|readme> [module \
-                     name]";
+        error_msg =
+            "  Usage: rsmodules <shell> \
+             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload|readme> [module \
+             name]";
     }
 
     println_stderr!("{}", &error_msg);
