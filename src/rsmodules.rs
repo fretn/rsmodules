@@ -238,12 +238,12 @@ fn find_root(path: &str, previous_path: &str, selected_module: &str) -> String {
     if counter == parts.len() {
         let mut parent = PathBuf::from(&path);
         parent.pop();
-        return find_root(parent.to_str().unwrap(), path, selected_module);
+        find_root(parent.to_str().unwrap(), path, selected_module)
     } else {
-        return String::from(previous_path);
+        String::from(previous_path)
     }
 
-    String::from(previous_path)
+    //String::from(previous_path)
 }
 
 fn glob_path(glob: &str, paths: &[String]) -> Vec<String> {
