@@ -70,12 +70,14 @@ D perl/5.14.1 | Perl 5.14.1 is a highly capable, feature-rich programming langua
  * RSModules is fast because it's written in a compiled language and it is using cache files for listing the modules.
  * By using module info, users can easily discover what a module provides and how they use the software that is bundled with the module.
  * The RSModules binary has no dependencies. RSModules works on linux and macOS.
+
 ```bash
 [user@awesome ~]$ ldd rsmodules
 	not a dynamic executable
 [user@awesome ~]$ file rsmodules
 rsmodules: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux), statically linked, BuildID[sha1]=d46b88517c5a31aa8241b8cac1dd48f96c04d26c, stripped
-[user@awesome ~]$
+[user@awesome ~]$ 
+
 ```
  * Support for bash, zsh, tcsh, csh, perl and python.
  * Tabcompletion support for bash, tcsh and csh.
