@@ -1,11 +1,10 @@
-
 variables:
   CARGO_HOME: $CI_PROJECT_DIR/cargo
 
 test:cargo:
   script:
-  - du -hs target
-  - du -hs cargo
+#  - du -hs target
+#  - du -hs cargo
   - rustc --version && cargo --version      # Print version info for debugging
   - cargo build # make a build
   cache:
