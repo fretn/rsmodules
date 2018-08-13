@@ -3,9 +3,6 @@ variables:
 
 test:cargo:
   script:
-#  - du -hs target
-#  - du -hs cargo
-  - env
   - rustc --version && cargo --version      # Print version info for debugging
   - cargo build # make a build
   cache:
