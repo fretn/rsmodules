@@ -447,7 +447,11 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
                             if found && module.0.starts_with(mdl) && module.1 == 1 {
                                 selected_module = module.0.as_ref();
                                 let testpath = format!("{}/{}", modulepath, module.0);
-                                modulefile = PathBuf::from(&testpath);
+                                // if a modulefile is already found, don't overwrite it with a
+                                // possible non existing file
+                                if Path::new(&testpath).exists() && Path::new(&testpath).is_file() {
+                                    modulefile = PathBuf::from(&testpath);
+                                }
 
                                 break 'outer;
                             }
@@ -460,8 +464,11 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
                                 selected_module = module.0.as_ref();
                                 found = true;
                                 let testpath = format!("{}/{}", modulepath, module.0);
-                                modulefile = PathBuf::from(&testpath);
-
+                                // if a modulefile is already found, don't overwrite it with a
+                                // possible non existing file
+                                if Path::new(&testpath).exists() && Path::new(&testpath).is_file() {
+                                    modulefile = PathBuf::from(&testpath);
+                                }
                                 // don't break out of the outer loop, their might be a module
                                 // file marked as D
                                 //break 'outer;
@@ -515,7 +522,6 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         }
 
         // finaly load|unload|info the module
-
         output(format!("# {} {}\n", action, selected_module));
         run_modulefile(&modulefile, rsmod, selected_module, action);
 
