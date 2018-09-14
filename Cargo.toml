@@ -21,6 +21,7 @@ gumdrop = "0.4.0"
 gumdrop_derive = "0.4.0"
 ansi_term = "0.9"
 glob = "0.2"
+dirs = "1.0"
 
 [[bin]]
 name = "rsmodules"

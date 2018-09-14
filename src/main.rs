@@ -43,6 +43,7 @@ extern crate bincode;
 extern crate rustc_serialize;
 extern crate users;
 extern crate walkdir;
+extern crate dirs;
 
 extern crate ansi_term;
 extern crate getopts;
@@ -270,7 +271,7 @@ fn run(args: &[String]) {
 
     let mut tmp_file_path: PathBuf;
 
-    match env::home_dir() {
+    match dirs::home_dir() {
         Some(path) => tmp_file_path = path,
         None => {
             show_warning!(
