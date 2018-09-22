@@ -378,7 +378,7 @@ fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
         }
 
         if append {
-            if !value.is_empty() && !(value.len() == 1 && value[0] == "") {
+            if !(value.len() == 1 && value[0] == "" || value.is_empty()) {
                 output = format!(
                     r#"{} {}{}"{}:{}""#,
                     &cap["export"], variable, &cap["equals"], &cap["value"], path

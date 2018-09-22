@@ -80,7 +80,7 @@ fn add_module(name: String, description: String, flags: i64, modules: &mut Vec<M
 
 fn get_default_version(modulepath: &str, modulename: &str) -> bool {
     let parts: Vec<&str> = modulename.split('/').collect();
-    let groupname = if parts.len() >= 1 { parts[0] } else { "" };
+    let groupname = if !parts.is_empty() { parts[0] } else { "" };
 
     let tmp = format!("{}/{}/.version", modulepath, groupname);
     let module_path = Path::new(&tmp);

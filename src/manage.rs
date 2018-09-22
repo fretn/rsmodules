@@ -56,7 +56,7 @@ fn remove_file(filename: &str) {
 }
 
 pub fn delete(rsmod: &Rsmodule) {
-    let interactive = !(rsmod.shell == "noshell");
+    let interactive = rsmod.shell != "noshell";
 
     let toremove: Vec<&str> = rsmod.arg.split_whitespace().collect();
     for module in &toremove {
@@ -429,7 +429,7 @@ fn select_modulepath(shell: &str) -> String {
 
     //println_stderr!("{}", modulepaths.len());
     if modulepaths.len() == 1 {
-        modulepaths.get(0).unwrap().to_string()
+        modulepaths[0].clone()
     } else if modulepaths.is_empty() {
         let modulepath = read_input_shell(" * Enter the path where you want to install this module: ", shell)
             .trim_right_matches('\n')
@@ -468,7 +468,7 @@ fn select_modulepath(shell: &str) -> String {
         };
 
         if modulepath_num <= modulepaths.len() && modulepath_num > 0 {
-            modulepaths.get(modulepath_num - 1).unwrap().to_string()
+            modulepaths[modulepath_num - 1].clone()
         } else {
             select_modulepath(shell)
         }
