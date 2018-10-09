@@ -150,6 +150,7 @@ Next to the default rhai syntax, the following functions are available:
  * ```description("module description");```
  * ```set_alias("name","value");```
  * ```is_loaded("modulename");```
+ * ```source("shelltype", "/path/to/filename.shell-extension");```
 
 ### Example modulefile
 
@@ -174,6 +175,9 @@ prepend_path("PATH","/software/shared/apps/iprscan/5.23-62/");
 
 system("mkdir -p /scratch/tmp/iprscan_logs");
 system("mkdir -p /scratch/tmp/iprscan_tmp");
+
+source("bash", "/software/shared/apps/iprscan/5.23-64/env.sh");
+source("zsh", "/software/shared/apps/iprscan/5.23-64/env.zsh");
 
 var x = getenv("SOMEVAR");
 
