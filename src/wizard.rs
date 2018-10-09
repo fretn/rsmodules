@@ -364,7 +364,10 @@ fn add_path(newpath: &str, filename: &str, variable: &str, append: bool) -> bool
 // match against export MODULEPATH="" and setenv MODULEPATH ""
 // and add the new path to it
 fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
-    let re = Regex::new(&format!(r#"^\s*(?P<export>export|setenv)\s+{}(?P<equals>[= ]?)"(?P<value>.*)""#, variable)).unwrap();
+    let re = Regex::new(&format!(
+        r#"^\s*(?P<export>export|setenv)\s+{}(?P<equals>[= ]?)"(?P<value>.*)""#,
+        variable
+    )).unwrap();
 
     let mut output: String = input.to_string();
     for cap in re.captures_iter(input) {

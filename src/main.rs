@@ -40,10 +40,10 @@ mod wizard;
 use rsmod::Rsmodule;
 
 extern crate bincode;
+extern crate dirs;
 extern crate rustc_serialize;
 extern crate users;
 extern crate walkdir;
-extern crate dirs;
 
 extern crate ansi_term;
 extern crate getopts;
@@ -500,7 +500,9 @@ pub fn setenv(var: &str, val: &str, shell: &str) -> String {
 }
 
 fn bold<'a>(shell: &str, msg: &'a str) -> ansi_term::ANSIGenericString<'a, str> {
-    if shell == "noshell" || shell == "perl" || shell == "python" || env::var("TERM") == Ok(String::from("")) || env::var("NO_COLOR").is_ok() {
+    if shell == "noshell" || shell == "perl" || shell == "python" || env::var("TERM") == Ok(String::from(""))
+        || env::var("NO_COLOR").is_ok()
+    {
         return Style::new().paint(msg);
     }
 

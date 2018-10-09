@@ -124,6 +124,13 @@ fn print(msg: String) {
     println_stderr!("{}", msg);
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+fn source(wanted_shell: String, path: String) {
+    let (shell, _) = get_shell_info();
+    if shell == wanted_shell {
+        add_to_commands(&format!("source \"{}\"", path));
+    }
+}
 // dummy functions for unloading
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
@@ -153,6 +160,8 @@ fn getenv_dummy(var: String) -> String {
 }
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn print_dummy(_msg: String) {}
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+fn source_dummy(_wanted_shell: String, _path: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn prepend_path_dummy(var: String, val: String) {}
@@ -440,9 +449,6 @@ pub fn run(path: &PathBuf, action: &str) {
 
     init_vars_and_commands();
 
-    // TODO: add a function: source
-    // source("bash", "/path/to/blah/source.sh");
-    // source("tcsh", "/path/to/blah/source.tcsh");
     if action == "unload" {
         // for unloading, we swap some functions
         // prepand_path and append_path are just remove_path
@@ -462,6 +468,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("set_alias", unset_alias);
         engine.register_fn("is_loaded", is_loaded_dummy);
         engine.register_fn("print", print_dummy);
+        engine.register_fn("source", source_dummy);
     } else if action == "load" {
         engine.register_fn("setenv", setenv);
         engine.register_fn("unsetenv", unsetenv);
@@ -477,6 +484,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("set_alias", set_alias);
         engine.register_fn("is_loaded", is_loaded);
         engine.register_fn("print", print);
+        engine.register_fn("source", source);
     } else if action == "info" {
         engine.register_fn("setenv", setenv_info);
         engine.register_fn("unsetenv", unsetenv_dummy);
@@ -492,6 +500,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("set_alias", set_alias_dummy);
         engine.register_fn("is_loaded", is_loaded);
         engine.register_fn("print", print_dummy);
+        engine.register_fn("source", source_dummy);
     } else if action == "description" {
         engine.register_fn("setenv", setenv_dummy);
         engine.register_fn("unsetenv", unsetenv_dummy);
@@ -507,6 +516,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("set_alias", set_alias);
         engine.register_fn("is_loaded", is_loaded);
         engine.register_fn("print", print_dummy);
+        engine.register_fn("source", source_dummy);
     } else if action == "readme" {
         engine.register_fn("setenv", setenv_readme);
         engine.register_fn("unsetenv", unsetenv_dummy);
@@ -522,6 +532,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("set_alias", set_alias);
         engine.register_fn("is_loaded", is_loaded);
         engine.register_fn("print", print_dummy);
+        engine.register_fn("source", source_dummy);
     }
 
     match engine.eval_file::<String>(path.to_string_lossy().into_owned().as_ref()) {
