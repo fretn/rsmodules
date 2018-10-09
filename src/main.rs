@@ -500,7 +500,7 @@ pub fn setenv(var: &str, val: &str, shell: &str) -> String {
 }
 
 fn bold<'a>(shell: &str, msg: &'a str) -> ansi_term::ANSIGenericString<'a, str> {
-    if shell == "noshell" || shell == "perl" || shell == "python" || env::var("TERM") == Ok(String::from("")) {
+    if shell == "noshell" || shell == "perl" || shell == "python" || env::var("TERM") == Ok(String::from("")) || env::var("NO_COLOR").is_ok() {
         return Style::new().paint(msg);
     }
 
