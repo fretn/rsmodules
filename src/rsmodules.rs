@@ -32,16 +32,9 @@ use super::bold;
 use glob::glob_with;
 use glob::MatchOptions;
 
-#[path = "script.rs"]
 mod script;
-
-#[path = "cache.rs"]
 mod cache;
-
-#[path = "autoload.rs"]
 mod autoload;
-
-#[path = "manage.rs"]
 mod manage;
 
 static DEFAULT_MODULE_PATH: &str = "/usr/local";

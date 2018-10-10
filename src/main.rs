@@ -34,7 +34,6 @@ extern crate lazy_static;
 #[path = "rsmodules.rs"]
 mod rsmod;
 
-#[path = "wizard.rs"]
 mod wizard;
 
 use rsmod::Rsmodule;
