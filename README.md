@@ -27,7 +27,7 @@ to setup and administer.
 ### Example
 An example says more than a thousand words:
 
-```
+```bash
 [user@awesome ~]$ echo $PATH
 /usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin
 [user@awesome ~]$ which perl
@@ -196,7 +196,7 @@ if is_loaded("blast/2.2.17") {
 ###### note: As the time of writing rhai scripts don't support tabs, only spaces.
 
 After you have created new modulefiles, don't forget to update the module cache by running the command:
-```
+```bash
 [user@awesome ~]$ module makecache
 ```
 
@@ -273,7 +273,7 @@ RS stands for [rust](https://www.rust-lang.org)
 #### How fast is RSModules ?
 
  
-```
+```bash
 [user@awesome ~]$ time module makecache
 
 /software/shared/rsmodulefiles/ was succesfully indexed.
@@ -338,7 +338,7 @@ The command ```module autoload``` is what you are looking for.
 #### I want to remove a module through a script, but I don't want the interactive mode.
 
 Call ```rsmodules``` directly and supply 'noshell' as the shell, example:
-```
+```bash
 [user@awesome ~]$ /usr/local/bin/rsmodules noshell delete module/1.0 module/2.1
 Removal of module/1.0 module/2.1 was succesful. Don't forget to update the module cache.
 [user@awesome ~]$
