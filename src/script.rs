@@ -121,7 +121,7 @@ fn getenv(var: String) -> String {
 
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn print(msg: String) {
-    println_stderr!("{}", msg);
+    eprintln!("{}", msg);
 }
 
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]

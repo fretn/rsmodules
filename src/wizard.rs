@@ -271,7 +271,7 @@ pub fn append_line(line: &str, filename: &str, verbose: bool, stderr: bool) -> b
         Ok(fileresult) => fileresult,
         Err(e) => {
             if stderr {
-                println_stderr!("  Error: cannot append to file {} ({})", filename, e);
+                eprintln!("  Error: cannot append to file {} ({})", filename, e);
             } else {
                 println!("    - Cannot append to file {} ({})", filename, e);
             }
@@ -288,7 +288,7 @@ pub fn append_line(line: &str, filename: &str, verbose: bool, stderr: bool) -> b
 
     if verbose {
         if stderr {
-            println_stderr!("    Succesfully added '{}' to {}", line, filename);
+            eprintln!("    Succesfully added '{}' to {}", line, filename);
         } else {
             println!("    - Succesfully added '{}' to {}", line, filename);
         }

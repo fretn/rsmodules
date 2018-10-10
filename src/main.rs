@@ -201,12 +201,12 @@ fn release_debug() -> String {
 fn usage(in_eval: bool) {
     let error_msg: &str;
 
-    println_stderr!("  RSModules {}{} - {}", VERSION, release_debug(), AUTHORS);
-    println_stderr!("");
-    println_stderr!("  2017 - Ghent University / VIB");
-    println_stderr!("  http://www.psb.ugent.be - http://www.ugent.be - http://www.vib.be");
-    println_stderr!("");
-    println_stderr!("");
+    eprintln!("  RSModules {}{} - {}", VERSION, release_debug(), AUTHORS);
+    eprintln!("");
+    eprintln!("  2017 - Ghent University / VIB");
+    eprintln!("  http://www.psb.ugent.be - http://www.ugent.be - http://www.vib.be");
+    eprintln!("");
+    eprintln!("");
 
     if in_eval {
         error_msg =
@@ -220,18 +220,18 @@ fn usage(in_eval: bool) {
              name]";
     }
 
-    println_stderr!("{}", &error_msg);
+    eprintln!("{}", &error_msg);
     if !in_eval {
-        println_stderr!(
+        eprintln!(
             "  Supported shells: bash, zsh, csh, tcsh, python, perl and \
              noshell"
         );
-        println_stderr!("");
-        println_stderr!("  When noshell is selected all output is printed to stdout,");
-        println_stderr!("  module available will then print a nice list without gaps, which is");
-        println_stderr!("  makes your life easier when you want to parse this output.");
+        eprintln!("");
+        eprintln!("  When noshell is selected all output is printed to stdout,");
+        eprintln!("  module available will then print a nice list without gaps, which is");
+        eprintln!("  makes your life easier when you want to parse this output.");
     }
-    println_stderr!("{}", &LONG_HELP);
+    eprintln!("{}", &LONG_HELP);
 }
 
 fn set_global_tmpfile(tmp_file_path: String) {

@@ -473,7 +473,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         }
 
         if !found && action != "unload" {
-            println_stderr!("Module {} not found.", selected_module);
+            eprintln!("Module {} not found.", selected_module);
             ::std::process::exit(super::CRASH_MODULE_NOT_FOUND);
         }
 

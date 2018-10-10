@@ -46,7 +46,7 @@ lazy_static! {
 fn remove_file(filename: &str) {
     let mut err: bool = false;
     fs::remove_file(filename).unwrap_or_else(|why| {
-        println_stderr!("Could not remove modulefile: {:?}", why.kind());
+        eprintln!("Could not remove modulefile: {:?}", why.kind());
         err = true;
     });
 
@@ -70,7 +70,7 @@ pub fn delete(rsmod: &Rsmodule) {
                     )) {
                         remove_file(filename);
                     } else {
-                        println_stderr!("No module files where deleted.");
+                        eprintln!("No module files where deleted.");
                     }
                 } else {
                     remove_file(filename);
@@ -107,7 +107,7 @@ pub fn delete(rsmod: &Rsmodule) {
 /*
 fn print_usage(opts: &Options) {
     let brief = "Usage: module create [options]";
-    println_stderr!("{}", opts.usage(brief));
+    eprintln!("{}", opts.usage(brief));
 }
 */
 
@@ -171,19 +171,19 @@ fn print_help(args: &[String], shell: &str) {
     // However, `derive(Options)` does generate information about all
     // defined options.
     if shell == "noshell" || shell == "python" || shell == "perl" {
-        println_stderr!("Usage: {} create [ARGUMENTS]", args[0]);
+        eprintln!("Usage: {} create [ARGUMENTS]", args[0]);
     } else {
-        println_stderr!("Usage: module create [ARGUMENTS]");
+        eprintln!("Usage: module create [ARGUMENTS]");
     }
-    println_stderr!("");
-    println_stderr!("{}", CreateOptions::usage());
+    eprintln!("");
+    eprintln!("{}", CreateOptions::usage());
 }
 
 fn prepare_for_saving(filename: &str, output: &[String]) {
     match save(filename, output) {
         Ok(_) => {}
         Err(e) => {
-            println_stderr!("Cannot write to file {} ({})", filename, e);
+            eprintln!("Cannot write to file {} ({})", filename, e);
             ::std::process::exit(super::super::CRASH_CREATE_ERROR);
         }
     }
@@ -197,7 +197,7 @@ pub fn create(rsmod: &Rsmodule) {
     let opts = match CreateOptions::parse_args_default(&args[3..]) {
         Ok(opts) => opts,
         Err(e) => {
-            println_stderr!("{}: {}", args[0], e);
+            eprintln!("{}: {}", args[0], e);
             return;
         }
     };
@@ -209,14 +209,14 @@ pub fn create(rsmod: &Rsmodule) {
         prepare_for_saving(&filename, &output);
     } else if opts.filename == None {
         print_help(&args, rsmod.shell);
-        println_stderr!("");
-        println_stderr!("Error:");
-        println_stderr!("");
+        eprintln!("");
+        eprintln!("Error:");
+        eprintln!("");
         // TODO: maybe we should just print to stdout when --filename is None
-        println_stderr!("  --filename is required");
-        println_stderr!("");
+        eprintln!("  --filename is required");
+        eprintln!("");
     } else {
-        println_stderr!("{:#?}", opts);
+        eprintln!("{:#?}", opts);
         prepare_for_saving(&opts.filename.unwrap(), &output);
     }
 }
@@ -297,7 +297,7 @@ pub fn _create(rsmod: &Rsmodule) {
             match save(&filename, &output) {
                 Ok(_) => {}
                 Err(e) => {
-                    println_stderr!("Cannot write to file {} ({})", filename, e);
+                    eprintln!("Cannot write to file {} ({})", filename, e);
                     ::std::process::exit(super::super::CRASH_CREATE_ERROR);
                 }
             }
@@ -311,7 +311,7 @@ fn get_modulename(arg: &str) -> String {
     let _arg: Vec<&str> = arg.split_whitespace().collect();
 
     if _arg.len() != 1 {
-        println_stderr!("usage: module create [modulename]");
+        eprintln!("usage: module create [modulename]");
         //super::super::usage(true);
         ::std::process::exit(super::super::CRASH_CREATE_ERROR);
     }
@@ -337,13 +337,13 @@ fn save(filename: &str, output: &[String]) -> io::Result<()> {
                     return Err(io::Error::last_os_error());
                 }
             }
-            println_stderr!(
+            eprintln!(
                 "\nThe creation of modulefile {} was succesful. Don't forget to update the module cache.",
                 filename
             );
         }
     } else {
-        println_stderr!("The file {} already exists, aborting.", filename);
+        eprintln!("The file {} already exists, aborting.", filename);
         ::std::process::exit(super::super::CRASH_CREATE_ERROR);
     }
 
@@ -387,7 +387,7 @@ pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, mo
             .to_string();
         output.push(format!("description(\"{}\");", desc));
         add_description(shell, &mut output, true, modulename);
-        println_stderr!("");
+        eprintln!("");
     }
 }
 
@@ -407,7 +407,7 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
             output.push(format!("prepend_path(\"LD_LIBRARY_PATH\",\"{}\");", val));
         }
     }
-    println_stderr!("");
+    eprintln!("");
     if is_yes(&read_input_shell(
         " * Do you want to set another path variable? [Y/n]: ",
         shell,
@@ -427,7 +427,7 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
 fn select_modulepath(shell: &str) -> String {
     let modulepaths = super::get_module_paths(true);
 
-    //println_stderr!("{}", modulepaths.len());
+    //eprintln!("{}", modulepaths.len());
     if modulepaths.len() == 1 {
         modulepaths[0].clone()
     } else if modulepaths.is_empty() {
@@ -453,9 +453,9 @@ fn select_modulepath(shell: &str) -> String {
         modulepath
     } else {
         let mut counter = 1;
-        println_stderr!("Available modulepaths (found in $MODULEPATH): \n");
+        eprintln!("Available modulepaths (found in $MODULEPATH): \n");
         for path in &modulepaths {
-            println_stderr!(" {}. {}", bold(shell, &counter.to_string()), path);
+            eprintln!(" {}. {}", bold(shell, &counter.to_string()), path);
             counter += 1;
         }
         let modulepath_num = read_input_shell("\n * Select the modulepath where you want to install this module: ", shell)
@@ -478,10 +478,10 @@ fn select_modulepath(shell: &str) -> String {
 }
 
 pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
-    println_stderr!("");
+    eprintln!("");
 
     let folder = select_modulepath(shell);
-    println_stderr!("selected path: {}", folder);
+    eprintln!("selected path: {}", folder);
     return String::from("");
 
     // select modulepath, if only one, skip this
@@ -514,7 +514,7 @@ pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
     // Enter the root directory of the installation
 
     //
-    println_stderr!("");
+    eprintln!("");
 
     // todo: tabcompletion
     // https://github.com/shaleh/rust-readline/blob/master/examples/fileman.rs
@@ -537,7 +537,7 @@ pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
     add_description(shell, &mut output, false, &modulename);
     add_path(shell, &mut output, false);
     for line in output {
-        println_stderr!("{}", line);
+        eprintln!("{}", line);
     }
 
     format!("{}/{}", folder, modulename)

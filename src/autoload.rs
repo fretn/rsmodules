@@ -129,7 +129,7 @@ fn create_autoload_file() {
         match OpenOptions::new().write(true).create_new(true).open(filename) {
             Ok(fileresult) => fileresult,
             Err(e) => {
-                println_stderr!("Cannot create  file {} ({})", filename, e);
+                eprintln!("Cannot create  file {} ({})", filename, e);
                 return;
             }
         };
@@ -292,7 +292,7 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
                             al_modules.push(al_module);
                         }
                     }
-                    //println_stderr!("'{}' '{}' '{}'", &cap["module"], &cap["subcommand"], &cap["modules"]);
+                    //eprintln!("'{}' '{}' '{}'", &cap["module"], &cap["subcommand"], &cap["modules"]);
                 }
             } else if subcommand == "append" || subcommand == "add" || subcommand == "prepend" || subcommand == "remove" {
                 let mut matched = false;
@@ -351,7 +351,7 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
         let mut file: File = match OpenOptions::new().write(true).create(true).truncate(true).open(initfile) {
             Ok(fileresult) => fileresult,
             Err(e) => {
-                println_stderr!("Cannot write to file {} ({})", initfile, e);
+                eprintln!("Cannot write to file {} ({})", initfile, e);
                 return;
             }
         };
