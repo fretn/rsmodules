@@ -169,18 +169,12 @@ static LONG_HELP: &str = "
 ";
 
 fn is_shell_supported(shell: &str) -> bool {
-    let mut shell_list = Vec::new();
 
-    shell_list.push("tcsh");
-    shell_list.push("csh");
-    shell_list.push("bash");
-    shell_list.push("zsh");
     // when noshell is selected, all output is printed
     // to stdout instead of the temp file
     // noshell is also useful for debugging purposes
-    shell_list.push("noshell");
-    shell_list.push("python");
-    shell_list.push("perl");
+
+    let shell_list = vec!["tcsh","csh","bash","zsh","noshell","python","perl"];//Vec::new();
 
     if shell_list.contains(&shell) {
         return true;

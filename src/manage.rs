@@ -477,7 +477,7 @@ fn select_modulepath(shell: &str) -> String {
     //String::from("")
 }
 
-pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
+pub fn run_create_wizard(shell: &str, mut _output: &mut Vec<String>) -> String {
     eprintln!("");
 
     let folder = select_modulepath(shell);
@@ -514,6 +514,7 @@ pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
     // Enter the root directory of the installation
 
     //
+
     eprintln!("");
 
     // todo: tabcompletion
@@ -534,9 +535,9 @@ pub fn run_create_wizard(shell: &str, mut output: &mut Vec<String>) -> String {
 
     //set_root();
 
-    add_description(shell, &mut output, false, &modulename);
-    add_path(shell, &mut output, false);
-    for line in output {
+    add_description(shell, &mut _output, false, &modulename);
+    add_path(shell, &mut _output, false);
+    for line in _output {
         eprintln!("{}", line);
     }
 
