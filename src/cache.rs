@@ -32,6 +32,8 @@ extern crate bincode;
 use bincode::rustc_serialize::{decode_from, encode_into};
 use super::{crash, echo, get_module_description, get_module_paths, is_module_loaded};
 
+use pbr::ProgressBar;
+
 pub static MODULESINDEX: &str = ".modulesindex";
 
 #[derive(RustcEncodable, RustcDecodable, Clone, Eq)]
@@ -117,6 +119,20 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
     let mut index_succes: i32 = 0;
     let mut index_default: i32 = 0;
 
+    let file_str = format!("{}/{}", modulepath, MODULESINDEX);
+    let num_modules = count_modules_in_cache(&PathBuf::from(&file_str)) * 2;
+
+    if shell == "progressbar" {
+        echo("", shell);
+        echo(&format!("  Indexing {}", modulepath), shell);
+        echo("", shell);
+    }
+    let mut pb = ProgressBar::new(0);
+
+    if num_modules != 0 && shell == "progressbar" {
+        pb = ProgressBar::new(num_modules as u64);
+    }
+
     for entry in WalkDir::new(module_path).into_iter().filter_map(|e| e.ok()) {
         let str_path: &str = entry.path().to_str().unwrap();
 
@@ -125,6 +141,9 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
         if !entry.path().is_dir() {
             for mut modulename in part {
                 if modulename != "" {
+                    if shell == "progressbar" {
+                        pb.inc();
+                    }
                     let first = modulename.chars().next().unwrap();
                     let second = if modulename.len() >= 2 { &modulename[1..2] } else { "" };
 
@@ -177,9 +196,11 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
             index_default += 1;
         }
         add_module(modulename, description, flags, &mut modules);
+        if shell == "progressbar" {
+            pb.inc();
+        }
     }
 
-    let file_str = format!("{}/{}", modulepath, MODULESINDEX);
     let file: File = match File::create(&file_str) {
         Ok(file) => file,
         Err(_) => {
@@ -199,6 +220,12 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
         }
     };
 
+    if shell == "progressbar" {
+        echo("", shell);
+    }
+    echo("", shell);
+    echo(&"  Writing cache file.", shell);
+
     let mut writer = BufWriter::new(file);
     encode_into(&modules, &mut writer, bincode::SizeLimit::Infinite).unwrap();
 
@@ -217,9 +244,32 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
     } else {
         let msg: String = format!("{} success", modulepath);
         echo(&msg, shell);
+        let tmp = format!("{}", index_succes);
+        let msg: String = format!("Total number of modules: {}", &tmp);
+        echo(&msg, shell);
+        let tmp = format!("{}", index_default);
+        let msg: String = format!("Number of default (D) modules: {}", &tmp);
+        echo(&msg, shell);
     }
 
     true
+}
+
+fn count_modules_in_cache(filename: &PathBuf) -> usize {
+    let file: File = match File::open(filename) {
+        Ok(file) => file,
+        Err(_) => {
+            crash(
+                super::super::CRASH_COULDNT_OPEN_CACHE_FILE,
+                "modules_cache_file: couldn't open the required index file",
+            );
+            return 0;
+        }
+    };
+    let mut reader = BufReader::new(file);
+    let decoded: Vec<Module> = decode_from(&mut reader, bincode::SizeLimit::Infinite).unwrap();
+
+    decoded.len()
 }
 
 pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i64)>) {

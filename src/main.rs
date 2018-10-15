@@ -51,6 +51,7 @@ extern crate gumdrop;
 #[macro_use]
 extern crate gumdrop_derive;
 extern crate is_executable;
+extern crate pbr;
 extern crate regex;
 extern crate shellexpand;
 
@@ -152,6 +153,8 @@ static LONG_HELP: &str = "
       Updates the .modulesindex file in all the paths that
       are found in the $MODULEPATH variable. This ofcourse
       only works if you have the correct permissions. ;)
+      If you want a progress bar use the command:
+      update_modules_cache instead of module makecache
 
     * create [modulename]
       Starts a wizard to create a modulefile.
@@ -169,12 +172,11 @@ static LONG_HELP: &str = "
 ";
 
 fn is_shell_supported(shell: &str) -> bool {
-
     // when noshell is selected, all output is printed
     // to stdout instead of the temp file
     // noshell is also useful for debugging purposes
 
-    let shell_list = vec!["tcsh","csh","bash","zsh","noshell","python","perl"];//Vec::new();
+    let shell_list = vec!["tcsh", "csh", "bash", "zsh", "noshell", "python", "perl", "progressbar"];
 
     if shell_list.contains(&shell) {
         return true;
@@ -312,6 +314,7 @@ fn run(args: &[String]) {
     };
 
     let mut quoted_string: String;
+    let mut command_hit: &str = "";
     if args.len() >= 3 {
         command = &args[2];
         let matches: bool;
@@ -373,7 +376,6 @@ fn run(args: &[String]) {
         }
 
         let mut num_hits: i32 = 0;
-        let mut command_hit: &str = "";
 
         for cmd in command_list {
             if cmd.starts_with(command) {
@@ -455,7 +457,7 @@ fn run(args: &[String]) {
     // this is used for scripts that want to parse the module av output
     // for example for tab completion
 
-    if shell != "noshell" && shell != "python" && shell != "perl" {
+    if shell != "noshell" && shell != "python" && shell != "perl" && shell != "progressbar" {
         // we want a self destructing tmpfile
         // so it must delete itself at the end of the run
         // if it crashes we still need to delete the file

@@ -92,7 +92,7 @@ RSModules has a few configuration options which are located in the setup scripts
  
 The scripts ```setup_rsmodules.sh``` and ```setup_rsmodules.sh``` need to be sourced when the user logs in. You either symlink these in /etc/profile.d/ or source them in the users init scripts (.bashrc, .cshrc, .zshrc, ...)
 
-After you have added modulefiles, don't forget to update the module cache by running the command: ```module makecache```
+After you have added modulefiles, don't forget to update the module cache by running the command: ```update_modules_cache```
 
 In case you want to use RSModules inside your python or perl scripts, add the ```$RSMODULES_INSTALL_DIR``` to the ```$PYTHONPAH``` and/or ```$PERL5LIB``` environment
 variable(s). But this shouldn't be needed as the ```setup_rsmodules.(c)sh``` scripts do this for you.
@@ -110,7 +110,7 @@ On the next login the ```module``` command will be available
 
 A dummy module will be created to help you around.
 
-After you have added modulefiles, don't forget to update the module cache by running the command: ```module makecache```
+After you have added modulefiles, don't forget to update the module cache by running the command: ```update_modules_cache```
 
 ### Compiling from source
 First you'll have to install Rust on your system:
@@ -198,6 +198,11 @@ if is_loaded("blast/2.2.17") {
 After you have created new modulefiles, don't forget to update the module cache by running the command:
 ```bash
 [user@awesome ~]$ module makecache
+```
+
+You can also have a progress bar while updating the cache.
+```bash
+[user@awesome ~] update_modules_cache
 ```
 
 ### Using from perl

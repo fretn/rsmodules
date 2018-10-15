@@ -630,7 +630,7 @@ pub fn is_other_version_of_module_loaded(name: &str) -> bool {
 pub fn echo(line: &str, shell: &str) {
     //FIXME: if line contains \n and shell is csh or tcsh
     // escape it
-    if shell == "noshell" {
+    if shell == "noshell" || shell == "progressbar" {
         println!("{}", line);
     } else if shell == "python" {
         println!("print(\"{}\")", line);

@@ -5,6 +5,11 @@ module() {
 	eval `$RSMODULES_INSTALL_DIR/rsmodules bash,$TERMWIDTH $*`;
 }
 
+update_modules_cache() {
+	export TERMWIDTH=`/bin/stty size 2>&1 | cut -d" " -f2`;
+	$RSMODULES_INSTALL_DIR/rsmodules progressbar,$TERMWIDTH makecache;
+}
+
 export MODULEPATH=""
 export RSMODULES_INSTALL_DIR=""
 #export LOADEDMODULES=""
