@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use std::io::{BufRead, BufReader, BufWriter};
+use std::io::{BufRead, BufReader, BufWriter, Stdout};
 use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::cmp::Ordering;
@@ -112,15 +112,27 @@ fn get_default_version(modulepath: &str, modulename: &str) -> bool {
     false
 }
 
+fn progressbar(num: u64, msg: &str) -> ProgressBar<Stdout> {
+    let mut pb = ProgressBar::new(num);
+    pb.show_speed = false;
+    pb.show_time_left = false;
+    pb.show_counter = false;
+    pb.show_message = true;
+    pb.message(msg);
+
+    pb
+}
+
 pub fn update(modulepath: &str, shell: &str) -> bool {
     // list is: path to file, module name, default
     let mut list: Vec<(String, String, bool)> = Vec::new();
     let module_path = Path::new(&modulepath);
     let mut index_succes: i32 = 0;
     let mut index_default: i32 = 0;
+    let mut counter: u64 = 0;
 
     let file_str = format!("{}/{}", modulepath, MODULESINDEX);
-    let num_modules = count_modules_in_cache(&PathBuf::from(&file_str)) * 2;
+    let num_modules = count_modules_in_cache(&PathBuf::from(&file_str));
 
     if shell == "progressbar" {
         echo("", shell);
@@ -130,7 +142,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
     let mut pb = ProgressBar::new(0);
 
     if num_modules != 0 && shell == "progressbar" {
-        pb = ProgressBar::new(num_modules as u64);
+        pb = progressbar(num_modules, "  Scanning folders ");
     }
 
     for entry in WalkDir::new(module_path).into_iter().filter_map(|e| e.ok()) {
@@ -143,6 +155,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
                 if modulename != "" {
                     if shell == "progressbar" {
                         pb.inc();
+                        counter += 1;
                     }
                     let first = modulename.chars().next().unwrap();
                     let second = if modulename.len() >= 2 { &modulename[1..2] } else { "" };
@@ -170,6 +183,10 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
                         let default = get_default_version(modulepath, modulename);
                         list.push((str_path.to_string(), modulename.to_string(), default));
                         index_succes += 1;
+                        if shell == "progressbar" {
+                            pb = progressbar(list.len() as u64 + num_modules, "  Scanning folders ");
+                            pb.set(counter);
+                        }
                     }
                 }
             }
@@ -178,12 +195,16 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
 
     // now we have all the module files in the current folder
     // we need to parse them to get their description
-
     // our list of modules that we will save into the .modulesindex
+
     let mut modules: Vec<Module> = vec![];
 
     for (modulepath, modulename, default) in list {
         let path: PathBuf = PathBuf::from(&modulepath);
+        if shell == "progressbar" {
+            pb.inc();
+            pb.message("  Parsing files    ");
+        }
 
         let description: Vec<String> = get_module_description(&path, "description");
         let description = description.join(" ");
@@ -196,10 +217,13 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
             index_default += 1;
         }
         add_module(modulename, description, flags, &mut modules);
-        if shell == "progressbar" {
-            pb.inc();
-        }
     }
+
+    if shell == "progressbar" {
+        echo("", shell);
+    }
+    echo("", shell);
+    echo(&"  Writing cache file.", shell);
 
     let file: File = match File::create(&file_str) {
         Ok(file) => file,
@@ -219,12 +243,6 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
             return false;
         }
     };
-
-    if shell == "progressbar" {
-        echo("", shell);
-    }
-    echo("", shell);
-    echo(&"  Writing cache file.", shell);
 
     let mut writer = BufWriter::new(file);
     encode_into(&modules, &mut writer, bincode::SizeLimit::Infinite).unwrap();
@@ -255,7 +273,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
     true
 }
 
-fn count_modules_in_cache(filename: &PathBuf) -> usize {
+fn count_modules_in_cache(filename: &PathBuf) -> u64 {
     let file: File = match File::open(filename) {
         Ok(file) => file,
         Err(_) => {
@@ -269,7 +287,7 @@ fn count_modules_in_cache(filename: &PathBuf) -> usize {
     let mut reader = BufReader::new(file);
     let decoded: Vec<Module> = decode_from(&mut reader, bincode::SizeLimit::Infinite).unwrap();
 
-    decoded.len()
+    decoded.len() as u64
 }
 
 pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i64)>) {
