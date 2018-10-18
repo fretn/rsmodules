@@ -444,9 +444,9 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
                                 // possible non existing file
                                 if Path::new(&testpath).exists() && Path::new(&testpath).is_file() {
                                     modulefile = PathBuf::from(&testpath);
+                                    break 'outer;
                                 }
 
-                                break 'outer;
                             }
 
                             if found && !module.0.starts_with(mdl) {
@@ -476,9 +476,9 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
             eprintln!("Module {} not found.", selected_module);
             ::std::process::exit(super::CRASH_MODULE_NOT_FOUND);
         }
-
         // check of another version is already loaded
         // and replace it with the current one
+
         let mut replaced_module: bool = false;
         let mut other: String = String::new();
         if is_other_version_of_module_loaded(selected_module) && action == "load" {
