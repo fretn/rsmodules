@@ -280,7 +280,10 @@ fn count_modules_in_cache(filename: &PathBuf) -> u64 {
         Err(_) => {
             crash(
                 super::super::CRASH_COULDNT_OPEN_CACHE_FILE,
-                "modules_cache_file: couldn't open the required index file",
+                &format!(
+                    "count_modules_in_cache: couldn't open the required index file: {:?}",
+                    filename
+                ),
             );
             return 0;
         }
@@ -297,7 +300,10 @@ pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i
         Err(_) => {
             crash(
                 super::super::CRASH_COULDNT_OPEN_CACHE_FILE,
-                "modules_cache_file: couldn't open the required index file",
+                &format!(
+                    "parse_modules_in_cache: couldn't open the required index file: {:?}",
+                    filename
+                ),
             );
             return;
         }
