@@ -446,7 +446,6 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
                                     modulefile = PathBuf::from(&testpath);
                                     break 'outer;
                                 }
-
                             }
 
                             if found && !module.0.starts_with(mdl) {

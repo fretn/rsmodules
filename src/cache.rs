@@ -139,11 +139,12 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
         echo(&format!("  Indexing {}", modulepath), shell);
         echo("", shell);
     }
-    let mut pb = ProgressBar::new(0);
 
-    if num_modules != 0 && shell == "progressbar" {
-        pb = progressbar(num_modules, "  Scanning folders ");
-    }
+    let mut pb = if num_modules != 0 && shell == "progressbar" {
+        progressbar(num_modules, "  Scanning folders ")
+    } else {
+        ProgressBar::new(0)
+    };
 
     for entry in WalkDir::new(module_path).into_iter().filter_map(|e| e.ok()) {
         let str_path: &str = entry.path().to_str().unwrap();
