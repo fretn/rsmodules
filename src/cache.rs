@@ -129,7 +129,6 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
     let module_path = Path::new(&modulepath);
     let mut index_succes: i32 = 0;
     let mut index_default: i32 = 0;
-    let mut counter: u64 = 0;
 
     let file_str = format!("{}/{}", modulepath, MODULESINDEX);
     let num_modules = count_modules_in_cache(&PathBuf::from(&file_str));
@@ -156,7 +155,6 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
                 if modulename != "" {
                     if shell == "progressbar" {
                         pb.inc();
-                        counter += 1;
                     }
                     let first = modulename.chars().next().unwrap();
                     let second = if modulename.len() >= 2 { &modulename[1..2] } else { "" };
@@ -184,10 +182,6 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
                         let default = get_default_version(modulepath, modulename);
                         list.push((str_path.to_string(), modulename.to_string(), default));
                         index_succes += 1;
-                        if shell == "progressbar" {
-                            pb = progressbar(list.len() as u64 + num_modules, "  Scanning folders ");
-                            pb.set(counter);
-                        }
                     }
                 }
             }
@@ -199,6 +193,13 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
     // our list of modules that we will save into the .modulesindex
 
     let mut modules: Vec<Module> = vec![];
+
+    let num_modules = list.len() as u64;
+    let mut pb = if num_modules != 0 && shell == "progressbar" {
+        progressbar(num_modules, "  Parsing files    ")
+    } else {
+        ProgressBar::new(0)
+    };
 
     for (modulepath, modulename, default) in list {
         let path: PathBuf = PathBuf::from(&modulepath);
