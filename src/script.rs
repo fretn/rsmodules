@@ -407,7 +407,7 @@ fn conflict(module: String) {
 
         if shell != "noshell" {
             echo(
-                &format!("{}You'll need to unload {}before you can continue:", spaces, bold_module),
+                &format!("{}You'll need to unload {} before you can continue:", spaces, bold_module),
                 shell,
             );
             echo("", shell);
