@@ -24,6 +24,7 @@ SOFTWARE.
 
 extern crate rand;
 use rand::Rng;
+use std::panic;
 
 #[macro_use]
 mod macros;
@@ -312,6 +313,12 @@ fn run(args: &[String]) {
             };
         }
     };
+
+    panic::set_hook(Box::new(|_| {
+        let tmp = TMPFILE_PATH.lock().unwrap();
+        let tmp_file_path = &*tmp;
+        remove_file(tmp_file_path).unwrap();
+    }));
 
     let mut quoted_string: String;
     let mut command_hit: &str = "";
