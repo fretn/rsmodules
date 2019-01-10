@@ -515,6 +515,7 @@ pub fn run_create_wizard(shell: &str, mut _output: &mut Vec<String>) -> String {
 
     //
 
+    unreachable!();
     eprintln!("");
 
     // todo: tabcompletion

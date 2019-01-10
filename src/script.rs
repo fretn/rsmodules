@@ -33,6 +33,8 @@ use std::fs::read_dir;
 use super::{echo, get_shell_info, Rsmodule};
 use is_executable::IsExecutable;
 use super::super::bold;
+use regex::Regex;
+use std::ffi::OsString;
 
 // WARNING: the scripts don't support tabbed indents in if else structures
 
@@ -698,16 +700,31 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     let mut execs: Vec<String> = Vec::new();
     for line in INFO_PATH.lock().unwrap().iter() {
         if Path::new(line).is_dir() {
+            // if activate, activate.csh, activate.fish and activate_this.py exist
+            // then we are in a python virtualenv, we can skip the typical python
+            // binaries, we don't want to see them when we run 'module info program/arch/version'
+
+            let is_virtual_env = is_virtual_env(PathBuf::from(line));
+
             let entries = match read_dir(line) {
                 Ok(entry) => entry,
                 Err(_) => continue,
             };
 
             for entry in entries {
-                let path = match entry {
+                let path = match &entry {
                     Ok(p) => p.path(),
                     Err(_) => continue,
                 };
+
+                let file_name = match &entry {
+                    Ok(p) => p.file_name(),
+                    Err(_) => continue,
+                };
+
+                if is_python_binary(file_name) && is_virtual_env {
+                    continue;
+                }
 
                 if path.is_dir() {
                     continue;
@@ -743,6 +760,60 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     }
 
     output
+}
+
+fn is_virtual_env(path: PathBuf) -> bool {
+    if env::var("RSMODULES_DONT_FILTER_INFO").is_ok() {
+        return false;
+    }
+
+    let mut tmp_path = path;
+    tmp_path.push("bin");
+
+    let files = vec!["activate", "activate.csh", "activate.fish", "activate_this.py"];
+    let mut counter = 0;
+
+    for file in &files {
+        tmp_path.set_file_name(file);
+        if tmp_path.exists() {
+            counter += 1;
+        }
+    }
+
+    if counter == files.len() {
+        return true;
+    }
+
+    false
+}
+
+fn is_python_binary(file_name: OsString) -> bool {
+    let files = vec![
+        "^activate$",
+        "^activate.csh$",
+        "^activate.fish$",
+        "^activate_this.py$",
+        "^easy_install$",
+        "^easy_install-[0-9].[0-9]$",
+        "^pip$",
+        "^pip[0-9]$",
+        "^pip[0-9].[0-9]$",
+        "^python$",
+        "^python[0-9]$",
+        "^python[0-9].[0-9]$",
+        "^python-config$",
+        "^wheel$",
+    ];
+
+    for file in files {
+        let re = Regex::new(&format!(r#"{}"#, file)).unwrap();
+
+        if re.is_match(file_name.to_str().unwrap()) {
+            return true;
+        }
+    }
+
+    false
 }
 
 // thx uucore
