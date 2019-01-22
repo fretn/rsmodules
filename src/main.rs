@@ -322,6 +322,8 @@ fn run(args: &[String]) {
         remove_file(tmp_file_path).unwrap();
     }));
 
+    let filename = tmp_file_path.to_str().unwrap().to_string();
+
     let mut quoted_string: String;
     let mut command_hit: &str = "";
     if args.len() >= 3 {
@@ -416,7 +418,7 @@ fn run(args: &[String]) {
                     &format!("{} {}", command_hit, modulename.to_string()),
                     &shell,
                 );
-                crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(data.as_bytes()));
+                crash_cleanup_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(data.as_bytes()), filename);
             }
 
             if command_hit == "switch" && args.len() != 5 {
@@ -431,7 +433,7 @@ fn run(args: &[String]) {
                     &format!("{} {}", command_hit, modulenames.join(" ")),
                     &shell,
                 );
-                crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(data.as_bytes()));
+                crash_cleanup_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(data.as_bytes()), filename);
             }
 
             if command_hit == "purge" {
@@ -442,7 +444,7 @@ fn run(args: &[String]) {
                 }
                 let loadedmodules = args.join(" ");
                 let data = setenv("RSMODULES_UNDO", &format!("unload {}", loadedmodules), &shell);
-                crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(data.as_bytes()));
+                crash_cleanup_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(data.as_bytes()), filename);
             }
 
             let mut rsmod_command: Rsmodule = Rsmodule {
@@ -469,7 +471,8 @@ fn run(args: &[String]) {
     if shell != "noshell" && shell != "python" && shell != "perl" && shell != "progressbar" {
         // we want a self destructing tmpfile
         // so it must delete itself at the end of the run
-        // if it crashes we still need to delete the file
+        // if it crashes it will be deleted after the source stuff
+        // if the code that writes the file crashes it should clean up
 
         let cmd = format!("\\rm -f {}\n", tmp_file_path.display());
 
@@ -478,11 +481,14 @@ fn run(args: &[String]) {
         output_buffer.push(cmd);
 
         for line in output_buffer {
-            crash_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(line.as_bytes()));
+            crash_cleanup_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(line.as_bytes()), filename);
         }
 
         // source tmpfile
         println!("source {}", tmp_file_path.display());
+        // doesn't this make more sense than creating a
+        // self destructing file ?
+        println!("rm -f {}", tmp_file_path.display());
     } else {
         remove_file(tmp_file_path.to_str().unwrap().to_string()).unwrap();
     }

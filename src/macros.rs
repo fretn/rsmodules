@@ -97,11 +97,24 @@ macro_rules! exit(
     })
 );
 
+#[allow(unused_macros)]
 macro_rules! crash_if_err(
     ($exitcode:expr, $exp:expr) => (
         match $exp {
             Ok(m) => m,
             Err(f) => crash!($exitcode, "{}", f),
+        }
+    )
+);
+
+macro_rules! crash_cleanup_if_err(
+    ($exitcode:expr, $exp:expr, $file:expr) => (
+        match $exp {
+            Ok(m) => m,
+            Err(f) => {
+                    remove_file($file).unwrap();
+                    crash!($exitcode, "{}", f);
+                },
         }
     )
 );
