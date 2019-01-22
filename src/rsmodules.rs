@@ -179,7 +179,22 @@ pub fn command(rsmod: &mut Rsmodule) {
         rsmod.arg = load;
         module_action(rsmod, "load");
     } else if rsmod.cmd == "available" {
-        cache::get_module_list(rsmod.arg, rsmod.typed_command, rsmod.shell, rsmod.shell_width);
+        let args: Vec<&str> = rsmod.arg.split_whitespace().collect();
+        let mut arg: &str = "";
+        let mut only_default: bool = false;
+        if args.len() == 2 {
+            if args[0] == "--default" {
+                only_default = true;
+            }
+            arg = &args[1];
+        } else if args.len() == 1 {
+            if args[0] == "--default" {
+                only_default = true;
+            } else {
+                arg = &args[0];
+            }
+        }
+        cache::get_module_list(arg, rsmod.typed_command, rsmod.shell, rsmod.shell_width, only_default);
     } else if rsmod.cmd == "list" {
         list(rsmod);
     } else if rsmod.cmd == "purge" {

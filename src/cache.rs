@@ -329,7 +329,7 @@ fn find_char_boundary(s: &str, i: usize) -> Option<usize> {
     Some(end)
 }
 
-pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width: usize) {
+pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width: usize, only_default: bool) {
     let modulepaths = get_module_paths(false);
 
     // prints a nice list for module av
@@ -415,6 +415,10 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
         previous_description = module.description;
 
         let default = if module.flags == 1 { "D" } else { " " };
+
+        if only_default && module.flags != 1 {
+            continue;
+        }
 
         if simple_list {
             tmp = module.name.clone();
