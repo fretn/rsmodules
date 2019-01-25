@@ -24,17 +24,17 @@ SOFTWARE.
 extern crate rhai;
 //extern crate is_executable;
 use self::rhai::{Engine, FnRegister};
-use std::env;
-use std::sync::{Arc, Mutex};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::path::{is_separator, Path, PathBuf};
-use std::io::Write;
-use std::fs::read_dir;
+use super::super::bold;
 use super::{echo, get_shell_info, Rsmodule};
 use is_executable::IsExecutable;
-use super::super::bold;
 use regex::Regex;
+use std::env;
 use std::ffi::OsString;
+use std::fs::read_dir;
+use std::io::Write;
+use std::path::{is_separator, Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 
 // WARNING: the scripts don't support tabbed indents in if else structures
 
@@ -110,7 +110,7 @@ fn add_to_load(data: String) {
 }
 
 // functions for load and unload
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn getenv(var: String) -> String {
     match env::var(&var) {
         Ok(res) => res,
@@ -121,12 +121,12 @@ fn getenv(var: String) -> String {
     }
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn print(msg: String) {
     eprintln!("{}", msg);
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn source(wanted_shell: String, path: String) {
     let (shell, _) = get_shell_info();
     if shell == wanted_shell {
@@ -135,49 +135,49 @@ fn source(wanted_shell: String, path: String) {
 }
 // dummy functions for unloading
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn unsetenv_dummy(var: String) {}
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn remove_path_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn system_dummy(cmd: String) {}
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn load_dummy(module: String) {}
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn conflict_dummy(module: String) {}
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn unload_dummy(module: String) {}
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn description_dummy(desc: String) {}
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn getenv_dummy(var: String) -> String {
     String::new()
 }
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn print_dummy(_msg: String) {}
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn source_dummy(_wanted_shell: String, _path: String) {}
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn prepend_path_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn append_path_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn setenv_dummy(var: String, val: String) {}
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn set_alias_dummy(name: String, val: String) {}
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn is_loaded_dummy(var: String) -> bool {
     true
 }
@@ -185,13 +185,13 @@ fn is_loaded_dummy(var: String) -> bool {
 // unload functions
 
 #[allow(unused_variables)]
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn setenv_unload(var: String, val: String) {
     unsetenv(var);
 }
 
 // readme functions
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn readme_path(var: String, val: String) {
     if var == "PATH" {
         add_to_readme_path(&val);
@@ -200,7 +200,7 @@ fn readme_path(var: String, val: String) {
     }
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn setenv_readme(var: String, val: String) {
     if var == "MANPATH" {
         add_to_readme_manpath(&val);
@@ -211,12 +211,12 @@ fn setenv_readme(var: String, val: String) {
 
 // info functions
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn setenv_info(var: String, val: String) {
     add_to_info_general(&format!("{}={}", var, val));
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn prepend_path_info(var: String, val: String) {
     if var == "PATH" {
         add_to_info_path(&val);
@@ -230,7 +230,7 @@ fn prepend_path_info(var: String, val: String) {
         add_to_info_general(&format!("{}={}", var, val));
     }
 }
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn append_path_info(var: String, val: String) {
     if var == "PATH" {
         add_to_info_path(&val);
@@ -245,24 +245,24 @@ fn append_path_info(var: String, val: String) {
     }
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn load_info(module: String) {
     add_to_load(module);
 }
 // load functions
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn setenv(var: String, val: String) {
     add_to_env_vars(&var, &val);
     env::set_var(&var, val);
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn is_loaded(var: String) -> bool {
     super::is_module_loaded(&var, false)
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn unsetenv(var: String) {
     let (shell, _) = get_shell_info();
     if shell == "bash" || shell == "zsh" {
@@ -278,7 +278,7 @@ fn unsetenv(var: String) {
     env::remove_var(&var);
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn prepend_path(var: String, val: String) {
     let mut current_val: String = String::from("");
     let mut notfound: bool = false;
@@ -300,7 +300,7 @@ fn prepend_path(var: String, val: String) {
     }
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn append_path(var: String, val: String) {
     let mut current_val: String = String::from("");
     let mut notfound: bool = false;
@@ -322,7 +322,7 @@ fn append_path(var: String, val: String) {
     }
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn remove_path(var: String, val: String) {
     let current_val: String;
 
@@ -343,7 +343,7 @@ fn remove_path(var: String, val: String) {
     env::set_var(&var, result);
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn unset_alias(name: String, val: String) {
     let (shell, _) = get_shell_info();
     if shell == "bash" || shell == "zsh" {
@@ -353,7 +353,7 @@ fn unset_alias(name: String, val: String) {
     }
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn set_alias(name: String, val: String) {
     let (shell, _) = get_shell_info();
     if shell != "python" && shell != "perl" {
@@ -361,7 +361,7 @@ fn set_alias(name: String, val: String) {
     }
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn system(cmd: String) {
     let (shell, _) = get_shell_info();
     if shell != "python" && shell != "perl" {
@@ -369,7 +369,7 @@ fn system(cmd: String) {
     }
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn load(module: String) {
     let (shell, _) = get_shell_info();
 
@@ -385,7 +385,7 @@ fn load(module: String) {
     super::command(&mut rsmod_command);
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn conflict(module: String) {
     if super::is_module_loaded(module.as_ref(), false) {
         let (shell, _) = get_shell_info();
@@ -420,7 +420,7 @@ fn conflict(module: String) {
     }
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn unload(module: String) {
     let (shell, _) = get_shell_info();
     let shell: &String = &shell;
@@ -436,12 +436,12 @@ fn unload(module: String) {
     super::command(&mut rsmod_command);
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn description(desc: String) {
     INFO_DESCRIPTION.lock().unwrap().push(desc.replace("\"", "\\\""));
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn description_cache(desc: String) {
     add_to_info_general(&desc);
 }
@@ -539,13 +539,15 @@ pub fn run(path: &PathBuf, action: &str) {
 
     match engine.eval_file::<String>(path.to_string_lossy().into_owned().as_ref()) {
         Ok(result) => println!("{}", result),
-        Err(e) => if e.to_string() != "Cast of output failed" {
-            show_warning!(
-                "modulescript error: {} ({})",
-                e.to_string(),
-                path.to_string_lossy().into_owned()
-            );
-        },
+        Err(e) => {
+            if e.to_string() != "Cast of output failed" {
+                show_warning!(
+                    "modulescript error: {} ({})",
+                    e.to_string(),
+                    path.to_string_lossy().into_owned()
+                );
+            }
+        }
     }
 }
 
@@ -806,7 +808,7 @@ fn is_python_binary(file_name: OsString) -> bool {
     ];
 
     for file in files {
-        let re = Regex::new(&format!(r#"{}"#, file)).unwrap();
+        let re = Regex::new(file).unwrap();
 
         if re.is_match(file_name.to_str().unwrap()) {
             return true;

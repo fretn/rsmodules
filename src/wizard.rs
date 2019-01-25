@@ -22,16 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-use std::io::{self, BufRead, BufReader, Write};
+use std::env;
 use std::fs::create_dir_all;
-use std::os::unix::fs::symlink;
-use std::path::Path;
 use std::fs::File;
 use std::fs::OpenOptions;
-use std::env;
+use std::io::{self, BufRead, BufReader, Write};
+use std::os::unix::fs::symlink;
+use std::path::Path;
 extern crate shellexpand;
-use regex::Regex;
 use super::rsmod::crash;
+use regex::Regex;
 
 use users::get_current_uid;
 
@@ -184,7 +184,8 @@ fn update_setup_rsmodules_c_sh(recursive: bool, path: &str) {
         let path_sh: &str = &shellexpand::tilde("~/.rsmodules.sh");
         let path_csh: &str = &shellexpand::tilde("~/.rsmodules.csh");
 
-        if !Path::new(path_sh).exists() || !Path::new(path_csh).exists()
+        if !Path::new(path_sh).exists()
+            || !Path::new(path_csh).exists()
             || !detect_line("source ~/.rsmodules.sh", &shellexpand::tilde("~/.bashrc"))
             || !detect_line("source ~/.rsmodules.csh", &shellexpand::tilde("~/.cshrc"))
         {
@@ -367,7 +368,8 @@ fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
     let re = Regex::new(&format!(
         r#"^\s*(?P<export>export|setenv)\s+{}(?P<equals>[= ]?)"(?P<value>.*)""#,
         variable
-    )).unwrap();
+    ))
+    .unwrap();
 
     let mut output: String = input.to_string();
     for cap in re.captures_iter(input) {
@@ -449,7 +451,8 @@ pub fn run(recursive: bool) -> bool {
                     " * Please enter a path where you want to save your module \
                      files [{}]: ",
                     path
-                ).as_ref(),
+                )
+                .as_ref(),
             );
 
             if line != "\n" {
@@ -479,7 +482,8 @@ pub fn run(recursive: bool) -> bool {
                     " * The folder {} doesn't exist, do you want to \
                      create it ? [Y/n]: ",
                     path
-                ).as_ref(),
+                )
+                .as_ref(),
             )) {
                 create_dir_all(path).unwrap();
                 println!();

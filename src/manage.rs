@@ -21,19 +21,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+use super::bold;
+use rsmod::{get_module_paths, Rsmodule};
+use std::env::args;
 use std::fs;
 use std::fs::create_dir_all;
-use std::fs::OpenOptions;
 use std::fs::File;
-use std::io::Write;
+use std::fs::OpenOptions;
 use std::io;
+use std::io::Write;
 use std::path::Path;
-use std::env::args;
-use rsmod::{get_module_paths, Rsmodule};
-use wizard::{is_yes, read_input_shell};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use super::bold;
+use std::sync::Arc;
+use wizard::{is_yes, read_input_shell};
 
 //use getopts::{Options, Matches};
 
@@ -88,7 +88,8 @@ pub fn delete(rsmod: &Rsmodule) {
                     rsmod.arg
                 ),
                 rsmod.shell,
-            )) {
+            ))
+        {
             let modulepaths = get_module_paths(false);
             for modulepath in modulepaths {
                 if modulepath != "" {

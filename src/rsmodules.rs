@@ -21,21 +21,21 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use std::sync::atomic::Ordering;
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::io::Write;
-use std::env;
-use std::str::FromStr;
-use super::output;
 use super::bold;
+use super::output;
 use glob::glob_with;
 use glob::MatchOptions;
+use std::env;
+use std::fs;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+use std::str::FromStr;
+use std::sync::atomic::Ordering;
 
-mod script;
-mod cache;
 mod autoload;
+mod cache;
 mod manage;
+mod script;
 
 static DEFAULT_MODULE_PATH: &str = "/usr/local";
 static ENV_LOADEDMODULES: &str = "LOADEDMODULES"; // name of an env var
@@ -888,9 +888,9 @@ fn autoload(rsmod: &mut Rsmodule) {
 
 #[cfg(test)]
 mod tests {
-    use super::is_other_version_of_module_loaded;
     use super::get_other_version_of_loaded_module;
     use super::is_module_loaded;
+    use super::is_other_version_of_module_loaded;
     use std::env;
 
     #[test]

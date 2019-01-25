@@ -21,13 +21,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+use super::super::bold;
+use super::{echo, output};
+use std::cmp::Ordering;
+use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
-use std::fs::File;
-use super::{echo, output};
-use std::cmp::Ordering;
-use super::super::bold;
 
 extern crate regex;
 extern crate shellexpand;
@@ -338,15 +338,20 @@ fn parse_file(subcommand: &str, args: &mut Vec<&str>, initfile: &str, mut al_mod
     }
 
     //  when the file is empty, just add the module load command
-    if num_matches == 0 && Path::new(initfile).is_file()
+    if num_matches == 0
+        && Path::new(initfile).is_file()
         && (subcommand == "append" || subcommand == "add" || subcommand == "prepend")
     {
         output.push(format!("module load {}", args.join(" ")));
     }
 
     // write to the file ~/.rsmodules_autoload
-    if (subcommand == "append" || subcommand == "add" || subcommand == "prepend" || subcommand == "remove"
-        || subcommand == "purge") && initfile == shellexpand::tilde(AUTOLOAD_FILE)
+    if (subcommand == "append"
+        || subcommand == "add"
+        || subcommand == "prepend"
+        || subcommand == "remove"
+        || subcommand == "purge")
+        && initfile == shellexpand::tilde(AUTOLOAD_FILE)
     {
         let mut file: File = match OpenOptions::new().write(true).create(true).truncate(true).open(initfile) {
             Ok(fileresult) => fileresult,

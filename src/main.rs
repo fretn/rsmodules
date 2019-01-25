@@ -49,20 +49,19 @@ extern crate ansi_term;
 extern crate getopts;
 extern crate glob;
 extern crate gumdrop;
-#[macro_use]
 extern crate gumdrop_derive;
 extern crate is_executable;
 extern crate pbr;
 extern crate regex;
 extern crate shellexpand;
 
-use std::sync::{Arc, Mutex};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::io::Write;
-use std::fs::{remove_file, File};
-use std::path::PathBuf;
-use std::env;
 use ansi_term::Style;
+use std::env;
+use std::fs::{remove_file, File};
+use std::io::Write;
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 
 lazy_static! {
     static ref TMPFILE_INITIALIZED: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
@@ -418,7 +417,11 @@ fn run(args: &[String]) {
                     &format!("{} {}", command_hit, modulename.to_string()),
                     &shell,
                 );
-                crash_cleanup_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(data.as_bytes()), filename);
+                crash_cleanup_if_err!(
+                    CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                    tmpfile.write_all(data.as_bytes()),
+                    filename
+                );
             }
 
             if command_hit == "switch" && args.len() != 5 {
@@ -433,7 +436,11 @@ fn run(args: &[String]) {
                     &format!("{} {}", command_hit, modulenames.join(" ")),
                     &shell,
                 );
-                crash_cleanup_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(data.as_bytes()), filename);
+                crash_cleanup_if_err!(
+                    CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                    tmpfile.write_all(data.as_bytes()),
+                    filename
+                );
             }
 
             if command_hit == "purge" {
@@ -444,7 +451,11 @@ fn run(args: &[String]) {
                 }
                 let loadedmodules = args.join(" ");
                 let data = setenv("RSMODULES_UNDO", &format!("unload {}", loadedmodules), &shell);
-                crash_cleanup_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(data.as_bytes()), filename);
+                crash_cleanup_if_err!(
+                    CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                    tmpfile.write_all(data.as_bytes()),
+                    filename
+                );
             }
 
             let mut rsmod_command: Rsmodule = Rsmodule {
@@ -481,7 +492,11 @@ fn run(args: &[String]) {
         output_buffer.push(cmd);
 
         for line in output_buffer {
-            crash_cleanup_if_err!(CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE, tmpfile.write_all(line.as_bytes()), filename);
+            crash_cleanup_if_err!(
+                CRASH_FAILED_TO_WRITE_TO_TEMPORARY_FILE,
+                tmpfile.write_all(line.as_bytes()),
+                filename
+            );
         }
 
         // source tmpfile
@@ -510,7 +525,10 @@ pub fn setenv(var: &str, val: &str, shell: &str) -> String {
 }
 
 fn bold<'a>(shell: &str, msg: &'a str) -> ansi_term::ANSIGenericString<'a, str> {
-    if shell == "noshell" || shell == "perl" || shell == "python" || env::var("TERM") == Ok(String::from(""))
+    if shell == "noshell"
+        || shell == "perl"
+        || shell == "python"
+        || env::var("TERM") == Ok(String::from(""))
         || env::var("NO_COLOR").is_ok()
     {
         return Style::new().paint(msg);

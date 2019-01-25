@@ -21,16 +21,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+use super::super::bold;
+use std::cmp::Ordering;
+use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Stdout};
 use std::path::{Path, PathBuf};
-use std::fs::File;
-use std::cmp::Ordering;
-use super::super::bold;
 
 use walkdir::WalkDir;
 extern crate bincode;
-use bincode::rustc_serialize::{decode_from, encode_into};
 use super::{crash, echo, get_module_description, get_module_paths, is_module_loaded};
+use bincode::rustc_serialize::{decode_from, encode_into};
 
 use pbr::ProgressBar;
 
