@@ -2,7 +2,7 @@
 name = "rsmodules"
 version = "0.6.3"
 authors = ["Frederik Delaere <frederik.delaere@ugent.be>"]
-edition = "2015"
+edition = "2018"
 
 [dependencies]
 rand = "0.3"
@@ -22,13 +22,21 @@ ansi_term = "0.9"
 glob = "0.2"
 dirs = "1.0"
 pbr = "1.0.1"
-syntect = "*"
-pulldown-cmark = "*"
 
 [dependencies.mdcat]
 version = "0.12.1"
 default-features = false
 features = ["vte50", "iterm2", "terminology"]
+
+[dependencies.pulldown-cmark]
+version = "^0.2"
+default-features = false
+features = []
+
+[dependencies.syntect]
+version = "^3"
+default-features = false
+features = ["parsing", "assets", "dump-load"]
 
 [[bin]]
 name = "rsmodules"
