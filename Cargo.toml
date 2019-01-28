@@ -2,10 +2,11 @@
 name = "rsmodules"
 version = "0.6.3"
 authors = ["Frederik Delaere <frederik.delaere@ugent.be>"]
+edition = "2015"
 
 [dependencies]
 rand = "0.3"
-lazy_static = "0.2"
+lazy_static = "1.2.0"
 rhai = "0.7.1"
 walkdir = "1"
 bincode = "0.6.1"
@@ -21,6 +22,9 @@ ansi_term = "0.9"
 glob = "0.2"
 dirs = "1.0"
 pbr = "1.0.1"
+mdcat = "0.12.1"
+syntect = "*"
+pulldown-cmark = "*"
 
 [[bin]]
 name = "rsmodules"

@@ -51,9 +51,12 @@ extern crate glob;
 extern crate gumdrop;
 extern crate gumdrop_derive;
 extern crate is_executable;
+extern crate mdcat;
 extern crate pbr;
+extern crate pulldown_cmark;
 extern crate regex;
 extern crate shellexpand;
+extern crate syntect;
 
 use ansi_term::Style;
 use std::env;

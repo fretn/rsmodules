@@ -32,6 +32,16 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::atomic::Ordering;
 
+use mdcat;
+
+use mdcat::{ResourceAccess, TerminalCapabilities, TerminalSize};
+use pulldown_cmark::Parser;
+use std::fs::File;
+use std::fs::OpenOptions;
+use std::io::prelude::*;
+use std::io::stdin;
+use syntect::parsing::SyntaxSet;
+
 mod autoload;
 mod cache;
 mod manage;
@@ -275,6 +285,21 @@ fn glob_path(glob: &str, paths: &[String]) -> Vec<String> {
     result
 }
 
+fn read_input<T: AsRef<str>>(filename: T) -> std::io::Result<(PathBuf, String)> {
+    let cd = std::env::current_dir()?;
+    let mut buffer = String::new();
+
+    if filename.as_ref() == "-" {
+        stdin().read_to_string(&mut buffer)?;
+        Ok((cd, buffer))
+    } else {
+        let mut source = File::open(filename.as_ref())?;
+        source.read_to_string(&mut buffer)?;
+        let base_dir = cd.join(filename.as_ref()).parent().map(|p| p.to_path_buf()).unwrap_or(cd);
+        Ok((base_dir, buffer))
+    }
+}
+
 fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
     // first check if there are manfiles
     let manpaths = script::get_readme_manpaths();
@@ -338,8 +363,40 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
     let mut counter = 0;
     for readme in &readmes {
         if counter == 0 {
+            let mdtmpfile = format!("{}{}", super::TMPFILE_PATH.lock().unwrap(), ".md");
             lines.push(format!("echo '\n  {}{}\n'", bold(shell, "Showing readme file: "), readme));
-            lines.push(format!("cat {}", readme));
+            let path = Path::new(readme);
+
+            let markdown = path.extension() != None && path.extension().unwrap() == "md";
+
+            match OpenOptions::new().write(true).create(true).truncate(true).open(&mdtmpfile) {
+                Ok(fileresult) => {
+                    let mut file: File = fileresult;
+                    if markdown && (shell == "zsh" || shell == "bash") {
+                        let (base_dir, input) = read_input(readme).unwrap();
+                        let parser = Parser::new(&input);
+
+                        let syntax_set = SyntaxSet::load_defaults_newlines();
+                        mdcat::push_tty(
+                            &mut file,
+                            TerminalCapabilities::detect(),
+                            TerminalSize::detect().unwrap_or_default(),
+                            parser,
+                            &base_dir,
+                            ResourceAccess::RemoteAllowed,
+                            syntax_set,
+                        )
+                        .unwrap();
+
+                        lines.push(format!("echo \"`cat {}`\"", mdtmpfile));
+                        lines.push(format!("rm -f {}", mdtmpfile));
+                    } else {
+                        lines.push(format!("cat {}", readme));
+                    }
+                }
+                Err(_) => lines.push(format!("cat {}", readme)),
+            };
+
             if readmes.len() > 1 {
                 lines.push(format!("echo '\n  {}\n'", bold(shell, "Other possible readme files: ")));
             }
