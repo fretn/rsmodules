@@ -383,7 +383,7 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
                             TerminalSize::detect().unwrap_or_default(),
                             parser,
                             &base_dir,
-                            ResourceAccess::RemoteAllowed,
+                            ResourceAccess::LocalOnly,
                             syntax_set,
                         )
                         .unwrap();

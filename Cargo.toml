@@ -22,9 +22,13 @@ ansi_term = "0.9"
 glob = "0.2"
 dirs = "1.0"
 pbr = "1.0.1"
-mdcat = "0.12.1"
 syntect = "*"
 pulldown-cmark = "*"
+
+[dependencies.mdcat]
+version = "0.12.1"
+default-features = false
+features = ["vte50", "iterm2", "terminology"]
 
 [[bin]]
 name = "rsmodules"
