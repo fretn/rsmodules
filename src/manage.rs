@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 use super::bold;
-use rsmod::{get_module_paths, Rsmodule};
+use crate::rsmod::{get_module_paths, Rsmodule};
 use std::env::args;
 use std::fs;
 use std::fs::create_dir_all;
@@ -33,7 +33,7 @@ use std::io::Write;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use wizard::{is_yes, read_input_shell};
+use crate::wizard::{is_yes, read_input_shell};
 
 //use getopts::{Options, Matches};
 
@@ -92,7 +92,7 @@ pub fn delete(rsmod: &Rsmodule) {
         {
             let modulepaths = get_module_paths(false);
             for modulepath in modulepaths {
-                if modulepath != "" {
+                if &modulepath != "" {
                     super::cache::update(&modulepath, rsmod.shell);
                 }
             }
@@ -426,7 +426,7 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
 
 // todo return Result instead of String
 fn select_modulepath(shell: &str) -> String {
-    let modulepaths = super::get_module_paths(true);
+    let modulepaths = get_module_paths(true);
 
     //eprintln!("{}", modulepaths.len());
     if modulepaths.len() == 1 {
