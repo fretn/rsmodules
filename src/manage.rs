@@ -23,6 +23,7 @@ SOFTWARE.
 */
 use super::bold;
 use crate::rsmod::{get_module_paths, Rsmodule};
+use crate::wizard::{is_yes, read_input_shell};
 use std::env::args;
 use std::fs;
 use std::fs::create_dir_all;
@@ -33,7 +34,6 @@ use std::io::Write;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use crate::wizard::{is_yes, read_input_shell};
 
 //use getopts::{Options, Matches};
 
@@ -374,7 +374,7 @@ fn parse_opt(matches: &Matches, output: &mut Vec<String>, opt: &str, command: &s
 pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, modulename: &str) {
     if !skip {
         let desc = read_input_shell(&format!(" * Enter a description for the module {}: ", modulename), shell)
-            .trim_right_matches('\n')
+            .trim_end_matches('\n')
             .to_string();
         output.push(format!("description(\"{}\");", desc));
     }
@@ -384,7 +384,7 @@ pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, mo
         shell,
     )) {
         let desc = read_input_shell("   Enter your description: ", shell)
-            .trim_right_matches('\n')
+            .trim_end_matches('\n')
             .to_string();
         output.push(format!("description(\"{}\");", desc));
         add_description(shell, &mut output, true, modulename);
@@ -395,7 +395,7 @@ pub fn add_description(shell: &str, mut output: &mut Vec<String>, skip: bool, mo
 pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
     if !skip {
         let val = read_input_shell("   Enter the path where the executables can be found: ", shell)
-            .trim_right_matches('\n')
+            .trim_end_matches('\n')
             .to_string();
         output.push(format!("prepend_path(\"PATH\",\"{}\");", val));
         if is_yes(&read_input_shell(
@@ -403,7 +403,7 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
             shell,
         )) {
             let val = read_input_shell("   Enter the path where the libraries can be found: ", shell)
-                .trim_right_matches('\n')
+                .trim_end_matches('\n')
                 .to_string();
             output.push(format!("prepend_path(\"LD_LIBRARY_PATH\",\"{}\");", val));
         }
@@ -414,10 +414,10 @@ pub fn add_path(shell: &str, mut output: &mut Vec<String>, skip: bool) {
         shell,
     )) {
         let var = read_input_shell("   Enter the name of variable: ", shell)
-            .trim_right_matches('\n')
+            .trim_end_matches('\n')
             .to_string();
         let val = read_input_shell("   Enter the path you want to add: ", shell)
-            .trim_right_matches('\n')
+            .trim_end_matches('\n')
             .to_string();
         output.push(format!("prepend_path(\"{}\",\"{}\");", var, val));
         add_path(shell, &mut output, true);
@@ -433,7 +433,7 @@ fn select_modulepath(shell: &str) -> String {
         modulepaths[0].clone()
     } else if modulepaths.is_empty() {
         let modulepath = read_input_shell(" * Enter the path where you want to install this module: ", shell)
-            .trim_right_matches('\n')
+            .trim_end_matches('\n')
             .to_string();
         if !Path::new(&modulepath).is_dir() {
             if is_yes(&read_input_shell(
@@ -460,7 +460,7 @@ fn select_modulepath(shell: &str) -> String {
             counter += 1;
         }
         let modulepath_num = read_input_shell("\n * Select the modulepath where you want to install this module: ", shell)
-            .trim_right_matches('\n')
+            .trim_end_matches('\n')
             .to_string();
 
         let modulepath_num = match modulepath_num.parse::<usize>() {
@@ -522,11 +522,11 @@ pub fn run_create_wizard(shell: &str, mut _output: &mut Vec<String>) -> String {
     // todo: tabcompletion
     // https://github.com/shaleh/rust-readline/blob/master/examples/fileman.rs
     let folder = read_input_shell(" * Enter the folder where the modulefile will be saved: ", shell)
-        .trim_right_matches('\n')
+        .trim_end_matches('\n')
         .to_string();
 
     let modulename = read_input_shell(" * Enter the name of the module: ", shell)
-        .trim_right_matches('\n')
+        .trim_end_matches('\n')
         .to_string();
 
     // set root installation dir

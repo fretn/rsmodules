@@ -50,6 +50,7 @@ lazy_static! {
     static ref INFO_LD_LIBRARY_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_PYTHONPATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_PERL5LIB: Mutex<Vec<String>> = Mutex::new(vec![]);
+    static ref INFO_BIN: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref LOAD: Mutex<Vec<String>> = Mutex::new(vec![]);
 }
 
@@ -133,6 +134,11 @@ fn source(wanted_shell: String, path: String) {
         add_to_commands(&format!("source \"{}\"", path));
     }
 }
+
+fn info_bin(bin: String) {
+    INFO_BIN.lock().unwrap().push(bin.to_string());
+}
+
 // dummy functions for unloading
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
@@ -164,6 +170,8 @@ fn getenv_dummy(var: String) -> String {
 fn print_dummy(_msg: String) {}
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn source_dummy(_wanted_shell: String, _path: String) {}
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
+fn info_bin_dummy(_bin: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn prepend_path_dummy(var: String, val: String) {}
@@ -471,6 +479,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("is_loaded", is_loaded_dummy);
         engine.register_fn("print", print_dummy);
         engine.register_fn("source", source_dummy);
+        engine.register_fn("add_bin_to_info", info_bin_dummy);
     } else if action == "load" {
         engine.register_fn("setenv", setenv);
         engine.register_fn("unsetenv", unsetenv);
@@ -487,6 +496,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("is_loaded", is_loaded);
         engine.register_fn("print", print);
         engine.register_fn("source", source);
+        engine.register_fn("add_bin_to_info", info_bin_dummy);
     } else if action == "info" {
         engine.register_fn("setenv", setenv_info);
         engine.register_fn("unsetenv", unsetenv_dummy);
@@ -503,6 +513,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("is_loaded", is_loaded);
         engine.register_fn("print", print_dummy);
         engine.register_fn("source", source_dummy);
+        engine.register_fn("add_bin_to_info", info_bin);
     } else if action == "description" {
         engine.register_fn("setenv", setenv_dummy);
         engine.register_fn("unsetenv", unsetenv_dummy);
@@ -519,6 +530,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("is_loaded", is_loaded);
         engine.register_fn("print", print_dummy);
         engine.register_fn("source", source_dummy);
+        engine.register_fn("add_bin_to_info", info_bin_dummy);
     } else if action == "readme" {
         engine.register_fn("setenv", setenv_readme);
         engine.register_fn("unsetenv", unsetenv_dummy);
@@ -535,6 +547,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("is_loaded", is_loaded);
         engine.register_fn("print", print_dummy);
         engine.register_fn("source", source_dummy);
+        engine.register_fn("add_bin_to_info", info_bin_dummy);
     }
 
     match engine.eval_file::<String>(path.to_string_lossy().into_owned().as_ref()) {
@@ -700,43 +713,51 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     }
 
     let mut execs: Vec<String> = Vec::new();
-    for line in INFO_PATH.lock().unwrap().iter() {
-        if Path::new(line).is_dir() {
-            // if activate, activate.csh, activate.fish and activate_this.py exist
-            // then we are in a python virtualenv, we can skip the typical python
-            // binaries, we don't want to see them when we run 'module info program/arch/version'
+    if INFO_BIN.lock().unwrap().is_empty() {
+        for line in INFO_PATH.lock().unwrap().iter() {
+            if Path::new(line).is_dir() {
+                // if activate, activate.csh, activate.fish and activate_this.py exist
+                // then we are in a python virtualenv, we can skip the typical python
+                // binaries, we don't want to see them when we run 'module info program/arch/version'
 
-            let is_virtual_env = is_virtual_env(PathBuf::from(line));
+                let is_virtual_env = is_virtual_env(PathBuf::from(line));
 
-            let entries = match read_dir(line) {
-                Ok(entry) => entry,
-                Err(_) => continue,
-            };
-
-            for entry in entries {
-                let path = match &entry {
-                    Ok(p) => p.path(),
+                let entries = match read_dir(line) {
+                    Ok(entry) => entry,
                     Err(_) => continue,
                 };
 
-                let file_name = match &entry {
-                    Ok(p) => p.file_name(),
-                    Err(_) => continue,
-                };
+                for entry in entries {
+                    let path = match &entry {
+                        Ok(p) => p.path(),
+                        Err(_) => continue,
+                    };
 
-                if is_python_binary(file_name) && is_virtual_env {
-                    continue;
-                }
+                    let file_name = match &entry {
+                        Ok(p) => p.file_name(),
+                        Err(_) => continue,
+                    };
 
-                if path.is_dir() {
-                    continue;
-                }
+                    if is_python_binary(file_name) && is_virtual_env {
+                        continue;
+                    }
 
-                if path.is_executable() {
-                    execs.push(format!("echo '{}'", strip_dir(path.to_str().unwrap())));
-                    got_output = true;
+                    if path.is_dir() {
+                        continue;
+                    }
+
+                    if path.is_executable() {
+                        execs.push(format!("echo '{}'", strip_dir(path.to_str().unwrap())));
+                        got_output = true;
+                    }
                 }
             }
+        }
+    } else {
+        let bins: Vec<String> = INFO_BIN.lock().unwrap().to_vec();
+        for bin in bins {
+            execs.push(format!("echo '{}'", bin));
+            got_output = true;
         }
     }
 

@@ -151,6 +151,11 @@ Next to the default rhai syntax, the following functions are available:
  * ```set_alias("name","value");```
  * ```is_loaded("modulename");```
  * ```source("shelltype", "/path/to/filename.shell-extension");```
+ * ```add_bin_to_info("binary_name");```
+
+###Note:
+When using add_bin_to_info (you can add it multiple times to your scripts), `module info <modulename>` will only
+show the binaries that are added with this function, it will ignore the binaries in your PATH variables.
 
 ### Example modulefile
 

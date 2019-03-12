@@ -165,7 +165,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
                     // modulename can start with /
                     // also we don't want the .modulesindex or other hidden files
                     if first == '/' && second != "." {
-                        modulename = modulename.trim_left_matches('/');
+                        modulename = modulename.trim_start_matches('/');
                     }
 
                     let modulename_part: Vec<&str> = modulename.split('/').collect();

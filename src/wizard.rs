@@ -461,7 +461,7 @@ pub fn run(recursive: bool) -> bool {
                 line.truncate(len - 1);
                 path = line.as_ref();
                 */
-                path = line.trim_right_matches('\n');
+                path = line.trim_end_matches('\n');
             }
 
             if Path::new(path).is_dir() {
