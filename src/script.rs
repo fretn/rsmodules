@@ -713,7 +713,8 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     }
 
     let mut execs: Vec<String> = Vec::new();
-    if INFO_BIN.lock().unwrap().is_empty() {
+    let mut filtered: bool = false;
+    if INFO_BIN.lock().unwrap().is_empty() || env::var("RSMODULES_DONT_FILTER_INFO").is_ok() {
         for line in INFO_PATH.lock().unwrap().iter() {
             if Path::new(line).is_dir() {
                 // if activate, activate.csh, activate.fish and activate_this.py exist
@@ -758,6 +759,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
         for bin in bins {
             execs.push(format!("echo '{}'", bin));
             got_output = true;
+            filtered = true;
         }
     }
 
@@ -776,6 +778,12 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     execs.sort();
     for exec in execs {
         output.push(exec);
+    }
+
+    if filtered {
+        output.push(String::from("echo ''"));
+        output.push(String::from("echo 'Some binaries are omitted in this output'"));
+        output.push(String::from("echo 'Set the environment var RSMODULES_DONT_FILTER_INFO if you want unfiltered output'"));
     }
 
     if got_output {

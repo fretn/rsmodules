@@ -2,7 +2,7 @@
 
 ./build_static.sh
 
-VERSION=`cat Cargo.toml  | grep version | awk -F' = ' '{ print $2 }' | sed -e 's/^"//' -e 's/"$//'`
+VERSION=`cat Cargo.toml  | grep -m 1 version | awk -F' = ' '{ print $2 }' | sed -e 's/^"//' -e 's/"$//'`
 DIR="rsmodules_$VERSION"
 OS=`uname | tr '[:upper:]' '[:lower:]'`
 MACHINE=`uname -m`
