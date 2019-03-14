@@ -544,8 +544,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         }
 
         if !found && action != "unload" {
-            eprintln!("Module {} not found.", selected_module);
-            ::std::process::exit(super::CRASH_MODULE_NOT_FOUND);
+            crash(super::CRASH_NO_CACHE_FILES_FOUND, format!("Module {} not found.", selected_module));
         }
         // check of another version is already loaded
         // and replace it with the current one
