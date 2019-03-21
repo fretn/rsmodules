@@ -783,7 +783,9 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     if filtered {
         output.push(String::from("echo ''"));
         output.push(String::from("echo 'Some binaries are omitted in this output'"));
-        output.push(String::from("echo 'Set the environment var RSMODULES_DONT_FILTER_INFO if you want unfiltered output'"));
+        output.push(String::from(
+            "echo 'Set the environment var RSMODULES_DONT_FILTER_INFO if you want unfiltered output'",
+        ));
     }
 
     if got_output {

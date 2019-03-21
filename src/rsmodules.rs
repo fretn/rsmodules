@@ -544,7 +544,10 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         }
 
         if !found && action != "unload" {
-            crash(super::CRASH_MODULE_NOT_FOUND, &format!("Module {} not found.", selected_module));
+            crash(
+                super::CRASH_MODULE_NOT_FOUND,
+                &format!("Module {} not found.", selected_module),
+            );
         }
         // check of another version is already loaded
         // and replace it with the current one
