@@ -478,6 +478,7 @@ fn select_modulepath(shell: &str) -> String {
     //String::from("")
 }
 
+#[allow(unreachable_code)]
 pub fn run_create_wizard(shell: &str, mut _output: &mut Vec<String>) -> String {
     eprintln!("");
 
