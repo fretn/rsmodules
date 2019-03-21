@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./build_static.sh
+./build_linux_static.sh
 
 VERSION=`cat Cargo.toml  | grep -m 1 version | awk -F' = ' '{ print $2 }' | sed -e 's/^"//' -e 's/"$//'`
 DIR="rsmodules_$VERSION"
