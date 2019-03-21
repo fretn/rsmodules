@@ -372,7 +372,7 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
             match OpenOptions::new().write(true).create(true).truncate(true).open(&mdtmpfile) {
                 Ok(fileresult) => {
                     let mut file: File = fileresult;
-                    if markdown && (shell == "zsh" || shell == "bash") && !env::var("NO_COLOR").is_ok() {
+                    if markdown && (shell == "zsh" || shell == "bash") && env::var("NO_COLOR").is_err() {
                         let (base_dir, input) = read_input(readme).unwrap();
                         let parser = Parser::new(&input);
 
