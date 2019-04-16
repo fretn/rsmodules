@@ -29,7 +29,7 @@ use std::path::{Path, PathBuf};
 
 use walkdir::WalkDir;
 extern crate bincode;
-use super::{crash, echo, get_module_description, get_module_paths, is_module_loaded};
+use super::{crash, echo, get_module_description, get_module_paths, is_module_loaded, AvailableOptions};
 use bincode::rustc_serialize::{decode_from, encode_into};
 
 use pbr::ProgressBar;
@@ -329,7 +329,14 @@ fn find_char_boundary(s: &str, i: usize) -> Option<usize> {
     Some(end)
 }
 
-pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width: usize, only_default: bool) {
+pub fn get_module_list(
+    arg: &str,
+    typed_command: &str,
+    shell: &str,
+    shell_width: usize,
+    opts: &AvailableOptions,
+    re: &regex::Regex,
+) {
     let modulepaths = get_module_paths(false);
 
     // prints a nice list for module av
@@ -376,7 +383,13 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
                 let avmodule_lc: &str = avmodule_lc.as_ref();
                 let module_lc: &str = module_lc.as_ref();
 
-                if longest_name <= module.name.len() && avmodule_lc.contains(module_lc) {
+                let matches: bool = if opts.regex {
+                    re.is_match(&module.name)
+                } else {
+                    avmodule_lc.contains(module_lc)
+                };
+
+                if longest_name <= module.name.len() && matches {
                     longest_name = module.name.len();
                 }
             }
@@ -416,7 +429,7 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
 
         let default = if module.flags == 1 { "D" } else { " " };
 
-        if only_default && module.flags != 1 {
+        if opts.default && module.flags != 1 {
             continue;
         }
 
@@ -447,7 +460,13 @@ pub fn get_module_list(arg: &str, typed_command: &str, shell: &str, shell_width:
             let avmodule_lc: &str = avmodule_lc.as_ref();
             let module_lc: &str = module_lc.as_ref();
 
-            if avmodule_lc.contains(module_lc) {
+            let matches: bool = if opts.regex {
+                re.is_match(&module.name)
+            } else {
+                avmodule_lc.contains(module_lc)
+            };
+
+            if matches {
                 cnt += 1;
                 let first_char: char = module.name.chars().next().unwrap();
                 if first_char != previous_first_char && !simple_list {

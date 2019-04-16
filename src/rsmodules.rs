@@ -25,6 +25,8 @@ use super::bold;
 use super::output;
 use glob::glob_with;
 use glob::MatchOptions;
+use gumdrop::Options;
+use regex::Regex;
 use std::env;
 use std::fs;
 use std::io::Write;
@@ -50,6 +52,21 @@ mod script;
 static DEFAULT_MODULE_PATH: &str = "/usr/local";
 static ENV_LOADEDMODULES: &str = "LOADEDMODULES"; // name of an env var
 static ENV_UNDO: &str = "RSMODULES_UNDO"; // name of an env var
+
+#[derive(Debug, Default, Options)]
+pub struct AvailableOptions {
+    #[options(free, help = "Space separated list of search strings")]
+    search: Vec<String>,
+
+    #[options(short = "d", help = "Show only the default modules")]
+    default: bool,
+
+    #[options(help = "Print this help message")]
+    help: bool,
+
+    #[options(short = "r", help = "Use a regex to search")]
+    regex: bool,
+}
 
 #[derive(Debug)]
 pub struct Rsmodule<'a> {
@@ -190,21 +207,34 @@ pub fn command(rsmod: &mut Rsmodule) {
         module_action(rsmod, "load");
     } else if rsmod.cmd == "available" {
         let args: Vec<&str> = rsmod.arg.split_whitespace().collect();
-        let mut arg: &str = "";
-        let mut only_default: bool = false;
-        if args.len() == 2 {
-            if args[0] == "--default" {
-                only_default = true;
+
+        let opts = match AvailableOptions::parse_args_default(&args) {
+            Ok(opts) => opts,
+            Err(e) => {
+                eprintln!("{}", e);
+                return;
             }
-            arg = &args[1];
-        } else if args.len() == 1 {
-            if args[0] == "--default" {
-                only_default = true;
-            } else {
-                arg = &args[0];
-            }
+        };
+
+        if opts.help {
+            eprintln!("Usage: module av [OPTIONS] [search]");
+            eprintln!();
+            eprintln!("{}", AvailableOptions::usage());
+            return;
         }
-        cache::get_module_list(arg, rsmod.typed_command, rsmod.shell, rsmod.shell_width, only_default);
+
+        if opts.search.len() > 0 {
+            for arg in &opts.search {
+                let re: Regex = match Regex::new(arg) {
+                    Ok(re) => re,
+                    Err(_) => continue,
+                };
+                cache::get_module_list(arg, rsmod.typed_command, rsmod.shell, rsmod.shell_width, &opts, &re);
+            }
+        } else {
+            let re: Regex = Regex::new("").unwrap();
+            cache::get_module_list("", rsmod.typed_command, rsmod.shell, rsmod.shell_width, &opts, &re);
+        }
     } else if rsmod.cmd == "list" {
         list(rsmod);
     } else if rsmod.cmd == "purge" {

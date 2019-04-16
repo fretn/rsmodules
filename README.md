@@ -53,7 +53,7 @@ D perl/5.14.1 | Perl 5.14.1 is a highly capable, feature-rich programming langua
 ```
 ## Features
 
- * ```module available [--default] [search string]``` Shows all the (default) modules or the modules that match the search string.
+ * ```module available [--default] [--regex][search string(s)]``` Shows all the (default) modules or the modules that match the search strings.
  * ```module info [(partial)modulename] [(partial)modulename] [...]``` Shows info about the requested module(s).
  * ```module load [(partial)modulename] [(partial)modulename] [...]``` Loads the requested modules.
  * ```module switch [(partial)modulename from] [(partial)modulename to] ``` Switch between the requested modules.

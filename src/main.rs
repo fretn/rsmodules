@@ -138,12 +138,16 @@ static LONG_HELP: &str = "
     * refresh
       Reloads all loaded modules.
 
-    * available <--default> <search string>
+    * available [--default] [--regex] [search string]
       Lists all the available modules.
-      If a <search string> is given then all modules which match
+      If a [search string] is given then all modules which match
       the search string will be listed.
-      When --default is specified then only default modules
+      The search string can also contain multiple items separated
+      by spaces.
+      When --default, -d is specified then only default modules
       will be listed.
+      When --regex, -r is specified the search term can be a
+      regular expression.
 
     * info [(partial) module name(s)]
       Gives more info about a module. Description, which
