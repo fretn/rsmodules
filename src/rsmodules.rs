@@ -26,7 +26,6 @@ use super::output;
 use glob::glob_with;
 use glob::MatchOptions;
 use gumdrop::Options;
-use regex::Regex;
 use std::env;
 use std::fs;
 use std::io::Write;
@@ -223,17 +222,12 @@ pub fn command(rsmod: &mut Rsmodule) {
             return;
         }
 
-        if opts.search.len() > 0 {
+        if !opts.search.is_empty() {
             for arg in &opts.search {
-                let re: Regex = match Regex::new(arg) {
-                    Ok(re) => re,
-                    Err(_) => continue,
-                };
-                cache::get_module_list(arg, rsmod.typed_command, rsmod.shell, rsmod.shell_width, &opts, &re);
+                cache::get_module_list(arg, &rsmod, &opts);
             }
         } else {
-            let re: Regex = Regex::new("").unwrap();
-            cache::get_module_list("", rsmod.typed_command, rsmod.shell, rsmod.shell_width, &opts, &re);
+            cache::get_module_list("", &rsmod, &opts);
         }
     } else if rsmod.cmd == "list" {
         list(rsmod);
@@ -325,6 +319,7 @@ fn read_input<T: AsRef<str>>(filename: T) -> std::io::Result<(PathBuf, String)> 
     } else {
         let mut source = File::open(filename.as_ref())?;
         source.read_to_string(&mut buffer)?;
+        #[allow(clippy::redundant_closure)]
         let base_dir = cd.join(filename.as_ref()).parent().map(|p| p.to_path_buf()).unwrap_or(cd);
         Ok((base_dir, buffer))
     }

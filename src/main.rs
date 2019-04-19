@@ -84,6 +84,7 @@ static CRASH_CANNOT_ADD_TO_ENV: i32 = 8;
 static CRASH_MISSING_INIT_FILES: i32 = 9;
 static CRASH_GET_SHELL: i32 = 10;
 static CRASH_CREATE_ERROR: i32 = 11;
+static CRASH_INVALID_REGEX: i32 = 12;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &str = env!("CARGO_PKG_AUTHORS");

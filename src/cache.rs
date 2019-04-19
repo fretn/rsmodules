@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 use super::super::bold;
+use regex::Regex;
 use std::cmp::Ordering;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Stdout};
@@ -29,7 +30,7 @@ use std::path::{Path, PathBuf};
 
 use walkdir::WalkDir;
 extern crate bincode;
-use super::{crash, echo, get_module_description, get_module_paths, is_module_loaded, AvailableOptions};
+use super::{crash, echo, get_module_description, get_module_paths, is_module_loaded, AvailableOptions, Rsmodule};
 use bincode::rustc_serialize::{decode_from, encode_into};
 
 use pbr::ProgressBar;
@@ -145,6 +146,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
         ProgressBar::new(0)
     };
 
+#[allow(clippy::redundant_closure)]
     for entry in WalkDir::new(module_path).into_iter().filter_map(|e| e.ok()) {
         let str_path: &str = entry.path().to_str().unwrap();
 
@@ -331,13 +333,24 @@ fn find_char_boundary(s: &str, i: usize) -> Option<usize> {
 
 pub fn get_module_list(
     arg: &str,
-    typed_command: &str,
-    shell: &str,
-    shell_width: usize,
+    rsmod: &Rsmodule,
     opts: &AvailableOptions,
-    re: &regex::Regex,
 ) {
+    let typed_command: &str = &rsmod.typed_command;
+    let shell: &str = &rsmod.shell;
+    let shell_width: usize = rsmod.shell_width;
     let modulepaths = get_module_paths(false);
+
+    let re: Regex = match Regex::new(arg) {
+        Ok(re) => re,
+        Err(_) => {
+            crash(
+                super::super::CRASH_INVALID_REGEX,
+                "Invalid regular expression",
+            );
+            return;
+        }
+    };
 
     // prints a nice list for module av
     // no gaps, no default, no description
