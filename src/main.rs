@@ -147,7 +147,7 @@ static LONG_HELP: &str = "
       by spaces.
       When --default, -d is specified then only default modules
       will be listed.
-      When --regex, -r is specified the search term can be a
+      When --regex or -r is specified the search term can be a
       regular expression.
 
     * info [(partial) module name(s)]
@@ -161,12 +161,12 @@ static LONG_HELP: &str = "
 
     * makecache
       Updates the .modulesindex file in all the paths that
-      are found in the $MODULEPATH variable. This ofcourse
-      only works if you have the correct permissions. ;)
+      are found in the $MODULEPATH variable. This will only
+      work if you have the correct permissions.
       If you want a progress bar use the command:
       update_modules_cache instead of module makecache
 
-    * create [modulename]
+    * create [--help] [modulename]
       Starts a wizard to create a modulefile.
 
     * delete
