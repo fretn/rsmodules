@@ -146,7 +146,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
         ProgressBar::new(0)
     };
 
-#[allow(clippy::redundant_closure)]
+    #[allow(clippy::redundant_closure)]
     for entry in WalkDir::new(module_path).into_iter().filter_map(|e| e.ok()) {
         let str_path: &str = entry.path().to_str().unwrap();
 
@@ -331,11 +331,7 @@ fn find_char_boundary(s: &str, i: usize) -> Option<usize> {
     Some(end)
 }
 
-pub fn get_module_list(
-    arg: &str,
-    rsmod: &Rsmodule,
-    opts: &AvailableOptions,
-) {
+pub fn get_module_list(arg: &str, rsmod: &Rsmodule, opts: &AvailableOptions) {
     let typed_command: &str = &rsmod.typed_command;
     let shell: &str = &rsmod.shell;
     let shell_width: usize = rsmod.shell_width;
@@ -344,10 +340,7 @@ pub fn get_module_list(
     let re: Regex = match Regex::new(arg) {
         Ok(re) => re,
         Err(_) => {
-            crash(
-                super::super::CRASH_INVALID_REGEX,
-                "Invalid regular expression",
-            );
+            crash(super::super::CRASH_INVALID_REGEX, "Invalid regular expression");
             return;
         }
     };

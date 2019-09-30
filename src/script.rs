@@ -46,6 +46,7 @@ lazy_static! {
     static ref README_MANPATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_DESCRIPTION: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_GENERAL: Mutex<Vec<String>> = Mutex::new(vec![]);
+    static ref SOURCES: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_LD_LIBRARY_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_PYTHONPATH: Mutex<Vec<String>> = Mutex::new(vec![]);
@@ -61,6 +62,7 @@ fn init_vars_and_commands() {
     README_MANPATH.lock().unwrap().clear();
     INFO_DESCRIPTION.lock().unwrap().clear();
     INFO_GENERAL.lock().unwrap().clear();
+    SOURCES.lock().unwrap().clear();
     INFO_PATH.lock().unwrap().clear();
     INFO_LD_LIBRARY_PATH.lock().unwrap().clear();
     INFO_PYTHONPATH.lock().unwrap().clear();
@@ -88,6 +90,10 @@ fn add_to_readme_path(data: &str) {
 
 fn add_to_info_general(data: &str) {
     INFO_GENERAL.lock().unwrap().push(data.to_string());
+}
+
+fn add_to_sources(data: &str) {
+    SOURCES.lock().unwrap().push(data.to_string());
 }
 
 fn add_to_info_path(data: &str) {
@@ -250,6 +256,14 @@ fn append_path_info(var: String, val: String) {
         add_to_info_perl5lib(&val);
     } else {
         add_to_info_general(&format!("{}={}", var, val));
+    }
+}
+
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
+fn source_info(wanted_shell: String, path: String) {
+    let (shell, _) = get_shell_info();
+    if shell == wanted_shell {
+        add_to_sources(&path);
     }
 }
 
@@ -512,7 +526,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("set_alias", set_alias_dummy);
         engine.register_fn("is_loaded", is_loaded);
         engine.register_fn("print", print_dummy);
-        engine.register_fn("source", source_dummy);
+        engine.register_fn("source", source_info);
         engine.register_fn("add_bin_to_info", info_bin);
     } else if action == "description" {
         engine.register_fn("setenv", setenv_dummy);
@@ -665,6 +679,14 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
         output.push(format!("echo '{}'", line.to_string()));
     }
 
+    if SOURCES.lock().unwrap().iter().len() > 0 {
+        output.push("echo \"\"".to_string());
+        output.push(format!("echo \"{}\"", bold(shell, "Sources the following files:")));
+        got_output = true;
+    }
+    for line in SOURCES.lock().unwrap().iter() {
+        output.push(format!("echo '{}'", line.to_string()));
+    }
     // TODO: find man pages and let the user know
 
     if INFO_PATH.lock().unwrap().iter().len() > 0 {
