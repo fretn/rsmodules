@@ -186,7 +186,7 @@ static LONG_HELP: &str = "
 
     * edit [modulename]
       Opens the modulefile in your $EDITOR or if this variable is not
-      present in ```vi -e```.
+      present in vi -e.
 ";
 
 fn is_shell_supported(shell: &str) -> bool {
