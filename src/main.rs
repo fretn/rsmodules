@@ -183,6 +183,7 @@ static LONG_HELP: &str = "
     * cd [modulename]
       Changes your current working directory to the module
       installation folder.
+
     * edit [modulename]
       Opens the modulefile in your $EDITOR or if this variable is not
       present in ```vi -e```.
