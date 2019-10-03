@@ -237,6 +237,8 @@ pub fn command(rsmod: &mut Rsmodule) {
         refurbish(rsmod);
     } else if rsmod.cmd == "refresh" {
         refresh(rsmod);
+    } else if rsmod.cmd == "cd" {
+        module_action(rsmod, "cd");
     } else if rsmod.cmd == "info" {
         module_action(rsmod, "info");
     } else if rsmod.cmd == "makecache" {
@@ -323,6 +325,24 @@ fn read_input<T: AsRef<str>>(filename: T) -> std::io::Result<(PathBuf, String)> 
         let base_dir = cd.join(filename.as_ref()).parent().map(|p| p.to_path_buf()).unwrap_or(cd);
         Ok((base_dir, buffer))
     }
+}
+
+fn cd(selected_module: &str) -> Vec<String> {
+    let mut lines: Vec<String> = Vec::new();
+    let paths = script::get_readme_paths();
+
+    let mut root_paths: Vec<String> = Vec::new();
+
+    for path in &paths {
+        let mut tmp = find_root(path, path, selected_module);
+        if !tmp.ends_with('/') {
+            tmp.push('/');
+        }
+        root_paths.push(tmp);
+    }
+
+    lines.push(format!("cd {}", root_paths[0]));
+    lines
 }
 
 fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
@@ -455,6 +475,8 @@ fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, a
 
     let data = if action == "info" {
         script::get_info(rsmod.shell, selected_module)
+    } else if action == "cd" {
+        cd(selected_module)
     } else if action == "readme" {
         get_readme(selected_module, rsmod.shell)
     } else {

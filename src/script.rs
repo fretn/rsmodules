@@ -545,7 +545,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("print", print_dummy);
         engine.register_fn("source", source_dummy);
         engine.register_fn("add_bin_to_info", info_bin_dummy);
-    } else if action == "readme" {
+    } else if action == "readme" || action == "cd" {
         engine.register_fn("setenv", setenv_readme);
         engine.register_fn("unsetenv", unsetenv_dummy);
         engine.register_fn("prepend_path", readme_path);

@@ -179,6 +179,11 @@ static LONG_HELP: &str = "
     * readme [modulename]
       Looks for a manpage or a README file in the module installation
       folder and displays the contents of this file.
+
+    * cd [modulename]
+      Changes your current working directory to the module
+      installation folder.
+
 ";
 
 fn is_shell_supported(shell: &str) -> bool {
@@ -373,6 +378,7 @@ fn run(args: &[String]) {
         command_list.push("readme");
         command_list.push("delete");
         command_list.push("create");
+        command_list.push("cd");
         command_list.push("--help");
         command_list.push("-h");
         // TODO
