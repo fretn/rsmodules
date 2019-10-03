@@ -49,7 +49,7 @@ mod manage;
 mod script;
 
 static DEFAULT_MODULE_PATH: &str = "/usr/local";
-static ENV_LOADEDMODULES: &str = "LOADEDMODULES"; // name of an env var
+pub static ENV_LOADEDMODULES: &str = "LOADEDMODULES"; // name of an env var
 static ENV_UNDO: &str = "RSMODULES_UNDO"; // name of an env var
 
 #[derive(Debug, Default, Options)]
@@ -330,6 +330,10 @@ fn read_input<T: AsRef<str>>(filename: T) -> std::io::Result<(PathBuf, String)> 
 }
 
 fn cd(selected_module: &str) -> Vec<String> {
+    if selected_module.is_empty() {
+        return Vec::new();
+    }
+
     let mut lines: Vec<String> = Vec::new();
     let paths = script::get_readme_paths();
 
@@ -513,7 +517,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
 
     reversed_modules.reverse();
 
-    if rsmod.arg == "" {
+    if rsmod.cmd != "cd" && rsmod.arg == "" {
         // TODO: only print usage info about this subcommand
         super::usage(true);
         return;

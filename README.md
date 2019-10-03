@@ -66,7 +66,8 @@ D perl/5.14.1 | Perl 5.14.1 is a highly capable, feature-rich programming langua
  * ```module autoload append|prepend|remove|list|purge [modulename(s)]``` Manages the auto loading of modules by adding them to your startup scripts.
  * ```module delete [modulename(s)]``` Deletes one or more modulefiles. But only if you have the permissions to do so.
  * ```module readme [modulename]``` Looks for a manpage or README file in the module installation folder and displays the contents of this file.
- * ```module cd [modulename]``` Changes your current working directory to the module installation folder.
+ * ```module cd [modulename]``` Changes your current working directory to the module installation folder. When you don't provide a modulename
+      the working directory is changed to the module installation folder of the last loaded module.
  * ```module edit [modulename]``` Opens the modulefile in your $EDITOR or if this variable is not present in ```vi -e```.
  * The output is not redirected to stderr, but to stdout. So you are able to use grep / rg on the output and it doesn't trigger errors in pipelines.
  * RSModules is fast because it's written in a compiled language and it is using cache files for listing the modules.

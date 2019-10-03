@@ -182,7 +182,9 @@ static LONG_HELP: &str = "
 
     * cd [modulename]
       Changes your current working directory to the module
-      installation folder.
+      installation folder. When you don't provide a modulename
+      the working directory is changed to the module installation
+      folder of the last loaded module.
 
     * edit [modulename]
       Opens the modulefile in your $EDITOR or if this variable is not
@@ -412,11 +414,31 @@ fn run(args: &[String]) {
             }
         }
 
+        let loadedmodules: String;
         if num_hits != 1 {
             usage(true);
             return;
         } else {
             matches = true;
+
+            if command_hit == "cd" {
+                modulename = if modulename.is_empty() {
+                    match env::var(rsmod::ENV_LOADEDMODULES) {
+                        Ok(list) => loadedmodules = list,
+                        Err(_) => {
+                            loadedmodules = String::from("");
+                        }
+                    };
+
+                    let mut loadedmodules: Vec<&str> = loadedmodules.split(':').collect();
+                    loadedmodules.retain(|&x| x != "");
+
+                    let loadedmodule: &str = if !loadedmodules.is_empty() { loadedmodules[0] } else { "" };
+                    loadedmodule
+                } else {
+                    modulename
+                };
+            }
 
             if command_hit == "add" {
                 command_hit = "load";
