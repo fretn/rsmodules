@@ -183,7 +183,9 @@ static LONG_HELP: &str = "
     * cd [modulename]
       Changes your current working directory to the module
       installation folder.
-
+    * edit [modulename]
+      Opens the modulefile in your $EDITOR or if this variable is not
+      present in ```vi -e```.
 ";
 
 fn is_shell_supported(shell: &str) -> bool {
@@ -379,6 +381,7 @@ fn run(args: &[String]) {
         command_list.push("delete");
         command_list.push("create");
         command_list.push("cd");
+        command_list.push("edit");
         command_list.push("--help");
         command_list.push("-h");
         // TODO

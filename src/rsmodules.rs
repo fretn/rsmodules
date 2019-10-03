@@ -237,6 +237,8 @@ pub fn command(rsmod: &mut Rsmodule) {
         refurbish(rsmod);
     } else if rsmod.cmd == "refresh" {
         refresh(rsmod);
+    } else if rsmod.cmd == "edit" {
+        module_action(rsmod, "edit");
     } else if rsmod.cmd == "cd" {
         module_action(rsmod, "cd");
     } else if rsmod.cmd == "info" {
@@ -588,6 +590,15 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
                     }
                 }
             }
+        }
+
+        if action == "edit" {
+            if env::var("EDITOR").is_ok() {
+                output(format!("$EDITOR {}\n", modulefile.display()));
+            } else {
+                output(format!("vi -e {}\n", modulefile.display()));
+            }
+            continue;
         }
 
         if !found && action != "unload" {

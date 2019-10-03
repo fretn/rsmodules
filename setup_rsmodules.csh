@@ -31,6 +31,8 @@ set mod_av="`$RSMODULES_INSTALL_DIR/rsmodules noshell avail`"
 complete module \
 'n#load#$mod_av#' \
 'n#info#$mod_av#' \
+'n#cd#$mod_av#' \
+'n#edit#$mod_av#' \
 'n#unload#$mod_av#' \
 'n#delete#$mod_av#' \
 'n#switch#$mod_av#' \
