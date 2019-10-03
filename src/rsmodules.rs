@@ -596,7 +596,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
             if env::var("EDITOR").is_ok() {
                 output(format!("$EDITOR {}\n", modulefile.display()));
             } else {
-                output(format!("vi -e {}\n", modulefile.display()));
+                output(format!("vi {}\n", modulefile.display()));
             }
             continue;
         }
