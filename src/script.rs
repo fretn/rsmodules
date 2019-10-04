@@ -55,65 +55,66 @@ lazy_static! {
     static ref LOAD: Mutex<Vec<String>> = Mutex::new(vec![]);
 }
 
+// lu! means lock().unwrap()
 fn init_vars_and_commands() {
-    ENV_VARS.lock().unwrap().clear();
-    COMMANDS.lock().unwrap().clear();
-    README_PATH.lock().unwrap().clear();
-    README_MANPATH.lock().unwrap().clear();
-    INFO_DESCRIPTION.lock().unwrap().clear();
-    INFO_GENERAL.lock().unwrap().clear();
-    SOURCES.lock().unwrap().clear();
-    INFO_PATH.lock().unwrap().clear();
-    INFO_LD_LIBRARY_PATH.lock().unwrap().clear();
-    INFO_PYTHONPATH.lock().unwrap().clear();
-    INFO_PERL5LIB.lock().unwrap().clear();
-    LOAD.lock().unwrap().clear();
+    lu!(ENV_VARS).clear();
+    lu!(COMMANDS).clear();
+    lu!(README_PATH).clear();
+    lu!(README_MANPATH).clear();
+    lu!(INFO_DESCRIPTION).clear();
+    lu!(INFO_GENERAL).clear();
+    lu!(SOURCES).clear();
+    lu!(INFO_PATH).clear();
+    lu!(INFO_LD_LIBRARY_PATH).clear();
+    lu!(INFO_PYTHONPATH).clear();
+    lu!(INFO_PERL5LIB).clear();
+    lu!(LOAD).clear();
 
     CONFLICT.store(false, Ordering::Relaxed);
 }
 
 fn add_to_env_vars(variable: &str, value: &str) {
-    ENV_VARS.lock().unwrap().push((variable.to_string(), value.to_string()));
+    lu!(ENV_VARS).push((variable.to_string(), value.to_string()));
 }
 
 fn add_to_commands(data: &str) {
-    COMMANDS.lock().unwrap().push(data.to_string());
+    lu!(COMMANDS).push(data.to_string());
 }
 
 fn add_to_readme_manpath(data: &str) {
-    README_MANPATH.lock().unwrap().push(data.to_string());
+    lu!(README_MANPATH).push(data.to_string());
 }
 
 fn add_to_readme_path(data: &str) {
-    README_PATH.lock().unwrap().push(data.to_string());
+    lu!(README_PATH).push(data.to_string());
 }
 
 fn add_to_info_general(data: &str) {
-    INFO_GENERAL.lock().unwrap().push(data.to_string());
+    lu!(INFO_GENERAL).push(data.to_string());
 }
 
 fn add_to_sources(data: &str) {
-    SOURCES.lock().unwrap().push(data.to_string());
+    lu!(SOURCES).push(data.to_string());
 }
 
 fn add_to_info_path(data: &str) {
-    INFO_PATH.lock().unwrap().push(data.to_string());
+    lu!(INFO_PATH).push(data.to_string());
 }
 
 fn add_to_info_ld_library_path(data: &str) {
-    INFO_LD_LIBRARY_PATH.lock().unwrap().push(data.to_string());
+    lu!(INFO_LD_LIBRARY_PATH).push(data.to_string());
 }
 
 fn add_to_info_pythonpath(data: &str) {
-    INFO_PYTHONPATH.lock().unwrap().push(data.to_string());
+    lu!(INFO_PYTHONPATH).push(data.to_string());
 }
 
 fn add_to_info_perl5lib(data: &str) {
-    INFO_PERL5LIB.lock().unwrap().push(data.to_string());
+    lu!(INFO_PERL5LIB).push(data.to_string());
 }
 
 fn add_to_load(data: String) {
-    LOAD.lock().unwrap().push(data);
+    lu!(LOAD).push(data);
 }
 
 // functions for load and unload
@@ -142,7 +143,7 @@ fn source(wanted_shell: String, path: String) {
 }
 
 fn info_bin(bin: String) {
-    INFO_BIN.lock().unwrap().push(bin.to_string());
+    lu!(INFO_BIN).push(bin.to_string());
 }
 
 // dummy functions for unloading
@@ -460,7 +461,7 @@ fn unload(module: String) {
 
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn description(desc: String) {
-    INFO_DESCRIPTION.lock().unwrap().push(desc.replace("\"", "\\\""));
+    lu!(INFO_DESCRIPTION).push(desc.replace("\"", "\\\""));
 }
 
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
@@ -579,13 +580,13 @@ pub fn run(path: &PathBuf, action: &str) {
 }
 
 pub fn get_readme_paths() -> Vec<String> {
-    let paths: Vec<String> = README_PATH.lock().unwrap().to_vec();
+    let paths: Vec<String> = lu!(README_PATH).to_vec();
 
     paths
 }
 
 pub fn get_readme_manpaths() -> Vec<String> {
-    let paths: Vec<String> = README_MANPATH.lock().unwrap().to_vec();
+    let paths: Vec<String> = lu!(README_MANPATH).to_vec();
 
     paths
 }
@@ -596,9 +597,9 @@ pub fn get_description() -> Vec<String> {
     // there can be multiple description calls, but
     // only store the first line of the description in
     // the cache file
-    let desc: Vec<String> = INFO_GENERAL.lock().unwrap().to_vec();
+    let desc: Vec<String> = lu!(INFO_GENERAL).to_vec();
     if !desc.is_empty() {
-        output.push(INFO_GENERAL.lock().unwrap().get(0).unwrap().to_string());
+        output.push(lu!(INFO_GENERAL).get(0).unwrap().to_string());
     }
 
     output
@@ -618,7 +619,7 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
     // this part must be below the above part
     let mut output: Vec<String> = Vec::new();
 
-    for result in ENV_VARS.lock().unwrap().iter() {
+    for result in lu!(ENV_VARS).iter() {
         let mut data: String = String::new();
         if shell == "bash" || shell == "zsh" {
             data = format!("export {}=\"{}\"", result.0, result.1);
@@ -635,7 +636,7 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
         }
     }
 
-    for line in COMMANDS.lock().unwrap().iter() {
+    for line in lu!(COMMANDS).iter() {
         output.push(line.to_string());
     }
 
@@ -657,10 +658,10 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     output.push(format!("echo \"{}\"", bold(shell, &"=".repeat(module.len() + 4))));
     output.push(String::from("echo \"\""));
 
-    if INFO_DESCRIPTION.lock().unwrap().iter().len() > 0 {
+    if lu!(INFO_DESCRIPTION).iter().len() > 0 {
         got_output = true;
     }
-    for line in INFO_DESCRIPTION.lock().unwrap().iter() {
+    for line in lu!(INFO_DESCRIPTION).iter() {
         if shell == "bash" || shell == "zsh" {
             output.push(format!("echo $\"{}\"", line.to_string()));
         } else if shell == "csh" || shell == "tcsh" {
@@ -670,74 +671,74 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
         }
     }
 
-    if INFO_GENERAL.lock().unwrap().iter().len() > 0 {
+    if lu!(INFO_GENERAL).iter().len() > 0 {
         output.push("echo \"\"".to_string());
         output.push(format!("echo \"{}\"", bold(shell, "Sets the following variables: ")));
         got_output = true;
     }
-    for line in INFO_GENERAL.lock().unwrap().iter() {
+    for line in lu!(INFO_GENERAL).iter() {
         output.push(format!("echo '{}'", line.to_string()));
     }
 
-    if SOURCES.lock().unwrap().iter().len() > 0 {
+    if lu!(SOURCES).iter().len() > 0 {
         output.push("echo \"\"".to_string());
         output.push(format!("echo \"{}\"", bold(shell, "Sources the following files:")));
         got_output = true;
     }
-    for line in SOURCES.lock().unwrap().iter() {
+    for line in lu!(SOURCES).iter() {
         output.push(format!("echo '{}'", line.to_string()));
     }
     // TODO: find man pages and let the user know
 
-    if INFO_PATH.lock().unwrap().iter().len() > 0 {
+    if lu!(INFO_PATH).iter().len() > 0 {
         output.push("echo \"\"".to_string());
         output.push(format!("echo \"{}\"", bold(shell, "Executables can be found in: ")));
         got_output = true;
     }
-    for line in INFO_PATH.lock().unwrap().iter() {
+    for line in lu!(INFO_PATH).iter() {
         output.push(format!("echo '{}'", line.to_string()));
     }
 
-    if INFO_LD_LIBRARY_PATH.lock().unwrap().iter().len() > 0 {
+    if lu!(INFO_LD_LIBRARY_PATH).iter().len() > 0 {
         output.push("echo \"\"".to_string());
         output.push(format!("echo \"{}\"", bold(shell, "Libraries can be found in: ")));
         got_output = true;
     }
-    for line in INFO_LD_LIBRARY_PATH.lock().unwrap().iter() {
+    for line in lu!(INFO_LD_LIBRARY_PATH).iter() {
         output.push(format!("echo '{}'", line.to_string()));
     }
 
-    if INFO_PYTHONPATH.lock().unwrap().iter().len() > 0 {
+    if lu!(INFO_PYTHONPATH).iter().len() > 0 {
         output.push("echo \"\"".to_string());
         output.push(format!("echo \"{}\"", bold(shell, "\\$PYTHONPATH: ")));
         got_output = true;
     }
-    for line in INFO_PYTHONPATH.lock().unwrap().iter() {
+    for line in lu!(INFO_PYTHONPATH).iter() {
         output.push(format!("echo '{}'", line.to_string()));
     }
 
-    if INFO_PERL5LIB.lock().unwrap().iter().len() > 0 {
+    if lu!(INFO_PERL5LIB).iter().len() > 0 {
         output.push("echo \"\"".to_string());
         output.push(format!("echo \"{}\"", bold(shell, "\\$PERL5LIB: ")));
         got_output = true;
     }
-    for line in INFO_PERL5LIB.lock().unwrap().iter() {
+    for line in lu!(INFO_PERL5LIB).iter() {
         output.push(format!("echo '{}'", line.to_string()));
     }
 
-    if LOAD.lock().unwrap().iter().len() > 0 {
+    if lu!(LOAD).iter().len() > 0 {
         output.push("echo \"\"".to_string());
         output.push(format!("echo \"{}\"", bold(shell, "Depends on: ")));
         got_output = true;
     }
-    for line in LOAD.lock().unwrap().iter() {
+    for line in lu!(LOAD).iter() {
         output.push(format!("echo '{}'", line.to_string()));
     }
 
     let mut execs: Vec<String> = Vec::new();
     let mut filtered: bool = false;
-    if INFO_BIN.lock().unwrap().is_empty() || env::var("RSMODULES_DONT_FILTER_INFO").is_ok() {
-        for line in INFO_PATH.lock().unwrap().iter() {
+    if lu!(INFO_BIN).is_empty() || env::var("RSMODULES_DONT_FILTER_INFO").is_ok() {
+        for line in lu!(INFO_PATH).iter() {
             if Path::new(line).is_dir() {
                 // if activate, activate.csh, activate.fish and activate_this.py exist
                 // then we are in a python virtualenv, we can skip the typical python
@@ -777,7 +778,7 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
             }
         }
     } else {
-        let bins: Vec<String> = INFO_BIN.lock().unwrap().to_vec();
+        let bins: Vec<String> = lu!(INFO_BIN).to_vec();
         for bin in bins {
             execs.push(format!("echo '{}'", bin));
             got_output = true;

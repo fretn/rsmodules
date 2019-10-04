@@ -251,7 +251,7 @@ fn usage(in_eval: bool) {
 }
 
 fn set_global_tmpfile(tmp_file_path: String) {
-    let mut tmp = TMPFILE_PATH.lock().unwrap();
+    let mut tmp = lu!(TMPFILE_PATH);
     *tmp = tmp_file_path;
 
     TMPFILE_INITIALIZED.store(true, Ordering::Relaxed);
@@ -334,7 +334,7 @@ fn run(args: &[String]) {
     };
 
     panic::set_hook(Box::new(|_| {
-        let tmp = TMPFILE_PATH.lock().unwrap();
+        let tmp = lu!(TMPFILE_PATH);
         let tmp_file_path = &*tmp;
         remove_file(tmp_file_path).unwrap();
     }));
@@ -527,7 +527,7 @@ fn run(args: &[String]) {
 
         let cmd = format!("\\rm -f {}\n", tmp_file_path.display());
 
-        let mut output_buffer = OUTPUT_BUFFER.lock().unwrap();
+        let mut output_buffer = lu!(OUTPUT_BUFFER);
         let output_buffer = &mut (*output_buffer);
         output_buffer.push(cmd);
 
@@ -578,7 +578,7 @@ fn bold<'a>(shell: &str, msg: &'a str) -> ansi_term::ANSIGenericString<'a, str> 
 }
 
 pub fn output(line: String) {
-    let mut output_buffer = OUTPUT_BUFFER.lock().unwrap();
+    let mut output_buffer = lu!(OUTPUT_BUFFER);
     let output_buffer = &mut (*output_buffer);
     output_buffer.push(line);
 }

@@ -118,3 +118,9 @@ macro_rules! crash_cleanup_if_err(
         }
     )
 );
+
+macro_rules! lu(
+    ($file:expr) => (
+        $file.lock().unwrap()
+    )
+);

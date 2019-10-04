@@ -78,7 +78,7 @@ pub struct Rsmodule<'a> {
 }
 
 pub fn crash(signal: i32, message: &str) {
-    let tmp_file_path = super::TMPFILE_PATH.lock().unwrap();
+    let tmp_file_path = lu!(super::TMPFILE_PATH);
 
     if super::TMPFILE_INITIALIZED.load(Ordering::Relaxed) {
         let path = &(*tmp_file_path);
@@ -414,7 +414,7 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
     let mut counter = 0;
     for readme in &readmes {
         if counter == 0 {
-            let mdtmpfile = format!("{}{}", super::TMPFILE_PATH.lock().unwrap(), ".md");
+            let mdtmpfile = format!("{}{}", lu!(super::TMPFILE_PATH), ".md");
             lines.push(format!("echo '\n  {}{}\n'", bold(shell, "Showing readme file: "), readme));
             let path = Path::new(readme);
 
