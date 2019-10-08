@@ -1,6 +1,6 @@
 [package]
 name = "rsmodules"
-version = "0.7.1"
+version = "0.7.2"
 authors = ["Frederik Delaere <frederik.delaere@ugent.be>"]
 edition = "2018"
 
