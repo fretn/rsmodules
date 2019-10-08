@@ -176,17 +176,17 @@ static LONG_HELP: &str = "
     * autoload append|prepend|remove|list|purge [module name(s)]
       Manages the autoloading of modules when opening a new terminal.
 
-    * readme [modulename]
+    * readme [(partial)modulename]
       Looks for a manpage or a README file in the module installation
       folder and displays the contents of this file.
 
-    * cd [modulename]
+    * cd [(partial)modulename]
       Changes your current working directory to the module
       installation folder. When you don't provide a modulename
       the working directory is changed to the module installation
       folder of the last loaded module.
 
-    * edit [modulename]
+    * edit [(partial)modulename]
       Opens the modulefile in your $EDITOR or if this variable is not
       present in vi -e.
 ";
