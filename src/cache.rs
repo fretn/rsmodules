@@ -132,7 +132,11 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
     let mut index_default: i32 = 0;
 
     let file_str = format!("{}/{}", modulepath, MODULESINDEX);
-    let num_modules = count_modules_in_cache(&PathBuf::from(&file_str));
+    let num_modules = if Path::new(&file_str).exists() {
+        count_modules_in_cache(&PathBuf::from(&file_str))
+    } else {
+        0
+    };
 
     if shell == "progressbar" {
         echo("", shell);
