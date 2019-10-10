@@ -59,6 +59,7 @@ extern crate shellexpand;
 extern crate syntect;
 
 use ansi_term::Style;
+use std::collections::HashMap;
 use std::env;
 use std::fs::{remove_file, File};
 use std::io::Write;
@@ -89,108 +90,6 @@ static CRASH_INVALID_REGEX: i32 = 12;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 
-static LONG_HELP: &str = "
-
-  RSModules manages your user environment on linux and macOS.
-  The RSModules package is a tool to help users modifying their environment
-  during a session by using modulefiles.
-  A modulefile contains all the settings needed to configure the shell for
-  using a certain application.
-
-  A modulefile sets or alters environment variables such as PATH,
-  LD_LIBRARY_PATH, MANPATH, PYTHONPATH, PERL5LIB, ...
-
-  Modulefiles can be shared by many users or can be used by individuals
-  by setting up paths in the MODULEPATH environment variable. Once
-  a new modulepath is created and added to MODULEPATH,
-  the cache needs to be updated by invoking the command: module makecache.
-
-  Modulefiles can be loaded and unloaded by the user whenever the
-  module command is available.
-
-  * module [subcommand] <module name>
-
-    subcommands
-    -----------
-
-    * load [(partial) module name(s)]
-    * unload [(partial) module name(s)]
-
-      A partial module name is the part of the modulename
-      before a slash, eg: you have module name 'rsmodules/2.0.0'
-      the partial name is 'rsmodules'.
-
-    * switch [(partial) module name from] [(partial) module name to]
-      Switches between two version of modules.
-
-      This does the same as module load blast/1.2.3 when
-      blast/1.2.5 was already loaded.
-      This feature was added for compatibility reasons.
-
-    * list
-      Lists all the loaded modules.
-
-    * purge
-      Unloads all loaded modules.
-
-    * refurbish
-      Unloads all loaded modules. And loads the autoloaded modules.
-
-    * refresh
-      Reloads all loaded modules.
-
-    * available [--default] [--regex] [search string]
-      Lists all the available modules.
-      If a [search string] is given then all modules which match
-      the search string will be listed.
-      The search string can also contain multiple items separated
-      by spaces.
-      When --default, -d is specified then only default modules
-      will be listed.
-      When --regex or -r is specified the search term can be a
-      regular expression.
-
-    * info [(partial) module name(s)]
-      Gives more info about a module. Description, which
-      variables it modifies and/or which commands are executed
-      upon launch.
-
-    * undo
-      Undo the previous module command, only works for load, unload,
-      switch and purge.
-
-    * makecache
-      Updates the .modulesindex file in all the paths that
-      are found in the $MODULEPATH variable. This will only
-      work if you have the correct permissions.
-      If you want a progress bar use the command:
-      update_modules_cache instead of module makecache
-
-    * create [--help] [modulename]
-      Starts a wizard to create a modulefile.
-
-    * delete
-      Deletes a modulefile. As with makecache, this only works
-      if you have the correct permissions.
-
-    * autoload append|prepend|remove|list|purge [module name(s)]
-      Manages the autoloading of modules when opening a new terminal.
-
-    * readme [(partial)modulename]
-      Looks for a manpage or a README file in the module installation
-      folder and displays the contents of this file.
-
-    * cd [(partial)modulename]
-      Changes your current working directory to the module
-      installation folder. When you don't provide a modulename
-      the working directory is changed to the module installation
-      folder of the last loaded module.
-
-    * edit [(partial)modulename]
-      Opens the modulefile in your $EDITOR or if this variable is not
-      present in vi -e.
-";
-
 fn is_shell_supported(shell: &str) -> bool {
     // when noshell is selected, all output is printed
     // to stdout instead of the temp file
@@ -214,8 +113,231 @@ fn release_debug() -> String {
     String::from("")
 }
 
-fn usage(in_eval: bool) {
+fn usage(in_eval: bool, subcommand_help: bool) {
+    // SubCommandHelp
+    let mut sch = HashMap::new();
+
+    // the \t is part of an advanced markup codebase ^^
+    // \t doesn't show up in the full usage text
+    // but in the partial usage text its replaced by a newline
+    // this makes the partial usage text look nicer
+
+    sch.insert("load".to_owned(), "load [(partial) module name(s)]");
+    sch.insert(
+        "unload".to_owned(),
+        "unload [(partial) module name(s)]\t
+            A partial module name is the part of the modulename
+            before a slash, eg: you have module name 'rsmodules/2.0.0'
+            the partial name is 'rsmodules'.",
+    );
+
+    sch.insert(
+        "switch".to_owned(),
+        "switch [(partial) module name from] [(partial) module name to]\t
+            Switches between two version of modules.
+
+            This does the same as module load blast/1.2.3 when
+            blast/1.2.5 was already loaded.
+            This feature was added for compatibility reasons.",
+    );
+
+    sch.insert(
+        "list".to_owned(),
+        "list\t
+            Lists all the loaded modules.",
+    );
+
+    sch.insert(
+        "purge".to_owned(),
+        "purge\t
+            Unloads all loaded modules.",
+    );
+
+    sch.insert(
+        "refurbish".to_owned(),
+        "refurbish\t
+            Unloads all loaded modules. And loads the autoloaded modules.",
+    );
+
+    sch.insert(
+        "refresh".to_owned(),
+        "refresh\t
+            Reloads all loaded modules.",
+    );
+
+    sch.insert(
+        "available".to_owned(),
+        "available [--default] [--regex] [search string]\t
+            Lists all the available modules.
+            If a [search string] is given then all modules which match
+            the search string will be listed.
+            The search string can also contain multiple items separated
+            by spaces.
+            When --default, -d is specified then only default modules
+            will be listed.
+            When --regex or -r is specified the search term can be a
+            regular expression.",
+    );
+
+    sch.insert(
+        "info".to_owned(),
+        "info [(partial) module name(s)]\t
+            Gives more info about a module. Description, which
+            variables it modifies and/or which commands are executed
+            upon launch.",
+    );
+
+    sch.insert(
+        "undo".to_owned(),
+        "undo\t
+            Undo the previous module command, only works for load, unload,
+            switch and purge.",
+    );
+
+    sch.insert(
+        "makecache".to_owned(),
+        "makecache\t
+            Updates the .modulesindex file in all the paths that
+            are found in the $MODULEPATH variable. This will only
+            work if you have the correct permissions.
+            If you want a progress bar use the command:
+            update_modules_cache instead of module makecache",
+    );
+
+    sch.insert(
+        "create".to_owned(),
+        "create [--help] [modulename]\t
+            Starts a wizard to create a modulefile.",
+    );
+
+    sch.insert(
+        "delete".to_owned(),
+        "delete\t
+            Deletes a modulefile. As with makecache, this only works
+            if you have the correct permissions.",
+    );
+
+    sch.insert(
+        "autoload".to_owned(),
+        "autoload append|prepend|remove|list|purge [module name(s)]\t
+            Manages the autoloading of modules when opening a new terminal.",
+    );
+
+    sch.insert(
+        "readme".to_owned(),
+        "readme [(partial)modulename]\t
+            Looks for a manpage or a README file in the module installation
+            folder and displays the contents of this file.",
+    );
+
+    sch.insert(
+        "cd".to_owned(),
+        "cd [(partial)modulename]\t
+            Changes your current working directory to the module
+            installation folder. When you don't provide a modulename
+            the working directory is changed to the module installation
+            folder of the last loaded module.",
+    );
+
+    sch.insert(
+        "edit".to_owned(),
+        "edit [(partial)modulename]\t
+            Opens the modulefile in your $EDITOR or if this variable is not
+            present in vi -e.",
+    );
+
+    let long_help: &str = &format!(
+        "
+
+    RSModules manages your user environment on linux and macOS.
+    The RSModules package is a tool to help users modifying their environment
+    during a session by using modulefiles.
+    A modulefile contains all the settings needed to configure the shell for
+    using a certain application.
+
+    A modulefile sets or alters environment variables such as PATH,
+    LD_LIBRARY_PATH, MANPATH, PYTHONPATH, PERL5LIB, ...
+
+    Modulefiles can be shared by many users or can be used by individuals
+    by setting up paths in the MODULEPATH environment variable. Once
+    a new modulepath is created and added to MODULEPATH,
+    the cache needs to be updated by invoking the command: module makecache.
+
+    Modulefiles can be loaded and unloaded by the user whenever the
+    module command is available.
+
+    * module [subcommand] <module name>
+
+        subcommands
+        -----------
+
+        * {}
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+
+        * {}
+        ",
+        help!(sch, "load"),
+        help!(sch, "unload"),
+        help!(sch, "switch"),
+        help!(sch, "list"),
+        help!(sch, "purge"),
+        help!(sch, "refurbish"),
+        help!(sch, "refresh"),
+        help!(sch, "available"),
+        help!(sch, "info"),
+        help!(sch, "undo"),
+        help!(sch, "makecache"),
+        help!(sch, "create"),
+        help!(sch, "delete"),
+        help!(sch, "autoload"),
+        help!(sch, "readme"),
+        help!(sch, "cd"),
+        help!(sch, "edit")
+    );
+
     let error_msg: &str;
+
+    let args: Vec<String> = std::env::args().collect();
+
+    if args.len() == 3 && subcommand_help {
+        let (shell, _) = rsmod::get_shell_info();
+        eprintln!("");
+        eprintln!(
+            "  {}: module {}",
+            bold(&shell, "Usage"),
+            help!(sch, &args[2]).replace("            ", "  ").replace("\t", "\n")
+        );
+        eprintln!("");
+        return;
+    }
 
     eprintln!("  RSModules {}{} - {}", VERSION, release_debug(), AUTHORS);
     eprintln!("");
@@ -227,12 +349,12 @@ fn usage(in_eval: bool) {
     if in_eval {
         error_msg =
             "  Usage: module \
-             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload|readme> [module \
+             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload|readme|cd|edit> [module \
              name]";
     } else {
         error_msg =
             "  Usage: rsmodules <shell> \
-             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload|readme> [module \
+             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload|readme|cd|edit> [module \
              name]";
     }
 
@@ -244,10 +366,10 @@ fn usage(in_eval: bool) {
         );
         eprintln!("");
         eprintln!("  When noshell is selected all output is printed to stdout,");
-        eprintln!("  module available will then print a nice list without gaps, which is");
-        eprintln!("  makes your life easier when you want to parse this output.");
+        eprintln!("  module available will then print a nice list without gaps,");
+        eprintln!("  which makes your life easier when you want to parse this output.");
     }
-    eprintln!("{}", &LONG_HELP);
+    eprintln!("{}", &long_help);
 }
 
 fn set_global_tmpfile(tmp_file_path: String) {
@@ -267,7 +389,7 @@ fn run(args: &[String]) {
     ////
 
     if !is_shell_supported(&shell) {
-        usage(false);
+        usage(false, false);
         rsmod::crash(CRASH_UNSUPPORTED_SHELL, &format!("{} is not a supported shell", shell));
     }
 
@@ -401,7 +523,7 @@ fn run(args: &[String]) {
         //
 
         if command == "help" || command == "--help" || command == "-h" {
-            usage(true);
+            usage(true, false);
             return;
         }
 
@@ -416,7 +538,7 @@ fn run(args: &[String]) {
 
         let loadedmodules: String;
         if num_hits != 1 {
-            usage(true);
+            usage(true, false);
             return;
         } else {
             matches = true;
@@ -464,8 +586,20 @@ fn run(args: &[String]) {
                 );
             }
 
+            if (command_hit == "load"
+                || command_hit == "unload"
+                || command_hit == "info"
+                || command_hit == "delete"
+                || command_hit == "readme"
+                || command_hit == "edit")
+                && args.len() == 3
+            {
+                usage(true, true);
+                return;
+            }
+
             if command_hit == "switch" && args.len() != 5 {
-                usage(true);
+                usage(true, true);
                 return;
             }
 
@@ -511,7 +645,7 @@ fn run(args: &[String]) {
         }
 
         if !matches {
-            usage(false);
+            usage(false, false);
         }
     }
 
@@ -594,17 +728,17 @@ fn main() {
 
     if args.len() == 1 {
         if !wizard::run(false) {
-            usage(false);
+            usage(false, false);
         }
         return;
     }
 
     if args.len() == 2 {
-        usage(true);
+        usage(true, false);
     }
 
     if args.len() >= 2 && (args.get(1) == Some(&String::from("-h")) || args.get(1) == Some(&String::from("--help"))) {
-        usage(false);
+        usage(false, false);
         return;
     }
 

@@ -124,3 +124,9 @@ macro_rules! lu(
         $file.lock().unwrap()
     )
 );
+
+macro_rules! help(
+    ($file:expr, $cmd:expr) => (
+        $file.get($cmd).unwrap()
+    )
+);

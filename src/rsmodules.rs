@@ -518,8 +518,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
     reversed_modules.reverse();
 
     if rsmod.cmd != "cd" && rsmod.arg == "" {
-        // TODO: only print usage info about this subcommand
-        super::usage(true);
+        super::usage(true, true);
         return;
     }
 
