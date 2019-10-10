@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 extern crate rhai;
-//extern crate is_executable;
+
 use self::rhai::{Engine, FnRegister};
 use super::super::bold;
 use super::{echo, get_shell_info, Rsmodule};
@@ -393,6 +393,14 @@ fn system(cmd: String) {
 }
 
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
+fn system_unload(cmd: String) {
+    let (shell, _) = get_shell_info();
+    if shell != "python" && shell != "perl" {
+        add_to_commands(&cmd);
+    }
+}
+
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn load(module: String) {
     let (shell, _) = get_shell_info();
 
@@ -485,6 +493,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("append_path", remove_path);
         engine.register_fn("remove_path", remove_path_dummy);
         engine.register_fn("system", system_dummy);
+        engine.register_fn("system_unload", system_unload);
         engine.register_fn("load", load_dummy);
         engine.register_fn("conflict", conflict_dummy);
         engine.register_fn("unload", unload_dummy);
@@ -502,6 +511,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("append_path", append_path);
         engine.register_fn("remove_path", remove_path);
         engine.register_fn("system", system);
+        engine.register_fn("system_unload", system_dummy);
         engine.register_fn("load", load);
         engine.register_fn("conflict", conflict);
         engine.register_fn("unload", unload);
@@ -519,6 +529,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("append_path", append_path_info);
         engine.register_fn("remove_path", remove_path_dummy);
         engine.register_fn("system", system_dummy);
+        engine.register_fn("system_unload", system_dummy);
         engine.register_fn("load", load_info);
         engine.register_fn("conflict", conflict_dummy);
         engine.register_fn("unload", unload_dummy);
@@ -536,6 +547,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("append_path", append_path_dummy);
         engine.register_fn("remove_path", remove_path_dummy);
         engine.register_fn("system", system_dummy);
+        engine.register_fn("system_unload", system_dummy);
         engine.register_fn("load", load_dummy);
         engine.register_fn("conflict", conflict_dummy);
         engine.register_fn("unload", unload_dummy);
@@ -553,6 +565,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("append_path", readme_path);
         engine.register_fn("remove_path", remove_path_dummy);
         engine.register_fn("system", system_dummy);
+        engine.register_fn("system_unload", system_dummy);
         engine.register_fn("load", load_dummy);
         engine.register_fn("conflict", conflict_dummy);
         engine.register_fn("unload", unload_dummy);

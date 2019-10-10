@@ -147,6 +147,7 @@ Next to the default rhai syntax, the following functions are available:
  * ```append_path("variable","value");```
  * ```remove_path("variable","value");```
  * ```system("command");```
+ * ```system_unload("command");``` This command is only executed when unloading the module
  * ```load("modulename");```
  * ```unload("modulename");```
  * ```conflict("modulename");```
@@ -183,6 +184,9 @@ prepend_path("PATH","/software/shared/apps/iprscan/5.23-62/");
 
 system("mkdir -p /scratch/tmp/iprscan_logs");
 system("mkdir -p /scratch/tmp/iprscan_tmp");
+
+system("source activate myprogram");
+system_unload("source deactivate");
 
 source("bash", "/software/shared/apps/iprscan/5.23-64/env.sh");
 source("zsh", "/software/shared/apps/iprscan/5.23-64/env.zsh");
