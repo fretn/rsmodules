@@ -147,7 +147,7 @@ Next to the default rhai syntax, the following functions are available:
  * ```append_path("variable","value");```
  * ```remove_path("variable","value");```
  * ```system("command");```
- * ```system_unload("command");``` This command is only executed when unloading the module
+ * ```system_unload("command");``` This command is only executed when unloading a module
  * ```load("modulename");```
  * ```unload("modulename");```
  * ```conflict("modulename");```
