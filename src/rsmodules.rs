@@ -362,12 +362,12 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
     let mut mans: Vec<String> = Vec::new();
 
     // search filesystem with a glob
-    mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name), &manpaths));
-    mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name.to_lowercase()), &manpaths));
-    mans.extend_from_slice(&glob_path(&format!("man1/{}.1", name.to_uppercase()), &manpaths));
-    mans.extend_from_slice(&glob_path(&format!("/{}.1", name), &manpaths));
-    mans.extend_from_slice(&glob_path(&format!("/{}.1", name.to_lowercase()), &manpaths));
-    mans.extend_from_slice(&glob_path(&format!("/{}.1", name.to_uppercase()), &manpaths));
+    mans.extend_from_slice(&glob_path(&format!("man1/*{}*.1", name), &manpaths));
+    mans.extend_from_slice(&glob_path(&format!("man1/*{}*.1", name.to_lowercase()), &manpaths));
+    mans.extend_from_slice(&glob_path(&format!("man1/*{}*.1", name.to_uppercase()), &manpaths));
+    mans.extend_from_slice(&glob_path(&format!("/*{}*.1", name), &manpaths));
+    mans.extend_from_slice(&glob_path(&format!("/*{}*.1", name.to_lowercase()), &manpaths));
+    mans.extend_from_slice(&glob_path(&format!("/*{}*.1", name.to_uppercase()), &manpaths));
 
     if !mans.is_empty() {
         let mut lines: Vec<String> = Vec::new();
@@ -561,7 +561,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
                         // prevent that: module load blast loads blastz
                         let splitter: Vec<&str> = module.0.split(mdl).collect();
                         if splitter.len() > 1 {
-                            if found && module.0.starts_with(mdl) && module.1 == 1 {
+                            if found && module.0.starts_with(&format!("{}/", mdl)) && module.1 == 1 {
                                 selected_module = module.0.as_ref();
                                 let testpath = format!("{}/{}", modulepath, module.0);
                                 // if a modulefile is already found, don't overwrite it with a
