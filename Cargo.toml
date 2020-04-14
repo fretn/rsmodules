@@ -22,7 +22,7 @@ ansi_term = "0.9"
 glob = "0.2"
 dirs = "1.0"
 pbr = "1.0.1"
-smallvec = "0.6.10"
+natord = "1.0.9"
 
 [dependencies.mdcat]
 version = "0.12.1"

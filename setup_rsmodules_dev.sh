@@ -8,9 +8,9 @@ module() {
 export MODULEPATH=""
 export RSMODULES_INSTALL_DIR=""
 
-if [ "`hostname`" == "modimo" ]; then
-	export MODULEPATH="/usr/local/modules:/home/frlae/rust/rmodules/modulespath:/home/frlae/rust/rmodules/modulespath2"
-	export RSMODULES_INSTALL_DIR="/home/frlae/rust/rmodules/"
+if [ "`hostname`" == "modimo.psb.ugent.be" ]; then
+	export MODULEPATH="/usr/local/modules:/Users/frlae/rust/rmodules/modulespath:/Users/frlae/rust/rmodules/modulespath2"
+	export RSMODULES_INSTALL_DIR="/Users/frlae/rust/rmodules/"
 
 	module() {
 		export TERMWIDTH=`/bin/stty size | cut -d" " -f2`;

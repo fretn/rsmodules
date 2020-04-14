@@ -35,6 +35,7 @@ use std::io::Write;
 use std::path::{is_separator, Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // WARNING: the scripts don't support tabbed indents in if else structures
 
@@ -42,6 +43,7 @@ lazy_static! {
     static ref ENV_VARS: Mutex<Vec<(String, String)>> = Mutex::new(vec![]);
     static ref COMMANDS: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref CONFLICT: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+    static ref DEPRECATED: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
     static ref README_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref README_MANPATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_DESCRIPTION: Mutex<Vec<String>> = Mutex::new(vec![]);
@@ -71,6 +73,7 @@ fn init_vars_and_commands() {
     lu!(LOAD).clear();
 
     CONFLICT.store(false, Ordering::Relaxed);
+    DEPRECATED.store(false, Ordering::Relaxed);
 }
 
 fn add_to_env_vars(variable: &str, value: &str) {
@@ -162,6 +165,9 @@ fn load_dummy(module: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn conflict_dummy(module: String) {}
+#[allow(unused_variables)]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
+fn deprecated_dummy(time: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn unload_dummy(module: String) {}
@@ -258,6 +264,11 @@ fn append_path_info(var: String, val: String) {
     } else {
         add_to_info_general(&format!("{}={}", var, val));
     }
+}
+
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
+fn deprecated_info(_time: String) {
+//TODO
 }
 
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
@@ -417,6 +428,20 @@ fn load(module: String) {
 }
 
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
+fn deprecated(time: String) {
+    let start = SystemTime::now();
+    let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
+    let in_ms = since_the_epoch.as_millis();
+    eprintln!("in_ms: {}", in_ms);
+
+    let time = time.parse::<u128>().unwrap();
+
+    if in_ms > time {
+        DEPRECATED.store(true, Ordering::Relaxed);
+    }
+}
+
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn conflict(module: String) {
     if super::is_module_loaded(module.as_ref(), false) {
         let (shell, _) = get_shell_info();
@@ -496,6 +521,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("system_unload", system_unload);
         engine.register_fn("load", load_dummy);
         engine.register_fn("conflict", conflict_dummy);
+        engine.register_fn("deprecated", deprecated_dummy);
         engine.register_fn("unload", unload_dummy);
         engine.register_fn("getenv", getenv_dummy); // need getenv_dummy instead ??
         engine.register_fn("description", description_dummy);
@@ -514,6 +540,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("system_unload", system_dummy);
         engine.register_fn("load", load);
         engine.register_fn("conflict", conflict);
+        engine.register_fn("deprecated", deprecated);
         engine.register_fn("unload", unload);
         engine.register_fn("getenv", getenv);
         engine.register_fn("description", description_dummy);
@@ -532,6 +559,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("system_unload", system_dummy);
         engine.register_fn("load", load_info);
         engine.register_fn("conflict", conflict_dummy);
+        engine.register_fn("deprecated", deprecated_info);
         engine.register_fn("unload", unload_dummy);
         engine.register_fn("getenv", getenv_dummy);
         engine.register_fn("description", description);
@@ -550,6 +578,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("system_unload", system_dummy);
         engine.register_fn("load", load_dummy);
         engine.register_fn("conflict", conflict_dummy);
+        engine.register_fn("deprecated", deprecated_dummy);
         engine.register_fn("unload", unload_dummy);
         engine.register_fn("getenv", getenv_dummy);
         engine.register_fn("description", description_cache);
@@ -568,6 +597,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("system_unload", system_dummy);
         engine.register_fn("load", load_dummy);
         engine.register_fn("conflict", conflict_dummy);
+        engine.register_fn("deprecated", deprecated_dummy);
         engine.register_fn("unload", unload_dummy);
         engine.register_fn("getenv", getenv_dummy);
         engine.register_fn("description", description_dummy);
@@ -579,7 +609,7 @@ pub fn run(path: &PathBuf, action: &str) {
     }
 
     match engine.eval_file::<String>(path.to_string_lossy().into_owned().as_ref()) {
-        Ok(result) => println!("{}", result),
+        Ok(result) => println!("echo 'wut';{}", result),
         Err(e) => {
             if e.to_string() != "Cast of output failed" {
                 show_warning!(
@@ -620,6 +650,11 @@ pub fn get_description() -> Vec<String> {
 
 pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<String> {
     if CONFLICT.load(Ordering::Relaxed) {
+        return Vec::new();
+    }
+
+    if DEPRECATED.load(Ordering::Relaxed) {
+        eprintln!("This module is deprecated.");
         return Vec::new();
     }
 

@@ -414,7 +414,7 @@ pub fn get_module_list(arg: &str, rsmod: &Rsmodule, opts: &AvailableOptions) {
         }
     }
 
-    decoded.sort();
+    decoded.sort_by(|a, b| natord::compare(&a.name.as_str(), &b.name.as_str()));
 
     let mut previous_first_char: char = '§';
     let mut previous_description: String = String::new();
