@@ -429,12 +429,14 @@ fn load(module: String) {
 
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn deprecated(time: String) {
+    return; // disable for now
     let start = SystemTime::now();
     let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
     let in_ms = since_the_epoch.as_millis();
-    eprintln!("in_ms: {}", in_ms);
 
     let time = time.parse::<u128>().unwrap();
+    eprintln!("in_ms: {} {}", in_ms, time);
+
 
     if in_ms > time {
         DEPRECATED.store(true, Ordering::Relaxed);
