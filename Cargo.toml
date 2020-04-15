@@ -7,7 +7,8 @@ edition = "2018"
 [dependencies]
 rand = "0.3"
 lazy_static = "1.2.0"
-rhai = "0.7.1"
+#rhai = "0.7.1"
+rhai = "0.9.1"
 walkdir = "1"
 bincode = "0.6.1"
 rustc-serialize = "0.3.23"
@@ -23,6 +24,7 @@ glob = "0.2"
 dirs = "1.0"
 pbr = "1.0.1"
 natord = "1.0.9"
+chrono = "0.4.11"
 #smallvec = "0.6.10"
 
 [dependencies.mdcat]

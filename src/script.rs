@@ -23,7 +23,7 @@ SOFTWARE.
 */
 extern crate rhai;
 
-use self::rhai::{Engine, FnRegister};
+use self::rhai::{Engine, RegisterFn};
 use super::super::bold;
 use super::{echo, get_shell_info, Rsmodule};
 use is_executable::IsExecutable;
@@ -35,18 +35,53 @@ use std::io::Write;
 use std::path::{is_separator, Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::{SystemTime, UNIX_EPOCH};
+
+use chrono::{DateTime, Utc};
 
 // WARNING: the scripts don't support tabbed indents in if else structures
+
+#[derive(Debug, Clone)]
+pub enum DeprecatedState {
+    Not,
+    Before,
+    After,
+}
+
+#[derive(Debug, Clone)]
+pub struct Deprecated {
+    pub name: String,
+    pub time: String,
+    pub state: DeprecatedState,
+}
+
+impl Deprecated {
+    pub fn new() -> Deprecated {
+        Deprecated {
+            name: String::new(),
+            time: String::new(),
+            state: DeprecatedState::Not,
+        }
+    }
+
+    pub fn from(name: String, time: String, state: DeprecatedState) -> Deprecated {
+        Deprecated {
+            name: name,
+            time: time,
+            state: state,
+        }
+    }
+}
 
 lazy_static! {
     static ref ENV_VARS: Mutex<Vec<(String, String)>> = Mutex::new(vec![]);
     static ref COMMANDS: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref CONFLICT: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-    static ref DEPRECATED: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+    //static ref DEPRECATED: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+    pub static ref DEPRECATED: Mutex<Deprecated> = Mutex::new(Deprecated::new());
     static ref README_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref README_MANPATH: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_DESCRIPTION: Mutex<Vec<String>> = Mutex::new(vec![]);
+    static ref INFO_DEPRECATED: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_GENERAL: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref SOURCES: Mutex<Vec<String>> = Mutex::new(vec![]);
     static ref INFO_PATH: Mutex<Vec<String>> = Mutex::new(vec![]);
@@ -64,6 +99,7 @@ fn init_vars_and_commands() {
     lu!(README_PATH).clear();
     lu!(README_MANPATH).clear();
     lu!(INFO_DESCRIPTION).clear();
+    lu!(INFO_DEPRECATED).clear();
     lu!(INFO_GENERAL).clear();
     lu!(SOURCES).clear();
     lu!(INFO_PATH).clear();
@@ -73,7 +109,9 @@ fn init_vars_and_commands() {
     lu!(LOAD).clear();
 
     CONFLICT.store(false, Ordering::Relaxed);
-    DEPRECATED.store(false, Ordering::Relaxed);
+    //DEPRECATED.store(false, Ordering::Relaxed);
+    let mut deprecated = lu!(DEPRECATED);
+    *deprecated = Deprecated::new();
 }
 
 fn add_to_env_vars(variable: &str, value: &str) {
@@ -149,57 +187,57 @@ fn info_bin(bin: String) {
     lu!(INFO_BIN).push(bin.to_string());
 }
 
-// dummy functions for unloading
+// stub functions for unloading
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn unsetenv_dummy(var: String) {}
+pub fn unsetenv_stub(var: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn remove_path_dummy(var: String, val: String) {}
+pub fn remove_path_stub(var: String, val: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn system_dummy(cmd: String) {}
+pub fn system_stub(cmd: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn load_dummy(module: String) {}
+pub fn load_stub(module: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn conflict_dummy(module: String) {}
+pub fn conflict_stub(module: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn deprecated_dummy(time: String) {}
+pub fn deprecated_stub(time: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn unload_dummy(module: String) {}
+pub fn unload_stub(module: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn description_dummy(desc: String) {}
+pub fn description_stub(desc: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn getenv_dummy(var: String) -> String {
+pub fn getenv_stub(var: String) -> String {
     String::new()
 }
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn print_dummy(_msg: String) {}
+pub fn print_stub(_msg: String) {}
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn source_dummy(_wanted_shell: String, _path: String) {}
+pub fn source_stub(_wanted_shell: String, _path: String) {}
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn info_bin_dummy(_bin: String) {}
+pub fn info_bin_stub(_bin: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn prepend_path_dummy(var: String, val: String) {}
+pub fn prepend_path_stub(var: String, val: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn append_path_dummy(var: String, val: String) {}
+pub fn append_path_stub(var: String, val: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn setenv_dummy(var: String, val: String) {}
+pub fn setenv_stub(var: String, val: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn set_alias_dummy(name: String, val: String) {}
+pub fn set_alias_stub(name: String, val: String) {}
 #[allow(unused_variables)]
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn is_loaded_dummy(var: String) -> bool {
+pub fn is_loaded_stub(var: String) -> bool {
     true
 }
 
@@ -267,8 +305,33 @@ fn append_path_info(var: String, val: String) {
 }
 
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
-fn deprecated_info(_time: String) {
-//TODO
+fn deprecated_info(time: String) {
+    let now = Utc::now().timestamp_millis();
+
+    let mstime = format!("{} 00:00:00 +0000", time);
+    let mstime = match DateTime::parse_from_str(&mstime, "%Y-%m-%d %T %z") {
+        Ok(mstime) => mstime,
+        Err(e) => {
+            show_warning!("Error parsing deprecated time argument: {}", e);
+            return;
+        }
+    };
+    let mstime = mstime.timestamp_millis();
+
+    let mut deprecated = lu!(DEPRECATED);
+    if now > mstime {
+        lu!(INFO_DEPRECATED).push(format!(
+            "\n   This module was removed at {} and cannot be used anymore.",
+            time
+        ));
+        *deprecated = Deprecated::from(String::new(), time, DeprecatedState::After);
+    } else {
+        lu!(INFO_DEPRECATED).push(format!(
+            "This has been marked as deprecated and will be removed after {}.\n",
+            time
+        ));
+        *deprecated = Deprecated::from(String::new(), time, DeprecatedState::Before);
+    }
 }
 
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
@@ -429,17 +492,23 @@ fn load(module: String) {
 
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
 fn deprecated(time: String) {
-    return; // disable for now
-    let start = SystemTime::now();
-    let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
-    let in_ms = since_the_epoch.as_millis();
+    let now = Utc::now().timestamp_millis();
 
-    let time = time.parse::<u128>().unwrap();
-    eprintln!("in_ms: {} {}", in_ms, time);
+    let mstime = format!("{} 00:00:00 +0000", time);
+    let mstime = match DateTime::parse_from_str(&mstime, "%Y-%m-%d %T %z") {
+        Ok(mstime) => mstime,
+        Err(e) => {
+            show_warning!("Error parsing deprecated time argument: {}", e);
+            return;
+        }
+    };
+    let mstime = mstime.timestamp_millis();
 
-
-    if in_ms > time {
-        DEPRECATED.store(true, Ordering::Relaxed);
+    let mut deprecated = lu!(DEPRECATED);
+    if now > mstime {
+        *deprecated = Deprecated::from(String::new(), time, DeprecatedState::After);
+    } else {
+        *deprecated = Deprecated::from(String::new(), time, DeprecatedState::Before);
     }
 }
 
@@ -504,9 +573,31 @@ fn description_cache(desc: String) {
     add_to_info_general(&desc);
 }
 
+pub fn register_stub_fn(engine: &mut Engine) {
+    engine.register_fn("setenv", setenv_stub);
+    engine.register_fn("unsetenv", unsetenv_stub);
+    engine.register_fn("prepend_path", prepend_path_stub);
+    engine.register_fn("append_path", append_path_stub);
+    engine.register_fn("remove_path", remove_path_stub);
+    engine.register_fn("system", system_stub);
+    engine.register_fn("system_unload", system_stub);
+    engine.register_fn("load", load_stub);
+    engine.register_fn("conflict", conflict_stub);
+    engine.register_fn("deprecated", deprecated_stub);
+    engine.register_fn("unload", unload_stub);
+    engine.register_fn("getenv", getenv_stub);
+    engine.register_fn("description", description_stub);
+    engine.register_fn("set_alias", set_alias_stub);
+    engine.register_fn("is_loaded", is_loaded_stub);
+    engine.register_fn("print", print_stub);
+    engine.register_fn("source", source_stub);
+    engine.register_fn("add_bin_to_info", info_bin_stub);
+}
+
 pub fn run(path: &PathBuf, action: &str) {
     let mut engine = Engine::new();
 
+    register_stub_fn(&mut engine);
     init_vars_and_commands();
 
     if action == "unload" {
@@ -515,23 +606,10 @@ pub fn run(path: &PathBuf, action: &str) {
         // setenv should be an alternative to unsetenv
         // the others arent used
         engine.register_fn("setenv", setenv_unload);
-        engine.register_fn("unsetenv", unsetenv_dummy);
         engine.register_fn("prepend_path", remove_path);
         engine.register_fn("append_path", remove_path);
-        engine.register_fn("remove_path", remove_path_dummy);
-        engine.register_fn("system", system_dummy);
         engine.register_fn("system_unload", system_unload);
-        engine.register_fn("load", load_dummy);
-        engine.register_fn("conflict", conflict_dummy);
-        engine.register_fn("deprecated", deprecated_dummy);
-        engine.register_fn("unload", unload_dummy);
-        engine.register_fn("getenv", getenv_dummy); // need getenv_dummy instead ??
-        engine.register_fn("description", description_dummy);
         engine.register_fn("set_alias", unset_alias);
-        engine.register_fn("is_loaded", is_loaded_dummy);
-        engine.register_fn("print", print_dummy);
-        engine.register_fn("source", source_dummy);
-        engine.register_fn("add_bin_to_info", info_bin_dummy);
     } else if action == "load" {
         engine.register_fn("setenv", setenv);
         engine.register_fn("unsetenv", unsetenv);
@@ -539,81 +617,44 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("append_path", append_path);
         engine.register_fn("remove_path", remove_path);
         engine.register_fn("system", system);
-        engine.register_fn("system_unload", system_dummy);
         engine.register_fn("load", load);
         engine.register_fn("conflict", conflict);
         engine.register_fn("deprecated", deprecated);
         engine.register_fn("unload", unload);
         engine.register_fn("getenv", getenv);
-        engine.register_fn("description", description_dummy);
         engine.register_fn("set_alias", set_alias);
         engine.register_fn("is_loaded", is_loaded);
         engine.register_fn("print", print);
         engine.register_fn("source", source);
-        engine.register_fn("add_bin_to_info", info_bin_dummy);
     } else if action == "info" {
         engine.register_fn("setenv", setenv_info);
-        engine.register_fn("unsetenv", unsetenv_dummy);
         engine.register_fn("prepend_path", prepend_path_info);
         engine.register_fn("append_path", append_path_info);
-        engine.register_fn("remove_path", remove_path_dummy);
-        engine.register_fn("system", system_dummy);
-        engine.register_fn("system_unload", system_dummy);
         engine.register_fn("load", load_info);
-        engine.register_fn("conflict", conflict_dummy);
         engine.register_fn("deprecated", deprecated_info);
-        engine.register_fn("unload", unload_dummy);
-        engine.register_fn("getenv", getenv_dummy);
         engine.register_fn("description", description);
-        engine.register_fn("set_alias", set_alias_dummy);
         engine.register_fn("is_loaded", is_loaded);
-        engine.register_fn("print", print_dummy);
         engine.register_fn("source", source_info);
         engine.register_fn("add_bin_to_info", info_bin);
     } else if action == "description" {
-        engine.register_fn("setenv", setenv_dummy);
-        engine.register_fn("unsetenv", unsetenv_dummy);
-        engine.register_fn("prepend_path", prepend_path_dummy);
-        engine.register_fn("append_path", append_path_dummy);
-        engine.register_fn("remove_path", remove_path_dummy);
-        engine.register_fn("system", system_dummy);
-        engine.register_fn("system_unload", system_dummy);
-        engine.register_fn("load", load_dummy);
-        engine.register_fn("conflict", conflict_dummy);
-        engine.register_fn("deprecated", deprecated_dummy);
-        engine.register_fn("unload", unload_dummy);
-        engine.register_fn("getenv", getenv_dummy);
         engine.register_fn("description", description_cache);
         engine.register_fn("set_alias", set_alias);
         engine.register_fn("is_loaded", is_loaded);
-        engine.register_fn("print", print_dummy);
-        engine.register_fn("source", source_dummy);
-        engine.register_fn("add_bin_to_info", info_bin_dummy);
     } else if action == "readme" || action == "cd" {
         engine.register_fn("setenv", setenv_readme);
-        engine.register_fn("unsetenv", unsetenv_dummy);
         engine.register_fn("prepend_path", readme_path);
         engine.register_fn("append_path", readme_path);
-        engine.register_fn("remove_path", remove_path_dummy);
-        engine.register_fn("system", system_dummy);
-        engine.register_fn("system_unload", system_dummy);
-        engine.register_fn("load", load_dummy);
-        engine.register_fn("conflict", conflict_dummy);
-        engine.register_fn("deprecated", deprecated_dummy);
-        engine.register_fn("unload", unload_dummy);
-        engine.register_fn("getenv", getenv_dummy);
-        engine.register_fn("description", description_dummy);
         engine.register_fn("set_alias", set_alias);
         engine.register_fn("is_loaded", is_loaded);
-        engine.register_fn("print", print_dummy);
-        engine.register_fn("source", source_dummy);
-        engine.register_fn("add_bin_to_info", info_bin_dummy);
+    } else if action == "deprecated" {
+        engine.register_fn("deprecated", deprecated);
     }
 
     match engine.eval_file::<String>(path.to_string_lossy().into_owned().as_ref()) {
-        Ok(result) => println!("echo 'wut';{}", result),
+        Ok(result) => println!("{}", result),
         Err(e) => {
-            if e.to_string() != "Cast of output failed" {
+            // if e.to_string() != "Cast of output failed" {
+            if !e.to_string().starts_with("Cast of output failed") {
                 show_warning!(
                     "modulescript error: {} ({})",
                     e.to_string(),
@@ -655,9 +696,23 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
         return Vec::new();
     }
 
-    if DEPRECATED.load(Ordering::Relaxed) {
-        eprintln!("This module is deprecated.");
-        return Vec::new();
+    // don't load, this module is deprecated
+    let deprecated = lu!(DEPRECATED);
+    match deprecated.state {
+        DeprecatedState::Not => {}
+        DeprecatedState::Before => eprintln!(
+            "\n  The module '{}' has been marked as deprecated and will be removed after {}.\n",
+            bold(shell, selected_module),
+            bold(shell, &deprecated.time)
+        ),
+        DeprecatedState::After => {
+            eprintln!(
+                "\n  The module '{}' was removed at {} and cannot be used anymore.\n",
+                bold(shell, selected_module),
+                bold(shell, &deprecated.time)
+            );
+            return Vec::new();
+        }
     }
 
     if action == "unload" {
@@ -697,21 +752,25 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
 pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     let mut output: Vec<String> = Vec::new();
     let mut got_output: bool = false;
+    let is_deprecated = is_deprecated();
 
     let tmp = format!("= {} =", module);
     let title_bold_module = bold(shell, &tmp);
 
     //output.push(format!("echo \"{:=^1$}\"", module.to_string(), module.len()+5));
-    output.push(format!("echo \"{}\"", bold(shell, &"=".repeat(module.len() + 4))));
+    if !is_deprecated {
+        output.push(format!("echo \"{}\"", bold(shell, &"=".repeat(module.len() + 4))));
 
-    output.push(format!("echo \"{}\"", title_bold_module.to_string()));
-    output.push(format!("echo \"{}\"", bold(shell, &"=".repeat(module.len() + 4))));
-    output.push(String::from("echo \"\""));
+        output.push(format!("echo \"{}\"", title_bold_module.to_string()));
+        output.push(format!("echo \"{}\"", bold(shell, &"=".repeat(module.len() + 4))));
+        output.push(String::from("echo \"\""));
+    }
 
-    if lu!(INFO_DESCRIPTION).iter().len() > 0 {
+    if lu!(INFO_DEPRECATED).iter().len() > 0 {
         got_output = true;
     }
-    for line in lu!(INFO_DESCRIPTION).iter() {
+    for line in lu!(INFO_DEPRECATED).iter() {
+        let line = bold(shell, line);
         if shell == "bash" || shell == "zsh" {
             output.push(format!("echo $\"{}\"", line.to_string()));
         } else if shell == "csh" || shell == "tcsh" {
@@ -721,144 +780,159 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
         }
     }
 
-    if lu!(INFO_GENERAL).iter().len() > 0 {
-        output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}\"", bold(shell, "Sets the following variables: ")));
-        got_output = true;
-    }
-    for line in lu!(INFO_GENERAL).iter() {
-        output.push(format!("echo '{}'", line.to_string()));
-    }
+    if !is_deprecated {
+        if lu!(INFO_DESCRIPTION).iter().len() > 0 {
+            got_output = true;
+        }
+        for line in lu!(INFO_DESCRIPTION).iter() {
+            if shell == "bash" || shell == "zsh" {
+                output.push(format!("echo $\"{}\"", line.to_string()));
+            } else if shell == "csh" || shell == "tcsh" {
+                output.push(format!("echo \"{}\"", line.to_string().replace("\n", "\\n")));
+            } else {
+                output.push(format!("echo \"{}\"", line.to_string()));
+            }
+        }
 
-    if lu!(SOURCES).iter().len() > 0 {
-        output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}\"", bold(shell, "Sources the following files:")));
-        got_output = true;
-    }
-    for line in lu!(SOURCES).iter() {
-        output.push(format!("echo '{}'", line.to_string()));
-    }
-    // TODO: find man pages and let the user know
+        if lu!(INFO_GENERAL).iter().len() > 0 {
+            output.push("echo \"\"".to_string());
+            output.push(format!("echo \"{}\"", bold(shell, "Sets the following variables: ")));
+            got_output = true;
+        }
+        for line in lu!(INFO_GENERAL).iter() {
+            output.push(format!("echo '{}'", line.to_string()));
+        }
 
-    if lu!(INFO_PATH).iter().len() > 0 {
-        output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}\"", bold(shell, "Executables can be found in: ")));
-        got_output = true;
-    }
-    for line in lu!(INFO_PATH).iter() {
-        output.push(format!("echo '{}'", line.to_string()));
-    }
+        if lu!(SOURCES).iter().len() > 0 {
+            output.push("echo \"\"".to_string());
+            output.push(format!("echo \"{}\"", bold(shell, "Sources the following files:")));
+            got_output = true;
+        }
+        for line in lu!(SOURCES).iter() {
+            output.push(format!("echo '{}'", line.to_string()));
+        }
+        // TODO: find man pages and let the user know
 
-    if lu!(INFO_LD_LIBRARY_PATH).iter().len() > 0 {
-        output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}\"", bold(shell, "Libraries can be found in: ")));
-        got_output = true;
-    }
-    for line in lu!(INFO_LD_LIBRARY_PATH).iter() {
-        output.push(format!("echo '{}'", line.to_string()));
-    }
-
-    if lu!(INFO_PYTHONPATH).iter().len() > 0 {
-        output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}\"", bold(shell, "\\$PYTHONPATH: ")));
-        got_output = true;
-    }
-    for line in lu!(INFO_PYTHONPATH).iter() {
-        output.push(format!("echo '{}'", line.to_string()));
-    }
-
-    if lu!(INFO_PERL5LIB).iter().len() > 0 {
-        output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}\"", bold(shell, "\\$PERL5LIB: ")));
-        got_output = true;
-    }
-    for line in lu!(INFO_PERL5LIB).iter() {
-        output.push(format!("echo '{}'", line.to_string()));
-    }
-
-    if lu!(LOAD).iter().len() > 0 {
-        output.push("echo \"\"".to_string());
-        output.push(format!("echo \"{}\"", bold(shell, "Depends on: ")));
-        got_output = true;
-    }
-    for line in lu!(LOAD).iter() {
-        output.push(format!("echo '{}'", line.to_string()));
-    }
-
-    let mut execs: Vec<String> = Vec::new();
-    let mut filtered: bool = false;
-    if lu!(INFO_BIN).is_empty() || env::var("RSMODULES_DONT_FILTER_INFO").is_ok() {
+        if lu!(INFO_PATH).iter().len() > 0 {
+            output.push("echo \"\"".to_string());
+            output.push(format!("echo \"{}\"", bold(shell, "Executables can be found in: ")));
+            got_output = true;
+        }
         for line in lu!(INFO_PATH).iter() {
-            if Path::new(line).is_dir() {
-                // if activate, activate.csh, activate.fish and activate_this.py exist
-                // then we are in a python virtualenv, we can skip the typical python
-                // binaries, we don't want to see them when we run 'module info program/arch/version'
+            output.push(format!("echo '{}'", line.to_string()));
+        }
 
-                let is_virtual_env = is_virtual_env(PathBuf::from(line));
+        if lu!(INFO_LD_LIBRARY_PATH).iter().len() > 0 {
+            output.push("echo \"\"".to_string());
+            output.push(format!("echo \"{}\"", bold(shell, "Libraries can be found in: ")));
+            got_output = true;
+        }
+        for line in lu!(INFO_LD_LIBRARY_PATH).iter() {
+            output.push(format!("echo '{}'", line.to_string()));
+        }
 
-                let entries = match read_dir(line) {
-                    Ok(entry) => entry,
-                    Err(_) => continue,
-                };
+        if lu!(INFO_PYTHONPATH).iter().len() > 0 {
+            output.push("echo \"\"".to_string());
+            output.push(format!("echo \"{}\"", bold(shell, "\\$PYTHONPATH: ")));
+            got_output = true;
+        }
+        for line in lu!(INFO_PYTHONPATH).iter() {
+            output.push(format!("echo '{}'", line.to_string()));
+        }
 
-                for entry in entries {
-                    let path = match &entry {
-                        Ok(p) => p.path(),
+        if lu!(INFO_PERL5LIB).iter().len() > 0 {
+            output.push("echo \"\"".to_string());
+            output.push(format!("echo \"{}\"", bold(shell, "\\$PERL5LIB: ")));
+            got_output = true;
+        }
+        for line in lu!(INFO_PERL5LIB).iter() {
+            output.push(format!("echo '{}'", line.to_string()));
+        }
+
+        if lu!(LOAD).iter().len() > 0 {
+            output.push("echo \"\"".to_string());
+            output.push(format!("echo \"{}\"", bold(shell, "Depends on: ")));
+            got_output = true;
+        }
+        for line in lu!(LOAD).iter() {
+            output.push(format!("echo '{}'", line.to_string()));
+        }
+
+        let mut execs: Vec<String> = Vec::new();
+        let mut filtered: bool = false;
+        if lu!(INFO_BIN).is_empty() || env::var("RSMODULES_DONT_FILTER_INFO").is_ok() {
+            for line in lu!(INFO_PATH).iter() {
+                if Path::new(line).is_dir() {
+                    // if activate, activate.csh, activate.fish and activate_this.py exist
+                    // then we are in a python virtualenv, we can skip the typical python
+                    // binaries, we don't want to see them when we run 'module info program/arch/version'
+
+                    let is_virtual_env = is_virtual_env(PathBuf::from(line));
+
+                    let entries = match read_dir(line) {
+                        Ok(entry) => entry,
                         Err(_) => continue,
                     };
 
-                    let file_name = match &entry {
-                        Ok(p) => p.file_name(),
-                        Err(_) => continue,
-                    };
+                    for entry in entries {
+                        let path = match &entry {
+                            Ok(p) => p.path(),
+                            Err(_) => continue,
+                        };
 
-                    if is_python_binary(file_name) && is_virtual_env {
-                        continue;
-                    }
+                        let file_name = match &entry {
+                            Ok(p) => p.file_name(),
+                            Err(_) => continue,
+                        };
 
-                    if path.is_dir() {
-                        continue;
-                    }
+                        if is_python_binary(file_name) && is_virtual_env {
+                            continue;
+                        }
 
-                    if path.is_executable() {
-                        execs.push(format!("echo '{}'", strip_dir(path.to_str().unwrap())));
-                        got_output = true;
+                        if path.is_dir() {
+                            continue;
+                        }
+
+                        if path.is_executable() {
+                            execs.push(format!("echo '{}'", strip_dir(path.to_str().unwrap())));
+                            got_output = true;
+                        }
                     }
                 }
             }
-        }
-    } else {
-        let bins: Vec<String> = lu!(INFO_BIN).to_vec();
-        for bin in bins {
-            execs.push(format!("echo '{}'", bin));
-            got_output = true;
-            filtered = true;
-        }
-    }
-
-    if !execs.is_empty() {
-        output.push(String::from("echo ''"));
-        if execs.len() > 1 {
-            output.push(format!(
-                "echo \"{}\"",
-                bold(shell, "Try one of these commands to run the program: ")
-            ));
         } else {
-            output.push(format!("echo \"{}\"", bold(shell, "Try this command to run the program: ")));
+            let bins: Vec<String> = lu!(INFO_BIN).to_vec();
+            for bin in bins {
+                execs.push(format!("echo '{}'", bin));
+                got_output = true;
+                filtered = true;
+            }
         }
-    }
 
-    execs.sort();
-    for exec in execs {
-        output.push(exec);
-    }
+        if !execs.is_empty() {
+            output.push(String::from("echo ''"));
+            if execs.len() > 1 {
+                output.push(format!(
+                    "echo \"{}\"",
+                    bold(shell, "Try one of these commands to run the program: ")
+                ));
+            } else {
+                output.push(format!("echo \"{}\"", bold(shell, "Try this command to run the program: ")));
+            }
+        }
 
-    if filtered {
-        output.push(String::from("echo ''"));
-        output.push(String::from("echo 'Some binaries are omitted in this output'"));
-        output.push(String::from(
-            "echo 'Set the environment var RSMODULES_DONT_FILTER_INFO if you want unfiltered output'",
-        ));
+        execs.sort();
+        for exec in execs {
+            output.push(exec);
+        }
+
+        if filtered {
+            output.push(String::from("echo ''"));
+            output.push(String::from("echo 'Some binaries are omitted in this output'"));
+            output.push(String::from(
+                "echo 'Set the environment var RSMODULES_DONT_FILTER_INFO if you want unfiltered output'",
+            ));
+        }
     }
 
     if got_output {
@@ -866,6 +940,27 @@ pub fn get_info(shell: &str, module: &str) -> Vec<String> {
     }
 
     output
+}
+
+// returns true if the deprecated AFTER state has been reached
+fn is_deprecated() -> bool {
+    let is_deprecated: bool;
+    {
+        // we ne need a different scope, or DEPRECATED is locked
+        let deprecated = lu!(DEPRECATED);
+        match deprecated.state {
+            DeprecatedState::After => {
+                is_deprecated = true;
+            }
+            DeprecatedState::Before => {
+                is_deprecated = false;
+            }
+            DeprecatedState::Not => {
+                is_deprecated = false;
+            }
+        }
+    }
+    is_deprecated
 }
 
 fn is_virtual_env(path: PathBuf) -> bool {

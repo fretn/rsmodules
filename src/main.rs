@@ -175,6 +175,8 @@ fn usage(in_eval: bool, subcommand_help: bool) {
             by spaces.
             When --default, -d is specified then only default modules
             will be listed.
+            When --deprecated, -R is specified then only deprecated modules
+            will be listed.
             When --regex or -r is specified the search term can be a
             regular expression.",
     );
@@ -620,7 +622,7 @@ fn run(args: &[String]) {
             if command_hit == "purge" {
                 let loaded_list = rsmod::get_loaded_list();
                 let mut args: Vec<String> = Vec::new();
-                for (argument, _) in loaded_list {
+                for (argument, _, _) in loaded_list {
                     args.push(argument);
                 }
                 let loadedmodules = args.join(" ");

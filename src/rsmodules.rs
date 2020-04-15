@@ -26,6 +26,7 @@ use super::output;
 use glob::glob_with;
 use glob::MatchOptions;
 use gumdrop::Options;
+use script::DeprecatedState;
 use std::env;
 use std::fs;
 use std::io::Write;
@@ -59,6 +60,9 @@ pub struct AvailableOptions {
 
     #[options(short = "d", help = "Show only the default modules")]
     default: bool,
+
+    #[options(short = "R", help = "Show only the deprecated modules")]
+    deprecated: bool,
 
     #[options(help = "Print this help message")]
     help: bool,
@@ -114,8 +118,8 @@ pub fn get_module_paths(silent: bool) -> Vec<String> {
     modulepaths
 }
 
-pub fn get_module_list(shell: &str) -> Vec<(String, i64)> {
-    let mut modules: Vec<(String, i64)> = Vec::new();
+pub fn get_module_list(shell: &str) -> Vec<(String, bool, i8)> {
+    let mut modules: Vec<(String, bool, i8)> = Vec::new();
     let mut found_cachefile: bool = false;
     let modulepaths = get_module_paths(false);
 
@@ -561,7 +565,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
                         // prevent that: module load blast loads blastz
                         let splitter: Vec<&str> = module.0.split(mdl).collect();
                         if splitter.len() > 1 {
-                            if found && module.0.starts_with(&format!("{}/", mdl)) && module.1 == 1 {
+                            if found && module.0.starts_with(&format!("{}/", mdl)) && module.1 == true {
                                 selected_module = module.0.as_ref();
                                 let testpath = format!("{}/{}", modulepath, module.0);
                                 // if a modulefile is already found, don't overwrite it with a
@@ -585,7 +589,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
                                 if Path::new(&testpath).exists() && Path::new(&testpath).is_file() {
                                     modulefile = PathBuf::from(&testpath);
                                 }
-                                // don't break out of the outer loop, their might be a module
+                                // don't break out of the outer loop, there might be a module
                                 // file marked as D
                                 //break 'outer;
                             }
@@ -624,11 +628,36 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
             if other != "" && other != selected_module {
                 for modulepath in rsmod.search_path {
                     let testpath = format!("{}/{}", modulepath, other);
+                    let deprecated_check_path = format!("{}/{}", modulepath, selected_module);
+
                     if Path::new(&testpath).exists() && Path::new(&testpath).is_file() {
                         let tmpmodulefile: PathBuf = PathBuf::from(&testpath);
                         // unload the module as we found the path to the file
-                        run_modulefile(&tmpmodulefile, rsmod, other.as_ref(), "unload");
-                        replaced_module = true;
+                        // unless we are trying to load a deprecated module
+
+                        script::run(&PathBuf::from(&deprecated_check_path), "deprecated");
+                        let is_deprecated: bool;
+
+                        {
+                            // we ne need a different scope, or DEPRECATED is locked
+                            let deprecated = lu!(script::DEPRECATED);
+                            match deprecated.state {
+                                DeprecatedState::After => {
+                                    is_deprecated = true;
+                                }
+                                DeprecatedState::Before => {
+                                    is_deprecated = false;
+                                }
+                                DeprecatedState::Not => {
+                                    is_deprecated = false;
+                                }
+                            }
+                        }
+
+                        if !is_deprecated {
+                            run_modulefile(&tmpmodulefile, rsmod, other.as_ref(), "unload");
+                            replaced_module = true;
+                        }
                     }
                 }
             }
@@ -776,9 +805,9 @@ pub fn echo(line: &str, shell: &str) {
     }
 }
 
-pub fn get_loaded_list() -> Vec<(String, i64)> {
+pub fn get_loaded_list() -> Vec<(String, bool, i8)> {
     let loadedmodules: String;
-    let mut result: Vec<(String, i64)> = Vec::new();
+    let mut result: Vec<(String, bool, i8)> = Vec::new();
 
     match env::var(ENV_LOADEDMODULES) {
         Ok(list) => loadedmodules = list,
@@ -789,7 +818,7 @@ pub fn get_loaded_list() -> Vec<(String, i64)> {
 
     for module in loadedmodules.split(':') {
         if module != "" {
-            result.push((module.to_string(), 1));
+            result.push((module.to_string(), true, 1));
         }
     }
     result.sort();
@@ -1054,5 +1083,4 @@ mod tests {
         );
         assert_eq!(false, is_module_loaded("python2", false));
     }
-
 }

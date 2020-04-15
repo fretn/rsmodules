@@ -53,7 +53,7 @@ D perl/5.14.1 | Perl 5.14.1 is a highly capable, feature-rich programming langua
 ```
 ## Features
 
- * ```module available [--default] [--regex][search string(s)]``` Shows all the (default) modules or the modules that match the search strings.
+ * ```module available [--default] [--deprecated] [--regex][search string(s)]``` Shows all the (default, deprecated) modules or the modules that match the search strings.
  * ```module info [(partial)modulename] [(partial)modulename] [...]``` Shows info about the requested module(s).
  * ```module load [(partial)modulename] [(partial)modulename] [...]``` Loads the requested modules.
  * ```module switch [(partial)modulename from] [(partial)modulename to] ``` Switch between the requested modules.
@@ -156,10 +156,14 @@ Next to the default rhai syntax, the following functions are available:
  * ```is_loaded("modulename");```
  * ```source("shelltype", "/path/to/filename.shell-extension");```
  * ```add_bin_to_info("binary_name");```
+ * ```deprecated("YYYY-MM-DD");```
 
 ### Note:
 When using add_bin_to_info (you can add it multiple times to your scripts), `module info <modulename>` will only
-show the binaries that are added with this function, it will ignore the binaries in your PATH variables.
+show the binaries that are added with this function, it will ignore the binaries in your PATH variables.  
+
+`deprecated` should be used when you plan to remove a module. This will warn the user that this module
+will be removed after the given date in `YYYY-MM-DD` format. After this date the module file will still exist but wont be usable anymore, it's your task to remove it (you can find deprecated modules by running: `module av -R` the modules marked with an 'R' in front of them are the ones you are looking for. 
 
 ### Example modulefile
 

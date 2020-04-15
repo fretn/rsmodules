@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
 use super::super::bold;
 use regex::Regex;
 use std::cmp::Ordering;
@@ -33,6 +34,8 @@ extern crate bincode;
 use super::{crash, echo, get_module_description, get_module_paths, is_module_loaded, AvailableOptions, Rsmodule};
 use bincode::rustc_serialize::{decode_from, encode_into};
 
+use super::script;
+
 use pbr::ProgressBar;
 
 pub static MODULESINDEX: &str = ".modulesindex";
@@ -41,7 +44,8 @@ pub static MODULESINDEX: &str = ".modulesindex";
 struct Module {
     name: String,
     description: String,
-    flags: i64,
+    default: bool,
+    deprecated: i8,
 }
 
 impl Module {
@@ -49,7 +53,8 @@ impl Module {
         Module {
             name: String::new(),
             description: String::new(),
-            flags: 0,
+            default: false,
+            deprecated: 0,
         }
     }
 }
@@ -72,11 +77,12 @@ impl PartialEq for Module {
     }
 }
 
-fn add_module(name: String, description: String, flags: i64, modules: &mut Vec<Module>) {
+fn add_module(name: String, description: String, default: bool, deprecated: i8, modules: &mut Vec<Module>) {
     let mut module: Module = Module::new();
     module.name = name;
     module.description = description;
-    module.flags = flags;
+    module.default = default;
+    module.deprecated = deprecated;
 
     modules.push(module);
 }
@@ -126,7 +132,7 @@ fn progressbar(num: u64, msg: &str) -> ProgressBar<Stdout> {
 
 pub fn update(modulepath: &str, shell: &str) -> bool {
     // list is: path to file, module name, default
-    let mut list: Vec<(String, String, bool)> = Vec::new();
+    let mut list: Vec<(String, String, bool, script::Deprecated)> = Vec::new();
     let module_path = Path::new(&modulepath);
     let mut index_succes: i32 = 0;
     let mut index_default: i32 = 0;
@@ -185,8 +191,22 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
                     }
 
                     if second != "." && !is_version_file {
+                        // check if this module is deprecated or not
+                        let path = format!("{}/{}", modulepath, modulename);
+                        let path = PathBuf::from(&path);
+
+                        script::run(&path, "deprecated");
+                        let deprecated;
+
+                        {
+                            // we ne need a different scope, or DEPRECATED is locked
+                            let tmp_deprecated = lu!(script::DEPRECATED);
+                            deprecated = tmp_deprecated.clone();
+                        }
+
+                        //
                         let default = get_default_version(modulepath, modulename);
-                        list.push((str_path.to_string(), modulename.to_string(), default));
+                        list.push((str_path.to_string(), modulename.to_string(), default, deprecated.clone()));
                         index_succes += 1;
                     }
                 }
@@ -207,7 +227,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
         ProgressBar::new(0)
     };
 
-    for (modulepath, modulename, default) in list {
+    for (modulepath, modulename, default, deprecated) in list {
         let path: PathBuf = PathBuf::from(&modulepath);
         if shell == "progressbar" {
             pb.inc();
@@ -219,12 +239,18 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
 
         // flags is supposed to be a bitfield
         // currently it is only used for flagging a module as default
-        let mut flags: i64 = 0;
+        //        let mut _default: bool = false;
         if default {
-            flags = 1;
+            //           flags = flags | ModuleFlags::DEFAULT;
             index_default += 1;
         }
-        add_module(modulename, description, flags, &mut modules);
+
+        match deprecated.state {
+            script::DeprecatedState::Not => add_module(modulename, description, default, 0, &mut modules),
+            script::DeprecatedState::Before => add_module(modulename, description, default, 1, &mut modules),
+            script::DeprecatedState::After => add_module(modulename, description, default, 2, &mut modules),
+            //script::DeprecatedState::After => {}
+        };
     }
 
     if shell == "progressbar" {
@@ -301,7 +327,7 @@ fn count_modules_in_cache(filename: &PathBuf) -> u64 {
     decoded.len() as u64
 }
 
-pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i64)>) {
+pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, bool, i8)>) {
     let file: File = match File::open(filename) {
         Ok(file) => file,
         Err(_) => {
@@ -319,7 +345,7 @@ pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, i
     let decoded: Vec<Module> = decode_from(&mut reader, bincode::SizeLimit::Infinite).unwrap();
 
     for module in decoded {
-        modules.push((module.name, module.flags));
+        modules.push((module.name, module.default, module.deprecated));
     }
 }
 
@@ -437,9 +463,20 @@ pub fn get_module_list(arg: &str, rsmod: &Rsmodule, opts: &AvailableOptions) {
         }
         previous_description = module.description;
 
-        let default = if module.flags == 1 { "D" } else { " " };
+        let deprecated = if module.deprecated == 1 {
+            "#"
+        } else if module.deprecated == 2 {
+            "R"
+        } else {
+            " "
+        };
+        let default = if module.default == true { "D" } else { deprecated };
 
-        if opts.default && module.flags != 1 {
+        if opts.default && module.default != true {
+            continue;
+        }
+
+        if opts.deprecated && module.deprecated == 0 {
             continue;
         }
 
@@ -570,7 +607,21 @@ pub fn get_module_list(arg: &str, rsmod: &Rsmodule, opts: &AvailableOptions) {
         );
         echo(
             &format!(
-                "  {} Loaded modules are printed in {}.",
+                "  {} # means that the module is marked as deprecated and will be removed in the future.",
+                bold(shell, "*")
+            ),
+            shell,
+        );
+        echo(
+            &format!(
+                "  {} R means that the module is deprecated and has been removed.",
+                bold(shell, "*")
+            ),
+            shell,
+        );
+        echo(
+            &format!(
+                "\n  {} Loaded modules are printed in {}.",
                 bold(shell, "*"),
                 bold(shell, "bold")
             ),
