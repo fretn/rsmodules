@@ -118,8 +118,8 @@ pub fn get_module_paths(silent: bool) -> Vec<String> {
     modulepaths
 }
 
-pub fn get_module_list(shell: &str) -> Vec<(String, bool, i8)> {
-    let mut modules: Vec<(String, bool, i8)> = Vec::new();
+pub fn get_module_list(shell: &str) -> Vec<(String, bool, String)> {
+    let mut modules: Vec<(String, bool, String)> = Vec::new();
     let mut found_cachefile: bool = false;
     let modulepaths = get_module_paths(false);
 
@@ -805,9 +805,9 @@ pub fn echo(line: &str, shell: &str) {
     }
 }
 
-pub fn get_loaded_list() -> Vec<(String, bool, i8)> {
+pub fn get_loaded_list() -> Vec<(String, bool, String)> {
     let loadedmodules: String;
-    let mut result: Vec<(String, bool, i8)> = Vec::new();
+    let mut result: Vec<(String, bool, String)> = Vec::new();
 
     match env::var(ENV_LOADEDMODULES) {
         Ok(list) => loadedmodules = list,
@@ -818,7 +818,7 @@ pub fn get_loaded_list() -> Vec<(String, bool, i8)> {
 
     for module in loadedmodules.split(':') {
         if module != "" {
-            result.push((module.to_string(), true, 1));
+            result.push((module.to_string(), true, "0".to_string()));
         }
     }
     result.sort();

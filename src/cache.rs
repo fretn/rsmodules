@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 use super::super::bold;
+use chrono::{DateTime, Utc};
 use regex::Regex;
 use std::cmp::Ordering;
 use std::fs::File;
@@ -45,7 +46,7 @@ struct Module {
     name: String,
     description: String,
     default: bool,
-    deprecated: i8,
+    deprecated: String,
 }
 
 impl Module {
@@ -54,7 +55,7 @@ impl Module {
             name: String::new(),
             description: String::new(),
             default: false,
-            deprecated: 0,
+            deprecated: String::from("0"),
         }
     }
 }
@@ -77,7 +78,7 @@ impl PartialEq for Module {
     }
 }
 
-fn add_module(name: String, description: String, default: bool, deprecated: i8, modules: &mut Vec<Module>) {
+fn add_module(name: String, description: String, default: bool, deprecated: String, modules: &mut Vec<Module>) {
     let mut module: Module = Module::new();
     module.name = name;
     module.description = description;
@@ -246,9 +247,9 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
         }
 
         match deprecated.state {
-            script::DeprecatedState::Not => add_module(modulename, description, default, 0, &mut modules),
-            script::DeprecatedState::Before => add_module(modulename, description, default, 1, &mut modules),
-            script::DeprecatedState::After => add_module(modulename, description, default, 2, &mut modules),
+            script::DeprecatedState::Not => add_module(modulename, description, default, "0".to_string(), &mut modules),
+            script::DeprecatedState::Before => add_module(modulename, description, default, deprecated.time, &mut modules),
+            script::DeprecatedState::After => add_module(modulename, description, default, deprecated.time, &mut modules),
             //script::DeprecatedState::After => {}
         };
     }
@@ -327,7 +328,7 @@ fn count_modules_in_cache(filename: &PathBuf) -> u64 {
     decoded.len() as u64
 }
 
-pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, bool, i8)>) {
+pub fn parse_modules_cache_file(filename: &PathBuf, modules: &mut Vec<(String, bool, String)>) {
     let file: File = match File::open(filename) {
         Ok(file) => file,
         Err(_) => {
@@ -463,20 +464,33 @@ pub fn get_module_list(arg: &str, rsmod: &Rsmodule, opts: &AvailableOptions) {
         }
         previous_description = module.description;
 
-        let deprecated = if module.deprecated == 1 {
-            "#"
-        } else if module.deprecated == 2 {
-            "R"
-        } else {
-            " "
-        };
+        let mut deprecated = " ";
+        if module.deprecated != "0" {
+            let now = Utc::now().timestamp_millis();
+
+            let mstime = format!("{} 00:00:00 +0000", module.deprecated);
+            let mstime = match DateTime::parse_from_str(&mstime, "%Y-%m-%d %T %z") {
+                Ok(mstime) => mstime,
+                Err(e) => {
+                    eprintln!("Error parsing deprecated time argument: {}", e);
+                    break;
+                }
+            };
+            let mstime = mstime.timestamp_millis();
+
+            if now > mstime {
+                deprecated = "R";
+            } else {
+                deprecated = "#";
+            }
+        }
         let default = if module.default == true { "D" } else { deprecated };
 
         if opts.default && module.default != true {
             continue;
         }
 
-        if opts.deprecated && module.deprecated == 0 {
+        if opts.deprecated && module.deprecated == "0" {
             continue;
         }
 
