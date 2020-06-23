@@ -112,6 +112,7 @@ pub fn get_module_paths(silent: bool) -> Vec<String> {
 
     let modulepath: Vec<&str> = modulepath.split(':').collect();
     for path in modulepath {
+        let path = &shellexpand::tilde(path);
         modulepaths.push(path.to_string());
     }
 
