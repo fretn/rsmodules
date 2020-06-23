@@ -419,7 +419,9 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
     for readme in &readmes {
         if counter == 0 {
             let mdtmpfile = format!("{}{}", lu!(super::TMPFILE_PATH), ".md");
-            lines.push(format!("echo '\n  {}{}\n'", bold(shell, "Showing readme file: "), readme));
+            lines.push("echo ''".to_string());
+            lines.push(format!("echo '  {}{}'", bold(shell, "Showing readme file: "), readme));
+            lines.push("echo ''".to_string());
             let path = Path::new(readme);
 
             let markdown = path.extension() != None && path.extension().unwrap() == "md";
@@ -453,7 +455,9 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
             };
 
             if readmes.len() > 1 {
-                lines.push(format!("echo '\n  {}\n'", bold(shell, "Other possible readme files: ")));
+                lines.push("echo ''".to_string());
+                lines.push(format!("echo '  {}'", bold(shell, "Other possible readme files: ")));
+                lines.push("echo ''".to_string());
             }
         } else {
             lines.push(format!("echo '  - {}'", readme));
@@ -462,14 +466,17 @@ fn get_readme(selected_module: &str, shell: &str) -> Vec<String> {
     }
 
     if counter == 0 {
-        lines.push(format!("echo '\n  {}'", bold(shell, "No readme found.")));
+        lines.push("echo ''".to_string());
+        lines.push(format!("echo '  {}'", bold(shell, "No readme found.")));
 
         let str_path = if readme_paths.len() > 1 { "paths" } else { "path" };
 
+        lines.push("echo ''".to_string());
         lines.push(format!(
-            "echo '\n  This script is not perfect, you can try searching in the following {}:\n'",
+            "echo '  This script is not perfect, you can try searching in the following {}:'",
             str_path
         ));
+        lines.push("echo ''".to_string());
         for path in &readme_paths {
             lines.push(format!("echo '  - {}'", path));
         }
