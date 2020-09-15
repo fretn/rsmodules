@@ -1,0 +1,19 @@
+module <- function(...){
+  arglist <- as.list(match.call())
+  ## change this from 'module' to 'r'
+  arglist[1] <- 'r'
+  args <- paste(arglist, collapse = ' ', sep = '')
+
+  ## change this to the correct path to the rsmodules binary
+  binary <- "/path/to/rsmodules"
+
+  cmd <- paste(binary, args, sep = ' ')
+
+  hndl <- pipe(cmd)
+  ##cat("test: ", cmd)
+  eval(expr = parse(file = hndl))
+  close(hndl)
+
+  invisible(0)
+}
+

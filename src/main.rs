@@ -95,7 +95,7 @@ fn is_shell_supported(shell: &str) -> bool {
     // to stdout instead of the temp file
     // noshell is also useful for debugging purposes
 
-    let shell_list = vec!["tcsh", "csh", "bash", "zsh", "noshell", "python", "perl", "progressbar"];
+    let shell_list = vec!["tcsh", "csh", "bash", "zsh", "noshell", "python", "perl", "progressbar", "r"];
 
     if shell_list.contains(&shell) {
         return true;
@@ -655,7 +655,7 @@ fn run(args: &[String]) {
     // this is used for scripts that want to parse the module av output
     // for example for tab completion
 
-    if shell != "noshell" && shell != "python" && shell != "perl" && shell != "progressbar" {
+    if shell != "noshell" && shell != "python" && shell != "perl" && shell != "progressbar" && shell != "r" {
         // we want a self destructing tmpfile
         // so it must delete itself at the end of the run
         // if it crashes it will be deleted after the source stuff
@@ -693,6 +693,10 @@ pub fn setenv(var: &str, val: &str, shell: &str) -> String {
         data = format!("setenv {} \"{}\"\n", var, val);
     } else if shell == "python" {
         data = format!("os.environ[\"{}\"] = \"{}\";\n", var, val);
+    } else if shell == "r" {
+        data = format!("old_path <- Sys.getenv(\"{}\")
+
+        Sys.setenv({} = paste(old_path, \"{}\", sep = \":\"))", var, var, val);
     } else if shell == "perl" {
         data = format!("$ENV{{{}}}=\"{}\";\n", var, val);
     }
@@ -703,6 +707,7 @@ pub fn setenv(var: &str, val: &str, shell: &str) -> String {
 fn bold<'a>(shell: &str, msg: &'a str) -> ansi_term::ANSIGenericString<'a, str> {
     if shell == "noshell"
         || shell == "perl"
+        || shell == "r"
         || shell == "python"
         || env::var("TERM") == Ok(String::from(""))
         || env::var("NO_COLOR").is_ok()
@@ -758,5 +763,6 @@ mod tests {
         assert_eq!(true, is_shell_supported("zsh"));
         assert_eq!(true, is_shell_supported("tcsh"));
         assert_eq!(true, is_shell_supported("csh"));
+        assert_eq!(true, is_shell_supported("r"));
     }
 }

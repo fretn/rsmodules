@@ -78,6 +78,16 @@ impl PartialEq for Module {
     }
 }
 
+#[cfg(debug_assertions)]
+pub fn release_debug() -> String {
+    String::from("_debug")
+}
+#[cfg(not(debug_assertions))]
+pub fn release_debug() -> String {
+    String::from("")
+}
+
+
 fn add_module(name: String, description: String, default: bool, deprecated: String, modules: &mut Vec<Module>) {
     let mut module: Module = Module::new();
     module.name = name;
@@ -138,7 +148,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
     let mut index_succes: i32 = 0;
     let mut index_default: i32 = 0;
 
-    let file_str = format!("{}/{}", modulepath, MODULESINDEX);
+    let file_str = format!("{}/{}{}", modulepath, MODULESINDEX, release_debug());
     let num_modules = if Path::new(&file_str).exists() {
         count_modules_in_cache(&PathBuf::from(&file_str))
     } else {
@@ -172,7 +182,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
                     let first = modulename.chars().next().unwrap();
                     let second = if modulename.len() >= 2 { &modulename[1..2] } else { "" };
 
-                    if modulename == MODULESINDEX {
+                    if modulename == format!("{}{}", MODULESINDEX, release_debug()) {
                         continue;
                     }
                     // modulename can start with /
@@ -384,7 +394,7 @@ pub fn get_module_list(arg: &str, rsmod: &Rsmodule, opts: &AvailableOptions) {
     let mut longest_name = 0;
     let mut decoded: Vec<Module> = Vec::new();
     for modulepath in modulepaths.clone() {
-        let file: File = match File::open(format!("{}/{}", modulepath, MODULESINDEX)) {
+        let file: File = match File::open(format!("{}/{}{}", modulepath, MODULESINDEX, release_debug())) {
             Ok(file) => file,
             Err(_) => {
                 echo(
@@ -392,7 +402,7 @@ pub fn get_module_list(arg: &str, rsmod: &Rsmodule, opts: &AvailableOptions) {
                     shell,
                 );
                 if update(&modulepath, shell) {
-                    match File::open(format!("{}/{}", modulepath, MODULESINDEX)) {
+                    match File::open(format!("{}/{}{}", modulepath, MODULESINDEX, release_debug())) {
                         Ok(file) => file,
                         Err(_) => {
                             // for some unknown reason we cannot open the file

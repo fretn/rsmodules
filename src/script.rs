@@ -369,6 +369,8 @@ fn unsetenv(var: String) {
     } else if shell == "python" {
         add_to_commands(&format!("os.environ[\"{}\"] = \"\";", var));
         add_to_commands(&format!("del os.environ[\"{}\"];", var));
+    } else if shell == "r" {
+        add_to_commands(&format!("Sys.unsetenv(\"{}\")", var));
     } else {
         add_to_commands(&format!("unsetenv \"{}\"", var));
     }
@@ -517,7 +519,7 @@ fn conflict(module: String) {
     if super::is_module_loaded(module.as_ref(), false) {
         let (shell, _) = get_shell_info();
 
-        let spaces = if shell == "noshell" || shell == "perl" || shell == "python" {
+        let spaces = if shell == "noshell" || shell == "perl" || shell == "python" || shell == "r" {
             ""
         } else {
             "  "
@@ -732,6 +734,8 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
             data = format!("setenv {} \"{}\"", result.0, result.1);
         } else if shell == "python" {
             data = format!("os.environ[\"{}\"] = \"{}\";", result.0, result.1);
+        } else if shell == "r" {
+            data = format!("Sys.setenv({} = \"{}\")", result.0, result.1);
         } else if shell == "perl" {
             data = format!("$ENV{{{}}}=\"{}\";", result.0, result.1);
         }
@@ -742,7 +746,11 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
     }
 
     for line in lu!(COMMANDS).iter() {
-        output.push(line.to_string());
+        if shell == "r" {
+            output.push(format!("system(\"{}\")", line.to_string()));
+        } else {
+            output.push(line.to_string());
+        }
     }
 
     output

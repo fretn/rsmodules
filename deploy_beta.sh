@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./build_linux_static.sh
+./build_linux_static_debug.sh
 
 if [ -z ${RSMODULES_DEPLOY_HOST} ]; then
 	echo "The variable RSMODULES_DEPLOY_HOST is not found."

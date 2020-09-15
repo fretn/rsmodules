@@ -129,7 +129,7 @@ pub fn get_module_list(shell: &str) -> Vec<(String, bool, String)> {
         // if they don't and we have write permission in that folder
         // we should create the cache
         let mut testpath = PathBuf::from(&path);
-        testpath.push(cache::MODULESINDEX);
+        testpath.push(format!("{}{}", cache::MODULESINDEX, cache::release_debug()));
 
         if testpath.exists() {
             cache::parse_modules_cache_file(&testpath, &mut modules);
@@ -506,7 +506,7 @@ fn run_modulefile(path: &PathBuf, rsmod: &mut Rsmodule, selected_module: &str, a
             line = format!("{}\n", line);
         }
 
-        if rsmod.shell == "noshell" || rsmod.shell == "python" || rsmod.shell == "perl" {
+        if rsmod.shell == "noshell" || rsmod.shell == "python" || rsmod.shell == "perl" || rsmod.shell == "r" {
             println!("{}", line);
         } else {
             output(line);
@@ -690,7 +690,7 @@ fn module_action(rsmod: &mut Rsmodule, action: &str) {
         run_modulefile(&modulefile, rsmod, selected_module, action);
 
         if replaced_module && other != "" && selected_module != "" {
-            let spaces = if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
+            let spaces = if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" || rsmod.shell == "r" {
                 ""
             } else {
                 "  "
@@ -805,6 +805,8 @@ pub fn echo(line: &str, shell: &str) {
         println!("{}", line);
     } else if shell == "python" {
         println!("print(\"{}\")", line);
+    } else if shell == "r" {
+        println!("print(\"{}\")", line);
     } else if shell == "perl" {
         println!("print(\"{}\\n\");", line);
     } else {
@@ -856,7 +858,7 @@ fn list(rsmod: &mut Rsmodule) {
             echo("", rsmod.shell);
         }
     } else {
-        let spaces = if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" {
+        let spaces = if rsmod.shell == "noshell" || rsmod.shell == "perl" || rsmod.shell == "python" || rsmod.shell == "r" {
             ""
         } else {
             "  "
