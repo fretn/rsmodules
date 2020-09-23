@@ -735,6 +735,10 @@ pub fn get_output(selected_module: &str, action: &str, shell: &str) -> Vec<Strin
         } else if shell == "python" {
             data = format!("os.environ[\"{}\"] = \"{}\";", result.0, result.1);
         } else if shell == "r" {
+            // todo
+            // if result.0 = LD_LIBRARY_PATH
+            // loop through that folder and for each *.so
+            // dyn.load('lib.so')
             data = format!("Sys.setenv({} = \"{}\")", result.0, result.1);
         } else if shell == "perl" {
             data = format!("$ENV{{{}}}=\"{}\";", result.0, result.1);

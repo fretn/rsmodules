@@ -182,7 +182,11 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
                     let first = modulename.chars().next().unwrap();
                     let second = if modulename.len() >= 2 { &modulename[1..2] } else { "" };
 
-                    if modulename == format!("{}{}", MODULESINDEX, release_debug()) {
+                    if modulename == format!("{}", MODULESINDEX) {
+                        continue;
+                    }
+
+                    if modulename == format!("{}_debug", MODULESINDEX ) {
                         continue;
                     }
                     // modulename can start with /
