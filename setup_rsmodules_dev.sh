@@ -87,7 +87,7 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 
 		cmds="available \
 			list load purge info cd edit \
-			unload readme makecache add rm \
+			unload readme addtocache makecache add rm \
 			autoload refurbish undo refresh delete create"
 
 		opts="-h --help"

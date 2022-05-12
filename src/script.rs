@@ -652,6 +652,7 @@ pub fn run(path: &PathBuf, action: &str) {
         engine.register_fn("deprecated", deprecated);
     }
 
+    // FIXME: this error is vague when a module exists in the cache but not on disk
     match engine.eval_file::<String>(path.to_string_lossy().into_owned().as_ref()) {
         Ok(result) => println!("{}", result),
         Err(e) => {
