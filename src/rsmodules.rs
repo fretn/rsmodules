@@ -248,6 +248,30 @@ pub fn command(rsmod: &mut Rsmodule) {
         module_action(rsmod, "cd");
     } else if rsmod.cmd == "info" {
         module_action(rsmod, "info");
+    } else if rsmod.cmd == "addtocache" {
+        let args = shell_words::split(rsmod.arg).unwrap();
+        if args.len() < 5 {
+            super::usage(true, true);
+            return;
+        }
+        let modulepath = &args[0];
+        let name = &args[1];
+        let default = &args[2];
+        let deprecated = &args[3];
+        let description = &args[4..];
+        let description = description.join(" ");
+
+        if default != "true" && default != "false" {
+            super::usage(true, true);
+            return;
+        }
+
+        if deprecated != "true" && deprecated != "false" {
+            super::usage(true, true);
+            return;
+        }
+
+        cache::add_module_to_index(modulepath, rsmod.shell, name, &description, default, deprecated);
     } else if rsmod.cmd == "makecache" {
         let modulepaths = get_module_paths(false);
         for modulepath in modulepaths {

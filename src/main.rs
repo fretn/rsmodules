@@ -197,6 +197,13 @@ fn usage(in_eval: bool, subcommand_help: bool) {
     );
 
     sch.insert(
+        "addtocache".to_owned(),
+        "addtocache [path from $MODULEPATH] [modulename] [default: true/false] [deprecated: true/false ][\"description\"]\t
+            Adds a module to the .modulesindex file
+            This will only work if you have the correct permissions.",
+    );
+
+    sch.insert(
         "makecache".to_owned(),
         "makecache\t
             Updates the .modulesindex file in all the paths that
@@ -305,6 +312,8 @@ fn usage(in_eval: bool, subcommand_help: bool) {
         * {}
 
         * {}
+
+        * {}
         ",
         help!(sch, "load"),
         help!(sch, "unload"),
@@ -316,6 +325,7 @@ fn usage(in_eval: bool, subcommand_help: bool) {
         help!(sch, "available"),
         help!(sch, "info"),
         help!(sch, "undo"),
+        help!(sch, "addtocache"),
         help!(sch, "makecache"),
         help!(sch, "create"),
         help!(sch, "delete"),
@@ -351,12 +361,12 @@ fn usage(in_eval: bool, subcommand_help: bool) {
     if in_eval {
         error_msg =
             "  Usage: module \
-             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload|readme|cd|edit> [module \
+             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|addtocache|makecache|delete|autoload|readme|cd|edit> [module \
              name]";
     } else {
         error_msg =
             "  Usage: rsmodules <shell> \
-             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|makecache|delete|autoload|readme|cd|edit> [module \
+             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|addtocache|makecache|delete|autoload|readme|cd|edit> [module \
              name]";
     }
 
@@ -500,6 +510,7 @@ fn run(args: &[String]) {
         command_list.push("display");
         command_list.push("show");
         command_list.push("switch");
+        command_list.push("addtocache");
         command_list.push("makecache");
         command_list.push("help");
         command_list.push("undo");
@@ -694,9 +705,12 @@ pub fn setenv(var: &str, val: &str, shell: &str) -> String {
     } else if shell == "python" {
         data = format!("os.environ[\"{}\"] = \"{}\";\n", var, val);
     } else if shell == "r" {
-        data = format!("old_path <- Sys.getenv(\"{}\")
+        data = format!(
+            "old_path <- Sys.getenv(\"{}\")
 
-        Sys.setenv({} = paste(old_path, \"{}\", sep = \":\"))", var, var, val);
+        Sys.setenv({} = paste(old_path, \"{}\", sep = \":\"))",
+            var, var, val
+        );
     } else if shell == "perl" {
         data = format!("$ENV{{{}}}=\"{}\";\n", var, val);
     }

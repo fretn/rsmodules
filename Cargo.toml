@@ -25,6 +25,7 @@ dirs = "1.0"
 pbr = "1.0.1"
 natord = "1.0.9"
 chrono = "0.4.11"
+shell-words = "1.1.0"
 #smallvec = "0.6.10"
 
 [dependencies.mdcat]

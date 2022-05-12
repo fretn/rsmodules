@@ -41,7 +41,7 @@ use pbr::ProgressBar;
 
 pub static MODULESINDEX: &str = ".modulesindex";
 
-#[derive(RustcEncodable, RustcDecodable, Clone, Eq)]
+#[derive(RustcEncodable, RustcDecodable, Clone, Eq, Debug)]
 struct Module {
     name: String,
     description: String,
@@ -56,6 +56,15 @@ impl Module {
             description: String::new(),
             default: false,
             deprecated: String::from("0"),
+        }
+    }
+
+    pub fn from(name: String, description: String, default: bool, deprecated: String) -> Module {
+        Module {
+            name,
+            description,
+            default,
+            deprecated,
         }
     }
 }
@@ -87,18 +96,41 @@ pub fn release_debug() -> String {
     String::from("")
 }
 
-
 fn add_module(name: String, description: String, default: bool, deprecated: String, modules: &mut Vec<Module>) {
-    let mut module: Module = Module::new();
-    module.name = name;
-    module.description = description;
-    module.default = default;
-    module.deprecated = deprecated;
+    let module: Module = Module::from(name, description, default, deprecated);
 
     modules.push(module);
 }
 
-fn get_default_version(modulepath: &str, modulename: &str) -> bool {
+fn get_default_version(modulepath: &str, modulename: &str) -> String {
+    let parts: Vec<&str> = modulename.split('/').collect();
+    let groupname = if !parts.is_empty() { parts[0] } else { "" };
+
+    let tmp = format!("{}/{}/.version", modulepath, groupname);
+    let module_path = Path::new(&tmp);
+
+    // read filename line by line, and push it to modules
+    let mut buffer = String::new();
+
+    if Path::new(&module_path).is_file() {
+        let file: File = match File::open(module_path) {
+            Ok(file) => file,
+            Err(_) => {
+                return String::from("");
+            }
+        };
+
+        let file = BufReader::new(file);
+        // if there are multiple entries in .version, the last one counts
+        for (_, line) in file.lines().enumerate() {
+            buffer = line.unwrap();
+        }
+    }
+
+    buffer
+}
+
+fn is_default_version(modulepath: &str, modulename: &str) -> bool {
     let parts: Vec<&str> = modulename.split('/').collect();
     let groupname = if !parts.is_empty() { parts[0] } else { "" };
 
@@ -139,6 +171,81 @@ fn progressbar(num: u64, msg: &str) -> ProgressBar<Stdout> {
     pb.message(msg);
 
     pb
+}
+
+pub fn add_module_to_index(
+    modulepath: &str,
+    shell: &str,
+    name: &str,
+    description: &str,
+    default: &str,
+    deprecated: &str,
+) -> bool {
+    let file_str = format!("{}/{}{}", modulepath, MODULESINDEX, release_debug());
+    let file: File = match File::open(&file_str) {
+        Ok(file) => file,
+        Err(_) => {
+            if shell != "noshell" {
+                echo("", shell);
+                let msg: String = format!(
+                    "  {}: {} could NOT be opened.",
+                    bold(shell, "WARNING"),
+                    bold(shell, modulepath)
+                );
+                echo(&msg, shell);
+            } else {
+                let msg: String = format!("{} failed", modulepath);
+                echo(&msg, shell);
+            }
+            return false;
+        }
+    };
+
+    let default = if default == "true" { true } else { false };
+    let deprecated = if deprecated == "true" { "1" } else { "0" };
+
+    let mut reader = BufReader::new(&file);
+    let mut modules: Vec<Module> = decode_from(&mut reader, bincode::SizeLimit::Infinite).unwrap();
+
+    // open the file again
+    let file: File = match File::options().write(true).open(&file_str) {
+        Ok(file) => file,
+        Err(_) => {
+            if shell != "noshell" {
+                echo("", shell);
+                let msg: String = format!(
+                    "  {}: {} could NOT be opened.",
+                    bold(shell, "WARNING"),
+                    bold(shell, modulepath)
+                );
+                echo(&msg, shell);
+            } else {
+                let msg: String = format!("{} failed", modulepath);
+                echo(&msg, shell);
+            }
+            return false;
+        }
+    };
+
+    let module: Module = Module::from(name.to_string(), description.to_string(), default, deprecated.to_string());
+
+    if module.default {
+        let default_version = get_default_version(modulepath, &module.name);
+        for tmp_module in modules.iter_mut() {
+            if tmp_module.name == default_version {
+                tmp_module.default = false;
+            }
+        }
+    }
+
+    if !modules.contains(&module) {
+        // this only checks the modulename, so you cannot overwrite
+        let mut writer = BufWriter::new(&file);
+        modules.push(module);
+        encode_into(&modules, &mut writer, bincode::SizeLimit::Infinite).unwrap();
+    }
+
+    return true;
 }
 
 pub fn update(modulepath: &str, shell: &str) -> bool {
@@ -186,7 +293,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
                         continue;
                     }
 
-                    if modulename == format!("{}_debug", MODULESINDEX ) {
+                    if modulename == format!("{}_debug", MODULESINDEX) {
                         continue;
                     }
                     // modulename can start with /
@@ -220,7 +327,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
                         }
 
                         //
-                        let default = get_default_version(modulepath, modulename);
+                        let default = is_default_version(modulepath, modulename);
                         list.push((str_path.to_string(), modulename.to_string(), default, deprecated.clone()));
                         index_succes += 1;
                     }
