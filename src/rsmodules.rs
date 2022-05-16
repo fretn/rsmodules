@@ -248,6 +248,13 @@ pub fn command(rsmod: &mut Rsmodule) {
         module_action(rsmod, "cd");
     } else if rsmod.cmd == "info" {
         module_action(rsmod, "info");
+    } else if rsmod.cmd == "cache" {
+        cache::run(rsmod);
+        // TODO:
+        //  module cache create
+        //  module cache add /path/to/modules name default deprecated "description"
+        //  module cache edit name newname default deprecated "description"
+        //  module cache delete name
     } else if rsmod.cmd == "addtocache" {
         let args = shell_words::split(rsmod.arg).unwrap();
         if args.len() < 5 {

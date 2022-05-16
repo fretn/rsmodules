@@ -24,11 +24,14 @@ SOFTWARE.
 
 use super::super::bold;
 use chrono::{DateTime, Utc};
+use if_let_return::if_let_some;
 use regex::Regex;
 use std::cmp::Ordering;
+use std::env::args;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Stdout};
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 use walkdir::WalkDir;
 extern crate bincode;
@@ -38,6 +41,8 @@ use bincode::rustc_serialize::{decode_from, encode_into};
 use super::script;
 
 use pbr::ProgressBar;
+
+use gumdrop::Options;
 
 pub static MODULESINDEX: &str = ".modulesindex";
 
@@ -181,6 +186,11 @@ pub fn add_module_to_index(
     default: &str,
     deprecated: &str,
 ) -> bool {
+    if modulepath.is_empty() {
+        return false;
+    }
+    // TODO: check if the modulefile exists, if not don't add it
+
     let file_str = format!("{}/{}{}", modulepath, MODULESINDEX, release_debug());
     let file: File = match File::open(&file_str) {
         Ok(file) => file,
@@ -202,7 +212,7 @@ pub fn add_module_to_index(
     };
 
     let default = if default == "true" { true } else { false };
-    let deprecated = if deprecated == "true" { "1" } else { "0" };
+    //let deprecated = if deprecated == "true" { "1" } else { "0" };
 
     let mut reader = BufReader::new(&file);
     let mut modules: Vec<Module> = decode_from(&mut reader, bincode::SizeLimit::Infinite).unwrap();
@@ -238,8 +248,8 @@ pub fn add_module_to_index(
         }
     }
 
+    // this only checks the modulename, so you cannot overwrite
     if !modules.contains(&module) {
-        // this only checks the modulename, so you cannot overwrite
         let mut writer = BufWriter::new(&file);
         modules.push(module);
         encode_into(&modules, &mut writer, bincode::SizeLimit::Infinite).unwrap();
@@ -763,5 +773,170 @@ pub fn get_module_list(arg: &str, rsmod: &Rsmodule, opts: &AvailableOptions) {
             shell,
         );
         echo("", shell);
+    }
+}
+
+// Options accepted for the `make` command
+#[derive(Debug, Options)]
+struct AddOpts {
+    #[options(help = "Print this help message")]
+    help: bool,
+
+    #[options(no_short, help = "Single path from $MODULEPATH")]
+    modulepath: String,
+
+    #[options(no_short, help = "Name of the module")]
+    name: String,
+
+    #[options(no_short, help = "Description of the module")]
+    description: String,
+
+    #[options(no_short, help = "Mark module as default", count)]
+    default: u8,
+
+    #[options(no_short, help = "Mark module as deprecated, expects date format: YYYY-MM-DD")]
+    deprecated: String,
+}
+
+// Options accepted for the `make` command
+#[derive(Debug, Options)]
+struct MakeOpts {
+    #[options(help = "Print this help message")]
+    help: bool,
+}
+
+#[derive(Debug, Options)]
+enum Command {
+    #[options(help = "Add modules to the cache")]
+    Add(AddOpts),
+    #[options(help = "Rebuild the cache file")]
+    Make(MakeOpts),
+}
+
+#[derive(Debug, Default, Options)]
+struct CacheOptions {
+    #[options(command)]
+    command: Option<Command>,
+
+    #[options(help = "Print this help message")]
+    help: bool,
+}
+
+fn print_help(args: &[String], shell: &str, command: &str) {
+    let mut cmd = command;
+    if command.is_empty() {
+        cmd = "[make|add|edit|delete]";
+    }
+
+    if shell == "noshell" || shell == "python" || shell == "perl" {
+        eprintln!("Usage: {} cache {} [ARGUMENTS]", args[0], cmd);
+    } else {
+        eprintln!("Usage: module cache {} [ARGUMENTS]", cmd);
+    }
+    eprintln!("");
+    if cmd == "add" {
+        eprintln!("{}", AddOpts::usage());
+    } else {
+        eprintln!("{}", CacheOptions::usage());
+    }
+}
+
+pub fn run(rsmod: &Rsmodule) {
+    // the module bash function eats quotes
+    // so a description with spaces that is quoted doesn't
+    // work at all, this is a hack to work around this problem
+    let args: Vec<String> = args().collect();
+    let mut description_found = false;
+    let mut description: Vec<String> = vec![];
+    let mut result_args: Vec<String> = vec![];
+    for arg in args.iter() {
+        if arg == "--description" {
+            description_found = true;
+        } else if description_found {
+            if arg.starts_with("--") {
+                description_found = false;
+                result_args.push(arg.to_string());
+            } else {
+                description.push(arg.to_string());
+            }
+        } else {
+            result_args.push(arg.to_string());
+        }
+    }
+
+    let description = description.join(" ");
+    if !description.is_empty() {
+        result_args.push("--description".to_string());
+        result_args.push(description);
+    }
+    let args = result_args;
+    // end hack
+
+    // Remember to skip the first arguments. That's the program name, shell and command
+    let opts = match CacheOptions::parse_args_default(&args[3..]) {
+        Ok(opts) => opts,
+        Err(e) => {
+            eprintln!("{}: {}", args[0], e);
+            return;
+        }
+    };
+
+    if opts.command.is_none() {
+        print_help(&args, rsmod.shell, "");
+        return;
+    }
+    if_let_some!(command = opts.command_name(), ());
+
+    if command == "make" {
+        let modulepaths = get_module_paths(false);
+        for modulepath in modulepaths {
+            if modulepath != "" {
+                update(&modulepath, rsmod.shell);
+            }
+        }
+        return;
+    } else if command == "add" {
+        let addopts = match AddOpts::parse_args_default(&args[4..]) {
+            Ok(opts) => opts,
+            Err(e) => {
+                eprintln!("{}: {}", args[0], e);
+                return;
+            }
+        };
+
+        let default = if addopts.default > 0 { "true" } else { "false" };
+        let deprecated = if addopts.deprecated.is_empty() {
+            String::from("0")
+        } else {
+            // TODO: cleanup this mess
+            let mstime = format!("{} 00:00:00 +0000", addopts.deprecated);
+            let mstime = DateTime::parse_from_str(&mstime, "%Y-%m-%d %T %z");
+
+            if mstime.is_ok() {
+                let mstime = mstime.unwrap();
+
+                let mstime = mstime.date().to_string();
+                let mstime = &mstime[0..10];
+                String::from_str(mstime).unwrap()
+            } else {
+                eprintln!("Failed parsing deprecated date, module will not be flagged as deprecated");
+                String::from("0")
+            }
+        };
+
+        let modulepath = addopts.modulepath;
+        let name = addopts.name;
+        let description = addopts.description;
+        if !name.is_empty() && !modulepath.is_empty() {
+            add_module_to_index(&modulepath, rsmod.shell, &name, &description, default, &deprecated);
+        } else {
+            print_help(&args, rsmod.shell, command);
+        }
+
+        return;
+    }
+
+    if opts.help {
+        print_help(&args, rsmod.shell, "");
     }
 }

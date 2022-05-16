@@ -173,10 +173,13 @@ fn usage(in_eval: bool, subcommand_help: bool) {
             the search string will be listed.
             The search string can also contain multiple items separated
             by spaces.
+
             When --default, -d is specified then only default modules
             will be listed.
+
             When --deprecated, -R is specified then only deprecated modules
             will be listed.
+
             When --regex or -r is specified the search term can be a
             regular expression.",
     );
@@ -194,6 +197,26 @@ fn usage(in_eval: bool, subcommand_help: bool) {
         "undo\t
             Undo the previous module command, only works for load, unload,
             switch and purge.",
+    );
+
+    sch.insert(
+        "cache".to_owned(),
+        "cache [--help] [make|add|edit|delete]\t
+            Manipulate the contents of a .modulesindex file.
+
+            make\t
+
+            Updates the .modulesindex file in all the paths that
+            are found in the $MODULEPATH variable. This will only
+            work if you have the correct permissions.
+            If you want a progress bar use the command:
+            update_modules_cache instead of module makecache
+
+            add --modulepath [path] --name [modulename] --description \"description\" [--default] [--deprecated] \t
+
+            Adds a module to the .modulesindex file
+            This will only work if you have the correct permissions.
+            ",
     );
 
     sch.insert(
@@ -314,6 +337,8 @@ fn usage(in_eval: bool, subcommand_help: bool) {
         * {}
 
         * {}
+
+        * {}
         ",
         help!(sch, "load"),
         help!(sch, "unload"),
@@ -325,6 +350,7 @@ fn usage(in_eval: bool, subcommand_help: bool) {
         help!(sch, "available"),
         help!(sch, "info"),
         help!(sch, "undo"),
+        help!(sch, "cache"),
         help!(sch, "addtocache"),
         help!(sch, "makecache"),
         help!(sch, "create"),
@@ -510,6 +536,7 @@ fn run(args: &[String]) {
         command_list.push("display");
         command_list.push("show");
         command_list.push("switch");
+        command_list.push("cache");
         command_list.push("addtocache");
         command_list.push("makecache");
         command_list.push("help");
