@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 use super::super::bold;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use if_let_return::if_let_some;
 use regex::Regex;
 use std::cmp::Ordering;
@@ -31,7 +31,6 @@ use std::env::args;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Stdout};
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 
 use walkdir::WalkDir;
 extern crate bincode;
@@ -776,16 +775,16 @@ pub fn get_module_list(arg: &str, rsmod: &Rsmodule, opts: &AvailableOptions) {
     }
 }
 
-// Options accepted for the `make` command
+// Options accepted for the `module cache add` command
 #[derive(Debug, Options)]
 struct AddOpts {
     #[options(help = "Print this help message")]
     help: bool,
 
-    #[options(no_short, help = "Single path from $MODULEPATH")]
+    #[options(no_short, help = "Single path from $MODULEPATH (required)")]
     modulepath: String,
 
-    #[options(no_short, help = "Name of the module")]
+    #[options(no_short, help = "Name of the module (required)")]
     name: String,
 
     #[options(no_short, help = "Description of the module")]
@@ -798,7 +797,7 @@ struct AddOpts {
     deprecated: String,
 }
 
-// Options accepted for the `make` command
+// Options accepted for the `module cache make` command
 #[derive(Debug, Options)]
 struct MakeOpts {
     #[options(help = "Print this help message")]
@@ -841,10 +840,10 @@ fn print_help(args: &[String], shell: &str, command: &str) {
     }
 }
 
-pub fn run(rsmod: &Rsmodule) {
-    // the module bash function eats quotes
-    // so a description with spaces that is quoted doesn't
-    // work at all, this is a hack to work around this problem
+// the module bash function eats quotes
+// so a description with spaces that is quoted doesn't
+// work at all, this is a hack to work around this problem
+fn fix_args() -> Vec<String> {
     let args: Vec<String> = args().collect();
     let mut description_found = false;
     let mut description: Vec<String> = vec![];
@@ -869,10 +868,13 @@ pub fn run(rsmod: &Rsmodule) {
         result_args.push("--description".to_string());
         result_args.push(description);
     }
-    let args = result_args;
-    // end hack
+    result_args
+}
 
-    // Remember to skip the first arguments. That's the program name, shell and command
+pub fn run(rsmod: &Rsmodule) {
+    let args = fix_args();
+
+    // Remember to skip the first arguments. That's the program name, shell and command: rsmodules bash cache <command>
     let opts = match CacheOptions::parse_args_default(&args[3..]) {
         Ok(opts) => opts,
         Err(e) => {
@@ -899,28 +901,24 @@ pub fn run(rsmod: &Rsmodule) {
         let addopts = match AddOpts::parse_args_default(&args[4..]) {
             Ok(opts) => opts,
             Err(e) => {
+                print_help(&args, rsmod.shell, "");
                 eprintln!("{}: {}", args[0], e);
                 return;
             }
         };
 
         let default = if addopts.default > 0 { "true" } else { "false" };
+
         let deprecated = if addopts.deprecated.is_empty() {
-            String::from("0")
+            "0"
         } else {
-            // TODO: cleanup this mess
-            let mstime = format!("{} 00:00:00 +0000", addopts.deprecated);
-            let mstime = DateTime::parse_from_str(&mstime, "%Y-%m-%d %T %z");
+            let deprecated_date = NaiveDate::parse_from_str(&addopts.deprecated, "%Y-%m-%d");
 
-            if mstime.is_ok() {
-                let mstime = mstime.unwrap();
-
-                let mstime = mstime.date().to_string();
-                let mstime = &mstime[0..10];
-                String::from_str(mstime).unwrap()
+            if deprecated_date.is_ok() {
+                &addopts.deprecated
             } else {
                 eprintln!("Failed parsing deprecated date, module will not be flagged as deprecated");
-                String::from("0")
+                "0"
             }
         };
 
