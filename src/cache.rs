@@ -43,7 +43,7 @@ use pbr::ProgressBar;
 
 use gumdrop::Options;
 
-pub static MODULESINDEX: &str = ".modulesindex";
+pub static MODULECACHE: &str = ".modulecache";
 
 #[derive(RustcEncodable, RustcDecodable, Clone, Eq, Debug)]
 struct Module {
@@ -54,7 +54,7 @@ struct Module {
 }
 
 impl Module {
-    pub fn new() -> Module {
+    pub fn _new() -> Module {
         Module {
             name: String::new(),
             description: String::new(),
@@ -177,20 +177,13 @@ fn progressbar(num: u64, msg: &str) -> ProgressBar<Stdout> {
     pb
 }
 
-pub fn add_module_to_index(
-    modulepath: &str,
-    shell: &str,
-    name: &str,
-    description: &str,
-    default: &str,
-    deprecated: &str,
-) -> bool {
-    if modulepath.is_empty() {
+pub fn manipulate_cache(action: &str, modopts: &ModifyOpts, shell: &str) -> bool {
+    if modopts.modulepath.is_empty() {
         return false;
     }
     // TODO: check if the modulefile exists, if not don't add it
 
-    let file_str = format!("{}/{}{}", modulepath, MODULESINDEX, release_debug());
+    let file_str = format!("{}/{}{}", modopts.modulepath, MODULECACHE, release_debug());
     let file: File = match File::open(&file_str) {
         Ok(file) => file,
         Err(_) => {
@@ -199,19 +192,31 @@ pub fn add_module_to_index(
                 let msg: String = format!(
                     "  {}: {} could NOT be opened.",
                     bold(shell, "WARNING"),
-                    bold(shell, modulepath)
+                    bold(shell, &modopts.modulepath)
                 );
                 echo(&msg, shell);
             } else {
-                let msg: String = format!("{} failed", modulepath);
+                let msg: String = format!("{} failed", modopts.modulepath);
                 echo(&msg, shell);
             }
             return false;
         }
     };
 
-    let default = if default == "true" { true } else { false };
-    //let deprecated = if deprecated == "true" { "1" } else { "0" };
+    let default = if modopts.default > 0 { true } else { false };
+
+    let deprecated = if modopts.deprecated.is_empty() {
+        "0"
+    } else {
+        let deprecated_date = NaiveDate::parse_from_str(&modopts.deprecated, "%Y-%m-%d");
+
+        if deprecated_date.is_ok() {
+            &modopts.deprecated
+        } else {
+            eprintln!("Failed parsing deprecated date, module will not be flagged as deprecated, specify date as: YYYY-MM-DD");
+            "0"
+        }
+    };
 
     let mut reader = BufReader::new(&file);
     let mut modules: Vec<Module> = decode_from(&mut reader, bincode::SizeLimit::Infinite).unwrap();
@@ -225,21 +230,26 @@ pub fn add_module_to_index(
                 let msg: String = format!(
                     "  {}: {} could NOT be opened.",
                     bold(shell, "WARNING"),
-                    bold(shell, modulepath)
+                    bold(shell, &modopts.modulepath)
                 );
                 echo(&msg, shell);
             } else {
-                let msg: String = format!("{} failed", modulepath);
+                let msg: String = format!("{} failed", &modopts.modulepath);
                 echo(&msg, shell);
             }
             return false;
         }
     };
 
-    let module: Module = Module::from(name.to_string(), description.to_string(), default, deprecated.to_string());
+    let module: Module = Module::from(
+        modopts.name.to_string(),
+        modopts.description.to_string(),
+        default,
+        deprecated.to_string(),
+    );
 
     if module.default {
-        let default_version = get_default_version(modulepath, &module.name);
+        let default_version = get_default_version(&modopts.modulepath, &module.name);
         for tmp_module in modules.iter_mut() {
             if tmp_module.name == default_version {
                 tmp_module.default = false;
@@ -247,11 +257,43 @@ pub fn add_module_to_index(
         }
     }
 
-    // this only checks the modulename, so you cannot overwrite
-    if !modules.contains(&module) {
-        let mut writer = BufWriter::new(&file);
-        modules.push(module);
-        encode_into(&modules, &mut writer, bincode::SizeLimit::Infinite).unwrap();
+    if action == "add" {
+        // this only checks the modulename, so you cannot overwrite
+        if !modules.contains(&module) {
+            let mut writer = BufWriter::new(&file);
+            modules.push(module);
+            encode_into(&modules, &mut writer, bincode::SizeLimit::Infinite).unwrap();
+            eprintln!("Successfully modified the cache.");
+        }
+    } else if action == "edit" {
+        let mut modified = false;
+        // this only checks the modulename
+        if modules.contains(&module) {
+            for tmp_module in modules.iter_mut() {
+                if tmp_module.name == module.name {
+                    modified = true;
+                    tmp_module.name = modopts.new_name.to_string();
+                    if tmp_module.deprecated != deprecated {
+                        tmp_module.deprecated = deprecated.to_string();
+                    }
+                    if tmp_module.description != modopts.description {
+                        tmp_module.description = modopts.description.to_string();
+                    }
+                    if tmp_module.default != default {
+                        tmp_module.default = default;
+                    }
+                }
+            }
+
+            let mut writer = BufWriter::new(&file);
+            encode_into(&modules, &mut writer, bincode::SizeLimit::Infinite).unwrap();
+        }
+
+        if modified {
+            eprintln!("Successfully modified the cache.");
+        } else {
+            eprintln!("Cache was not modified.");
+        }
     }
 
     return true;
@@ -264,7 +306,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
     let mut index_succes: i32 = 0;
     let mut index_default: i32 = 0;
 
-    let file_str = format!("{}/{}{}", modulepath, MODULESINDEX, release_debug());
+    let file_str = format!("{}/{}{}", modulepath, MODULECACHE, release_debug());
     let num_modules = if Path::new(&file_str).exists() {
         count_modules_in_cache(&PathBuf::from(&file_str))
     } else {
@@ -298,15 +340,15 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
                     let first = modulename.chars().next().unwrap();
                     let second = if modulename.len() >= 2 { &modulename[1..2] } else { "" };
 
-                    if modulename == format!("{}", MODULESINDEX) {
+                    if modulename == format!("{}", MODULECACHE) {
                         continue;
                     }
 
-                    if modulename == format!("{}_debug", MODULESINDEX) {
+                    if modulename == format!("{}_debug", MODULECACHE) {
                         continue;
                     }
                     // modulename can start with /
-                    // also we don't want the .modulesindex or other hidden files
+                    // also we don't want the .modulecache or other hidden files
                     if first == '/' && second != "." {
                         modulename = modulename.trim_start_matches('/');
                     }
@@ -347,7 +389,7 @@ pub fn update(modulepath: &str, shell: &str) -> bool {
 
     // now we have all the module files in the current folder
     // we need to parse them to get their description
-    // our list of modules that we will save into the .modulesindex
+    // our list of modules that we will save into the .modulecache
 
     let mut modules: Vec<Module> = vec![];
 
@@ -514,7 +556,7 @@ pub fn get_module_list(arg: &str, rsmod: &Rsmodule, opts: &AvailableOptions) {
     let mut longest_name = 0;
     let mut decoded: Vec<Module> = Vec::new();
     for modulepath in modulepaths.clone() {
-        let file: File = match File::open(format!("{}/{}{}", modulepath, MODULESINDEX, release_debug())) {
+        let file: File = match File::open(format!("{}/{}{}", modulepath, MODULECACHE, release_debug())) {
             Ok(file) => file,
             Err(_) => {
                 echo(
@@ -522,7 +564,7 @@ pub fn get_module_list(arg: &str, rsmod: &Rsmodule, opts: &AvailableOptions) {
                     shell,
                 );
                 if update(&modulepath, shell) {
-                    match File::open(format!("{}/{}{}", modulepath, MODULESINDEX, release_debug())) {
+                    match File::open(format!("{}/{}{}", modulepath, MODULECACHE, release_debug())) {
                         Ok(file) => file,
                         Err(_) => {
                             // for some unknown reason we cannot open the file
@@ -804,12 +846,39 @@ struct MakeOpts {
     help: bool,
 }
 
+// Options accepted for the `module cache add` command
+#[derive(Debug, Options)]
+struct EditOpts {
+    #[options(help = "Print this help message")]
+    help: bool,
+
+    #[options(no_short, help = "Single path from $MODULEPATH (required)")]
+    modulepath: String,
+
+    #[options(no_short, help = "Name of the module (required)")]
+    name: String,
+
+    #[options(no_short, help = "New name of the module (optional)")]
+    new_name: String,
+
+    #[options(no_short, help = "Description of the module (optional)")]
+    description: String,
+
+    #[options(no_short, help = "Mark module as default (optional)", count)]
+    default: u8,
+
+    #[options(no_short, help = "Mark module as deprecated, expects date format: YYYY-MM-DD (optional)")]
+    deprecated: String,
+}
+
 #[derive(Debug, Options)]
 enum Command {
     #[options(help = "Add modules to the cache")]
     Add(AddOpts),
     #[options(help = "Rebuild the cache file")]
     Make(MakeOpts),
+    #[options(help = "Edit an entry in the cache file")]
+    Edit(EditOpts),
 }
 
 #[derive(Debug, Default, Options)]
@@ -835,6 +904,8 @@ fn print_help(args: &[String], shell: &str, command: &str) {
     eprintln!("");
     if cmd == "add" {
         eprintln!("{}", AddOpts::usage());
+    } else if cmd == "edit" {
+        eprintln!("{}", EditOpts::usage());
     } else {
         eprintln!("{}", CacheOptions::usage());
     }
@@ -871,6 +942,87 @@ fn fix_args() -> Vec<String> {
     result_args
 }
 
+#[derive(Debug, Default)]
+pub struct ModifyOpts {
+    modulepath: String,
+    name: String,
+    new_name: String,
+    description: String,
+    default: u8,
+    deprecated: String,
+}
+impl ModifyOpts {
+    pub fn _new() -> ModifyOpts {
+        ModifyOpts {
+            modulepath: String::new(),
+            name: String::new(),
+            new_name: String::new(),
+            description: String::new(),
+            default: 0,
+            deprecated: String::from("0"),
+        }
+    }
+
+    pub fn from(
+        modulepath: String,
+        name: String,
+        new_name: String,
+        description: String,
+        default: u8,
+        deprecated: String,
+    ) -> ModifyOpts {
+        ModifyOpts {
+            modulepath,
+            name,
+            new_name,
+            description,
+            default,
+            deprecated,
+        }
+    }
+}
+
+fn get_modify_opts(rsmod: &Rsmodule, command: String) -> ModifyOpts {
+    let args = fix_args();
+    //   let modifyopts = ModifyOpts::new();
+    let mut modifyopts: ModifyOpts = Default::default();
+
+    if command == "add" {
+        let addopts = match AddOpts::parse_args_default(&args[4..]) {
+            Ok(opts) => opts,
+            Err(e) => {
+                print_help(&args, rsmod.shell, "");
+                eprintln!("{}: {}", args[0], e);
+                return Default::default();
+            }
+        };
+
+        modifyopts.modulepath = addopts.modulepath;
+        modifyopts.name = addopts.name;
+        //modifyopts.newname = addopts.newname;
+        modifyopts.description = addopts.description;
+        modifyopts.default = addopts.default;
+        modifyopts.deprecated = addopts.deprecated;
+    } else {
+        let editopts = match EditOpts::parse_args_default(&args[4..]) {
+            Ok(opts) => opts,
+            Err(e) => {
+                print_help(&args, rsmod.shell, "");
+                eprintln!("{}: {}", args[0], e);
+                return Default::default();
+            }
+        };
+        modifyopts.modulepath = editopts.modulepath;
+        modifyopts.name = editopts.name;
+        modifyopts.new_name = editopts.new_name;
+        modifyopts.description = editopts.description;
+        modifyopts.default = editopts.default;
+        modifyopts.deprecated = editopts.deprecated;
+    };
+
+    modifyopts
+}
+
 pub fn run(rsmod: &Rsmodule) {
     let args = fix_args();
 
@@ -897,36 +1049,11 @@ pub fn run(rsmod: &Rsmodule) {
             }
         }
         return;
-    } else if command == "add" {
-        let addopts = match AddOpts::parse_args_default(&args[4..]) {
-            Ok(opts) => opts,
-            Err(e) => {
-                print_help(&args, rsmod.shell, "");
-                eprintln!("{}: {}", args[0], e);
-                return;
-            }
-        };
+    } else if command == "add" || command == "edit" {
+        let modopts = get_modify_opts(&rsmod, command.to_string());
 
-        let default = if addopts.default > 0 { "true" } else { "false" };
-
-        let deprecated = if addopts.deprecated.is_empty() {
-            "0"
-        } else {
-            let deprecated_date = NaiveDate::parse_from_str(&addopts.deprecated, "%Y-%m-%d");
-
-            if deprecated_date.is_ok() {
-                &addopts.deprecated
-            } else {
-                eprintln!("Failed parsing deprecated date, module will not be flagged as deprecated");
-                "0"
-            }
-        };
-
-        let modulepath = addopts.modulepath;
-        let name = addopts.name;
-        let description = addopts.description;
-        if !name.is_empty() && !modulepath.is_empty() {
-            add_module_to_index(&modulepath, rsmod.shell, &name, &description, default, &deprecated);
+        if !modopts.name.is_empty() && !modopts.modulepath.is_empty() {
+            manipulate_cache(command, &modopts, rsmod.shell);
         } else {
             print_help(&args, rsmod.shell, command);
         }

@@ -488,7 +488,7 @@ pub fn run_create_wizard(shell: &str, mut _output: &mut Vec<String>) -> String {
 
     // select modulepath, if only one, skip this
 
-    // what's the name of the modulefile ($MODULESPATH/modulename/version) ?
+    // what's the name of the modulefile ($MODULEPATH/modulename/version) ?
 
     // is there a root folder for your module ? (enter if none)
 

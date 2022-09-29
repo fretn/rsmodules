@@ -163,7 +163,7 @@ When using add_bin_to_info (you can add it multiple times to your scripts), `mod
 show the binaries that are added with this function, it will ignore the binaries in your PATH variables.  
 
 `deprecated` should be used when you plan to remove a module. This will warn the user that this module
-will be removed after the given date in `YYYY-MM-DD` format. After this date the module file will still exist but wont be usable anymore, it's your task to remove it (you can find deprecated modules by running: `module av -R` the modules marked with an 'R' in front of them are the ones you are looking for). Don't forget to run `module makecache` or `update_modules_cache` when you deprecated a module by adding the deprecated function call to the modulefile.
+will be removed after the given date in `YYYY-MM-DD` format. After this date the module file will still exist but wont be usable anymore, it's your task to remove it (you can find deprecated modules by running: `module av -R` the modules marked with an 'R' in front of them are the ones you are looking for). Don't forget to run `module cache make` or `update_modules_cache` when you deprecated a module by adding the deprecated function call to the modulefile.
 
 ### Example modulefile
 
@@ -213,7 +213,7 @@ if is_loaded("blast/2.2.17") {
 
 After you have created new modulefiles, don't forget to update the module cache by running the command:
 ```bash
-[user@awesome ~]$ module makecache
+[user@awesome ~]$ module cache make
 ```
 
 You can also have a progress bar while updating the cache.
@@ -295,7 +295,7 @@ RS stands for [rust](https://www.rust-lang.org)
 
  
 ```bash
-[user@awesome ~]$ time module makecache
+[user@awesome ~]$ time module cache make
 
 /software/shared/rsmodulefiles/ was succesfully indexed.
 

@@ -129,7 +129,7 @@ pub fn get_module_list(shell: &str) -> Vec<(String, bool, String)> {
         // if they don't and we have write permission in that folder
         // we should create the cache
         let mut testpath = PathBuf::from(&path);
-        testpath.push(format!("{}{}", cache::MODULESINDEX, cache::release_debug()));
+        testpath.push(format!("{}{}", cache::MODULECACHE, cache::release_debug()));
 
         if testpath.exists() {
             cache::parse_modules_cache_file(&testpath, &mut modules);
@@ -251,10 +251,11 @@ pub fn command(rsmod: &mut Rsmodule) {
     } else if rsmod.cmd == "cache" {
         cache::run(rsmod);
         // TODO:
-        //  module cache create
-        //  module cache add /path/to/modules name default deprecated "description"
-        //  module cache edit name newname default deprecated "description"
+        //  module cache create DONE
+        //  module cache add /path/to/modules name default deprecated "description" DONE
+        //  module cache edit name newname default deprecated "description" DONE
         //  module cache delete name
+    /*
     } else if rsmod.cmd == "addtocache" {
         let args = shell_words::split(rsmod.arg).unwrap();
         if args.len() < 5 {
@@ -273,12 +274,22 @@ pub fn command(rsmod: &mut Rsmodule) {
             return;
         }
 
+        let default = if default == "true" { 1 } else { 0 };
+
         if deprecated != "true" && deprecated != "false" {
             super::usage(true, true);
             return;
         }
 
-        cache::add_module_to_index(modulepath, rsmod.shell, name, &description, default, deprecated);
+        let modopts: cache::ModifyOpts = cache::ModifyOpts::from(
+            modulepath.to_string(),
+            name.to_string(),
+            String::from(""),
+            description.to_string(),
+            default,
+            deprecated.to_string(),
+        );
+        cache::manipulate_cache("add", &modopts, rsmod.shell);
     } else if rsmod.cmd == "makecache" {
         let modulepaths = get_module_paths(false);
         for modulepath in modulepaths {
@@ -286,6 +297,7 @@ pub fn command(rsmod: &mut Rsmodule) {
                 cache::update(&modulepath, rsmod.shell);
             }
         }
+        */
     } else if rsmod.cmd == "undo" {
         undo(rsmod);
     } else if rsmod.cmd == "delete" {

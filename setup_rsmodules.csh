@@ -1,7 +1,7 @@
 #!/bin/csh
 
 alias module 'setenv TERMWIDTH `stty size |& tee /dev/null | cut -d" " -f2` ; eval `$RSMODULES_INSTALL_DIR/rsmodules csh,$TERMWIDTH ' \!'*` '
-alias update_modules_cache 'setenv TERMWIDTH `stty size |& tee /dev/null | cut -d" " -f2` ; $RSMODULES_INSTALL_DIR/rsmodules progressbar,$TERMWIDTH makecache '
+alias update_modules_cache 'setenv TERMWIDTH `stty size |& tee /dev/null | cut -d" " -f2` ; $RSMODULES_INSTALL_DIR/rsmodules progressbar,$TERMWIDTH cache make '
 
 setenv MODULEPATH ""
 setenv RSMODULES_INSTALL_DIR ""
@@ -38,4 +38,4 @@ complete module \
 'n#switch#$mod_av#' \
 'n#autoload#(append prepend purge list)#' \
 'p#1#(info load unload available \
-    purge list refurbish autoload undo switch makecache create)#'
+    purge list refurbish autoload undo switch cache create)#'

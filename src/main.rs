@@ -202,39 +202,49 @@ fn usage(in_eval: bool, subcommand_help: bool) {
     sch.insert(
         "cache".to_owned(),
         "cache [--help] [make|add|edit|delete]\t
-            Manipulate the contents of a .modulesindex file.
+            Manipulate the contents of a .modulecache file.
 
             make\t
 
-            Updates the .modulesindex file in all the paths that
+            Updates the .modulecache file in all the paths that
             are found in the $MODULEPATH variable. This will only
             work if you have the correct permissions.
             If you want a progress bar use the command:
-            update_modules_cache instead of module makecache
+            update_modules_cache instead of module cache make
 
             add --modulepath [path] --name [modulename] --description \"description\" [--default] [--deprecated] \t
 
-            Adds a module to the .modulesindex file
+            Adds a module to the .modulecache file
             This will only work if you have the correct permissions.
+
+            edit --modulepath [path] --name [modulename] --new-name [new modulename] --description \"description\" [--default] [--deprecated] \t
+
+            Edits an existing module in the .modulecache file
+            This will only work if you have the correct permissions.
+            The modulename is used for matching the existing one.
+
+            Updating deprecated and description only updates this values in the cache
+            not in the modulefile itself.
             ",
     );
-
+/*
     sch.insert(
         "addtocache".to_owned(),
         "addtocache [path from $MODULEPATH] [modulename] [default: true/false] [deprecated: true/false ][\"description\"]\t
-            Adds a module to the .modulesindex file
+            Adds a module to the .modulecache file
             This will only work if you have the correct permissions.",
     );
 
     sch.insert(
         "makecache".to_owned(),
         "makecache\t
-            Updates the .modulesindex file in all the paths that
+            Updates the .modulecache file in all the paths that
             are found in the $MODULEPATH variable. This will only
             work if you have the correct permissions.
             If you want a progress bar use the command:
             update_modules_cache instead of module makecache",
     );
+    */
 
     sch.insert(
         "create".to_owned(),
@@ -245,7 +255,7 @@ fn usage(in_eval: bool, subcommand_help: bool) {
     sch.insert(
         "delete".to_owned(),
         "delete\t
-            Deletes a modulefile. As with makecache, this only works
+            Deletes a modulefile. This only works
             if you have the correct permissions.",
     );
 
@@ -293,7 +303,7 @@ fn usage(in_eval: bool, subcommand_help: bool) {
     Modulefiles can be shared by many users or can be used by individuals
     by setting up paths in the MODULEPATH environment variable. Once
     a new modulepath is created and added to MODULEPATH,
-    the cache needs to be updated by invoking the command: module makecache.
+    the cache needs to be updated by invoking the command: module cache make.
 
     Modulefiles can be loaded and unloaded by the user whenever the
     module command is available.
@@ -304,10 +314,6 @@ fn usage(in_eval: bool, subcommand_help: bool) {
         -----------
 
         * {}
-        * {}
-
-        * {}
-
         * {}
 
         * {}
@@ -351,8 +357,8 @@ fn usage(in_eval: bool, subcommand_help: bool) {
         help!(sch, "info"),
         help!(sch, "undo"),
         help!(sch, "cache"),
-        help!(sch, "addtocache"),
-        help!(sch, "makecache"),
+        //help!(sch, "addtocache"),
+        //help!(sch, "makecache"),
         help!(sch, "create"),
         help!(sch, "delete"),
         help!(sch, "autoload"),
@@ -385,14 +391,16 @@ fn usage(in_eval: bool, subcommand_help: bool) {
     eprintln!("");
 
     if in_eval {
+             //<load|unload|list|switch|purge|refurbish|refresh|available|undo|info|addtocache|makecache|delete|autoload|readme|cd|edit> [module \
         error_msg =
             "  Usage: module \
-             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|addtocache|makecache|delete|autoload|readme|cd|edit> [module \
+             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|delete|autoload|readme|cd|edit> [module \
              name]";
     } else {
+             //<load|unload|list|switch|purge|refurbish|refresh|available|undo|info|addtocache|makecache|delete|autoload|readme|cd|edit> [module \
         error_msg =
             "  Usage: rsmodules <shell> \
-             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|addtocache|makecache|delete|autoload|readme|cd|edit> [module \
+             <load|unload|list|switch|purge|refurbish|refresh|available|undo|info|delete|autoload|readme|cd|edit> [module \
              name]";
     }
 
@@ -537,8 +545,8 @@ fn run(args: &[String]) {
         command_list.push("show");
         command_list.push("switch");
         command_list.push("cache");
-        command_list.push("addtocache");
-        command_list.push("makecache");
+        //command_list.push("addtocache");
+        //command_list.push("makecache");
         command_list.push("help");
         command_list.push("undo");
         command_list.push("autoload");

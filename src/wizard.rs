@@ -412,12 +412,12 @@ fn set_path(input: &str, path: &str, variable: &str, append: bool) -> String {
 //
 // if modulepath found, but it is empty
 // start a wizard to add a module file
-// if .modulesindex doesn't exist
-// suggest the makecache command
+// if .modulecache doesn't exist
+// suggest the cache make command
 //
 // if modulepath found, and there are
-// module files but there is no .modulesindex file
-// suggest the makecache command
+// module files but there is no .modulecache file
+// suggest the cache make command
 //
 // else
 // crash with the help

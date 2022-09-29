@@ -7,7 +7,7 @@ module() {
 
 update_modules_cache() {
 	export TERMWIDTH=`/bin/stty size 2>&1 | cut -d" " -f2`;
-	$RSMODULES_INSTALL_DIR/rsmodules progressbar,$TERMWIDTH makecache;
+	$RSMODULES_INSTALL_DIR/rsmodules progressbar,$TERMWIDTH cache make;
 }
 
 export MODULEPATH=""
@@ -75,7 +75,7 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 
 		cmds="available \
 			list readme load purge info \
-			unload addtocache makecache add rm cd edit \
+			unload cache add rm cd edit \
 			autoload refurbish undo refresh delete create"
 
 		opts="-h --help"
@@ -86,6 +86,7 @@ if [ ${BASH_VERSINFO:-0} -ge 3 ]; then
 				COMPREPLY=( $(IFS=: compgen -W "${LOADEDMODULES}" -- "$cur") );;
 		info|readme|delete|cd|edit)
 				      COMPREPLY=( $(compgen -W "$(_module_avail)" -- "$cur") );;
+		cache)	COMPREPLY=( $(IFS=: compgen -W "make:add:edit:delete" -- "$cur") );;
 		autoload)
 				COMPREPLY=( $(IFS=: compgen -W "append:prepend:list:purge:remove" -- "$cur") );;
 		*)  if test $COMP_CWORD -gt 2
